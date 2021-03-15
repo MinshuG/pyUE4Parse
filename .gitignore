@@ -1,0 +1,17 @@
+/.vscode
+/.vs
+/.idea
+/venv
+*.uexp
+*.uasset
+*.json
+*.pyc
+/Test_Assets
+/test
+/jsons
+/UE4Parse.egg-info
+/dist
+/build
+Pakreader_test.py
+api.py
+/testing-api
