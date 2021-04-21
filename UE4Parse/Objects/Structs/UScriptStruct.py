@@ -9,6 +9,7 @@ from UE4Parse.Objects.Structs.FGameplayTagContainer import FGameplayTagContainer
 from UE4Parse.Objects.Structs.FIntPoint import FIntPoint
 from UE4Parse.Objects.Structs.FLevelSequenceObjectReferenceMap import FLevelSequenceObjectReferenceMap
 from UE4Parse.Objects.Structs.FNavAgentSelectorCustomization import FNavAgentSelectorCustomization
+from UE4Parse.Objects.Structs.FPerPlatform import FPerPlatformInt, FPerPlatformFloat
 from UE4Parse.Objects.Structs.FRotator import FRotator
 from UE4Parse.Objects.Structs.FSmartName import FSmartName
 from UE4Parse.Objects.Structs.FSoftObjectPath import FSoftObjectPath
@@ -32,7 +33,6 @@ class UScriptStruct:
     Struct: object
 
     def __init__(self, reader: BinaryStream, StructName) -> None:
-        # self.actually_read(StructName, reader)
         self.read(reader, StructName)
 
     def read(self, reader: BinaryStream, StructName):
@@ -60,8 +60,11 @@ class UScriptStruct:
             "MovieSceneTrackIdentifier": FFrameNumber,
             "MovieSceneSegmentIdentifier": FFrameNumber,
             "MovieSceneSequenceID": FFrameNumber,
-            "SmartName": FSmartName
+            "SmartName": FSmartName,
+            "PerPlatformInt": FPerPlatformInt,
+            "PerPlatformFloat": FPerPlatformFloat
         }
+
         if StructName in Structs:
             self.Struct = Structs.get(StructName)(reader)
         else:

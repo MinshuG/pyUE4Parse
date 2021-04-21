@@ -90,7 +90,7 @@ def ReadAsObject(reader, tag: FPropertyTag = None, type_: FName = None, readType
     elif switch("Int8Property", type_):
         prop = Int8Property(reader)
     elif switch("MapProperty", type_):
-        prop = MapProperty(reader, tag)  # using global tag, will this work??
+        prop = MapProperty(reader, tag)
     elif switch("SetProperty", type_):
         prop = SetProperty(reader, tag)
     elif switch("EnumProperty", type_):

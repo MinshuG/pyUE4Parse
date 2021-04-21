@@ -17,6 +17,9 @@ class FIoStoreEntry:
     ChunkId: FIoChunkId
     OffsetLength: FIoOffsetAndLength
 
+    hasUbulk: bool = False
+    hasUexp: bool = False
+
     def CompressionMethodString(self) -> str:
         return "COMPRESS_" + self.ioStore.TocResource.CompressionMethods[
             self.CompressionMethodIndex - 1] if self.CompressionMethodIndex > 0 else "COMPRESS_None"

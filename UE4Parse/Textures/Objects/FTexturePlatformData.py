@@ -30,7 +30,6 @@ class FTexturePlatformData:
         if FGame.Version.value > EPakVersion.FNAME_BASED_COMPRESSION_METHOD.value or FGame.SubVersion == 1:
             self.bIsVirtual = reader.readInt32() != 0
             if self.bIsVirtual:
-                return
                 raise NotImplementedError("Virtual Textures ar not Not implemented")
 
     def GetValue(self):

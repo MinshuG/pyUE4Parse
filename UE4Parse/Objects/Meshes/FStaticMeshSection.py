@@ -23,6 +23,6 @@ class FStaticMeshSection:
         self.MaxVertexIndex = reader.readInt32()
         self.EnableCollision = reader.readBool()
         self.CastShadow = reader.readBool()
-        self.ForceOpaque = reader.readBool() if FRenderingObjectVersion().get() >= FRenderingObjectVersion.StaticMeshSectionForceOpaqueField else False
-        self.VisibleInRayTracing = reader.readBool() if FGame.UEVersion.value >= EUEVersion.GAME_UE4_26.value else False
+        self.ForceOpaque = reader.readBool() if FRenderingObjectVersion().get(reader) >= FRenderingObjectVersion.StaticMeshSectionForceOpaqueField else False
+        self.VisibleInRayTracing = reader.readBool() if reader.game >= EUEVersion.GAME_UE4_26 else False
 

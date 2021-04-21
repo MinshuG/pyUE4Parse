@@ -1,49 +1,90 @@
 from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.Class.UObjects import UObject
+from UE4Parse.Objects.FName import FName
 from UE4Parse.Objects.FPackageIndex import FPackageIndex
 from UE4Parse.Objects.FGuid import FGuid
 from UE4Parse.Objects.EObjectFlags import EObjectFlags
+from UE4Parse.Objects.EUnrealEngineObjectUE4Version import EUnrealEngineObjectUE4Version
 
 
 class FObjectExport:
-    def __init__(self,reader: BinaryStream) -> None:
-        self.reader = reader
+    ClassIndex: FPackageIndex
+    SuperIndex: FPackageIndex
+    TemplateIndex: FPackageIndex
+    OuterIndex: FPackageIndex
+    ObjectName: FName
+    ObjectFlags: EObjectFlags
+    SerialSize: int
+    SerialOffset: int
+    bForcedExport: bool
+    bNotForClient: bool
+    bNotForServer: bool
+    PackageGuid: FGuid
+    PackageFlags: int
+    bNotAlwaysLoadedForEditorGame: bool = True
+    bIsAsset: bool = False
+    exportObject: UObject
 
-    def read(self):
-        reader = self.reader
-        self.ClassIndex =  FPackageIndex(reader)
-        self.SuperIndex =  FPackageIndex(reader)
+    def __init__(self, reader: BinaryStream) -> None:
+        self.ClassIndex = FPackageIndex(reader)
+        self.SuperIndex = FPackageIndex(reader)
 
         # only serialize when file version is past VER_UE4_TemplateIndex_IN_COOKED_EXPORTS
-        self.TemplateIndex =  FPackageIndex(reader)
+        if reader.version >= EUnrealEngineObjectUE4Version.VER_UE4_TemplateIndex_IN_COOKED_EXPORTS.value:
+            self.TemplateIndex = FPackageIndex(reader)
 
-        self.OuterIndex =  FPackageIndex(reader)
+        self.OuterIndex = FPackageIndex(reader)
         self.ObjectName = reader.readFName()
 
-        try: self.ObjectFlags = EObjectFlags(reader.readUInt32()) & EObjectFlags.RF_Load
-        except: pass
+        try:
+            self.ObjectFlags = EObjectFlags(reader.readUInt32()) & EObjectFlags.RF_Load.value
+        except:
+            pass
 
         # only serialize when file version is past VER_UE4_64BIT_EXPORTMAP_SERIALSIZES
-        self.SerialSize = reader.readInt64()
-        self.SerialOffset = reader.readInt64()
+        if reader.version >= EUnrealEngineObjectUE4Version.VER_UE4_64BIT_EXPORTMAP_SERIALSIZES:
+            self.SerialSize = reader.readInt64()
+            self.SerialOffset = reader.readInt64()
+        else:
+            self.SerialSize = reader.readInt32()
+            self.SerialOffset = reader.readInt32()
 
         self.bForcedExport = reader.readInt32() != 0
         self.bNotForClient = reader.readInt32() != 0
         self.bNotForServer = reader.readInt32() != 0
 
-        self.PackageGuid =  FGuid(reader).read()
+        self.PackageGuid = FGuid(reader)
         self.PackageFlags = reader.readUInt32()
 
         # only serialize when file version is past VER_UE4_LOAD_FOR_EDITOR_GAME
-        self.bNotAlwaysLoadedForEditorGame = reader.readInt32() != 0
+        if reader.version >= EUnrealEngineObjectUE4Version.VER_UE4_LOAD_FOR_EDITOR_GAME:
+            self.bNotAlwaysLoadedForEditorGame = reader.readBool()
 
         # only serialize when file version is past VER_UE4_COOKED_ASSETS_IN_EDITOR_SUPPORT
-        self.bIsAsset = reader.readInt32() != 0
+        if reader.version >= EUnrealEngineObjectUE4Version.VER_UE4_COOKED_ASSETS_IN_EDITOR_SUPPORT:
+            self.bIsAsset = reader.readBool()
 
         # only serialize when file version is past VER_UE4_PRELOAD_DEPENDENCIES_IN_COOKED_EXPORTS
-        self.FirstExportDependency = reader.readInt32()
-        self.SerializationBeforeSerializationDependencies = reader.readInt32()
-        self.CreateBeforeSerializationDependencies = reader.readInt32()
-        self.SerializationBeforeCreateDependencies = reader.readInt32() 
-        self.CreateBeforeCreateDependencies = reader.readInt32()
-        
-        return self
+        if reader.version >= EUnrealEngineObjectUE4Version.VER_UE4_PRELOAD_DEPENDENCIES_IN_COOKED_EXPORTS:
+            self.FirstExportDependency = reader.readInt32()
+            self.SerializationBeforeSerializationDependencies = reader.readInt32()
+            self.CreateBeforeSerializationDependencies = reader.readInt32()
+            self.SerializationBeforeCreateDependencies = reader.readInt32()
+            self.CreateBeforeCreateDependencies = reader.readInt32()
+        else:
+            self.FirstExportDependency = -1
+            self.SerializationBeforeSerializationDependencies = 0
+            self.CreateBeforeSerializationDependencies = 0
+            self.SerializationBeforeCreateDependencies = 0
+            self.CreateBeforeCreateDependencies = 0
+
+    def __str__(self):
+        return self.ObjectName.GetValue()
+
+    def GetValue(self):
+        return {
+            "ClassIndex": self.ClassIndex.GetValue(),
+            "SuperIndex": self.SuperIndex.GetValue(),
+            "OuterIndex": self.OuterIndex.GetValue(),
+            "ObjectName": self.ObjectName.GetValue()
+        }

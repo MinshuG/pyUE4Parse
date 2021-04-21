@@ -4,3 +4,6 @@ class InvalidMagic(Exception):
 
 class InvalidEncryptionKey(Exception):
     pass
+
+class ParserException(Exception):
+    pass

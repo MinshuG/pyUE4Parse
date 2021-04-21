@@ -26,7 +26,7 @@ class UObject:
         self.position = self.reader.base_stream.tell()
         while True:
             Tag = FPropertyTag(self.reader)
-            if Tag.Name.isNone or Tag.Name.string == "None":
+            if Tag.Name.isNone or Tag.Name.GetValue() == "None":
                 break
 
             pos = self.reader.base_stream.tell()
@@ -40,7 +40,7 @@ class UObject:
             key = Tag.Name.string
             if key in properties:
                 key = f"{key}_NK{num:00}"
-                num = + 1
+                num += 1
             else:
                 pass
 
@@ -49,32 +49,30 @@ class UObject:
             if obj is None:
                 break
             pos2 = self.reader.base_stream.tell()
-            if Tag.Size + pos != pos2:
-                behind = Tag.Size + pos - pos2
+
+            expectedPos: int = Tag.Size + pos
+            if pos2 + 4 <= expectedPos:
+                wtf = self.reader.readInt32() != 0
+                if pos2 + 16 <= expectedPos:
+                    FGuid(self.reader)
+
+            if expectedPos != pos2:
+                behind = expectedPos - pos2
                 logger.debug(
                     f"Didn't read {key} correctly (at {pos2}, should be {Tag.Size + pos}, {behind} behind)")
                 self.reader.seek(Tag.Size + pos, 0)
         if len(properties.keys()) > 0:
             self.Dict = properties
 
-        if not self.structFallback:
-            wtf = self.reader.readInt32() != 0
-            if wtf:
-                FGuid(self.reader)
         return self.Dict
 
-    def GetValue(self, position_value_type: bool = False) -> dict:
+    def GetValue(self) -> dict:
         """Json"""
         dict_ = {}
         for key, value in self.Dict.items():
             if value is not None:
-                if isinstance(value, bytes):
-                    breakpoint()  # getting byte somewhere
-                if position_value_type:
-                    value = {
-                        "position": value.position,
-                        "Value": value.GetValue()
-                    }
+                if isinstance(value, list):
+                    value = [x.GetValue() for x in value]
                 else:
                     value = value.GetValue()
             dict_[key] = value

@@ -1,6 +1,7 @@
 import io
 import os
 import time
+from typing import Dict, Mapping, Optional, Union
 
 from UE4Parse import Logger
 from UE4Parse.BinaryReader import BinaryStream
@@ -12,6 +13,8 @@ from UE4Parse.PakFile.PakObjects.FPakCompressedBlock import FPakCompressedBlock
 from UE4Parse.PakFile.PakObjects.FPakDirectoryEntry import FPakDirectoryEntry
 from UE4Parse.PakFile.PakObjects.FPakInfo import PakInfo
 from UE4Parse.PakFile.PakObjects.FSHAHash import FSHAHash
+from UE4Parse.IO.IoObjects.FIoStoreEntry import FIoStoreEntry
+
 
 CrytoAval = True
 try:
@@ -24,19 +27,19 @@ logger = Logger.get_logger(__name__)
 
 class PakReader:
     # @profile
-    def __init__(self, File: str) -> None:
-        self.MountPoint = ""
-        self.reader = BinaryStream(File)
-        self.FileName = os.path.basename(File)
-        self.Path = File
-        self.size = os.path.getsize(File)
+    def __init__(self, File: str, Case_insensitive: bool = False,) -> None:
+        self.MountPoint: str = ""
+        self.reader: BinaryStream = BinaryStream(File)
+        self.FileName: str = os.path.basename(File)
+        self.size: int = os.path.getsize(File)
         self.Info = PakInfo(self.reader, self.size)
         self.NumEntries = -1
         self.reader.seek(self.Info.IndexOffset, 0)
         self.MountArray = self.reader.readBytes(128)
+        self.Case_insensitive: bool = Case_insensitive
 
     # @profile
-    def ReadIndex(self, Case_insensitive: bool = False, key: str = None):
+    def ReadIndex(self, key: str = None):
         starttime = time.time()
         self.reader.seek(self.Info.IndexOffset, 0)
 
@@ -55,34 +58,37 @@ class PakReader:
 
             stringLen = IndexReader.readInt32()
             if stringLen > 512 or stringLen < -512:
-                raise RuntimeError(f"Provided key didn't work with {self.FileName}")
+                raise InvalidEncryptionKey(f"Provided key didn't work with {self.FileName}")
             if stringLen < 0:
                 IndexReader.base_stream.seek((stringLen - 1) * 2, 1)
                 if IndexReader.readUInt16() != 0:
-                    raise RuntimeError(f"Provided key didn't work with {self.FileName}")
+                    raise InvalidEncryptionKey(f"Provided key didn't work with {self.FileName}")
             else:
                 IndexReader.base_stream.seek(stringLen - 1, 1)
                 if int.from_bytes(IndexReader.readByte(), "little") != 0:
-                    raise RuntimeError(f"Provided key didn't work with {self.FileName}")
+                    raise InvalidEncryptionKey(f"Provided key didn't work with {self.FileName}")
             IndexReader.seek(0, 0)
 
         if self.Info.Version.value >= EPakVersion.PATH_HASH_INDEX.value:
-            self.ReadUpdatedIndex(IndexReader, key, Case_insensitive)
+            self.ReadUpdatedIndex(IndexReader, key, self.Case_insensitive)
         else:
             self.MountPoint = IndexReader.readFString() or ""
 
             if self.MountPoint.startswith("../../.."):
                 self.MountPoint = self.MountPoint[8::]
 
-            if Case_insensitive:
-                self.MountPoint = self.MountPoint.lower()
+            # if self.Case_insensitive:
+            #     self.MountPoint = self.MountPoint.lower()
 
             self.NumEntries = IndexReader.readInt32()
 
-            tempfiles = {}
+            tempfiles: Dict[str, FPakEntry] = {}
             for _ in range(self.NumEntries):
-                entry = FPakEntry(IndexReader, self.Info.Version, self.Info.SubVersion, Case_insensitive, self.FileName)
-                tempfiles[self.MountPoint + entry.Name] = entry
+                entry = FPakEntry(IndexReader, self.Info.Version, self.Info.SubVersion, self.FileName)
+                if self.Case_insensitive:
+                    tempfiles[self.MountPoint.lower() + entry.Name.lower()] = entry
+                else:
+                    tempfiles[self.MountPoint + entry.Name] = entry
 
             UpdateAndSetIndex(self.FileName, self, tempfiles)
             del tempfiles
@@ -104,7 +110,7 @@ class PakReader:
         PathHashSeed = IndexReader.readUInt64()
 
         if IndexReader.readInt32() == 0:
-            raise RuntimeError("No path hash index")
+            raise Exception("No path hash index")
 
         IndexReader.seek(8 + 8 + 20)  # PathHashIndexOffset(long) + PathHashIndexSize(long) + PathHashIndexHash(20bytes)
 
@@ -223,29 +229,10 @@ class PakReader:
                                              len(CompressionBlocks))
         return entry
 
-    # def get_package(self, package: str):
-    #     if package not in Globals.Index:
-    #         logger.error(f"Requested Package {package} not found.")
-    #         return False
-    #     else:
-    #         logger.info(f"Parsing {package}")
-    #         package = Globals.Index[package]
-    #         uasset = package.get_data(self.reader, key=None, compression_method=self.Info.CompressionMethods)
-    #         uexp = None
-    #         ubulk = None
-    #         if package.hasUexp:
-    #             package = Globals.Index[package.uexp]
-    #             uexp = package.get_data(self.reader, key=None, compression_method=self.Info.CompressionMethods)
-    #         if package.hasUbulk:
-    #             package = Globals.Index[package.ubulk]
-    #             ubulk = package.get_data(self.reader, key=None, compression_method=self.Info.CompressionMethods)
-    #
-    #         return PackageReader.LegacyPackageReader(uasset, uexp)
-
 
 # @profile
-def UpdateAndSetIndex(FileName, Pak=None, Index: dict = None, mount_point: str = None):
-    Globals.Paks[FileName] = Pak
+def UpdateAndSetIndex(FileName, Container, Index: Dict[str, Union[FPakEntry, FIoStoreEntry]]):
+    Globals.Paks[FileName] = Container
 
     def removeslash(string):
         if string.startswith("/"):

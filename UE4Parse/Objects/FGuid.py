@@ -2,6 +2,7 @@ from UE4Parse.BinaryReader import BinaryStream
 
 
 class FGuid:
+    mainGuid = "00000"
     position: int
     A: int
     B: int

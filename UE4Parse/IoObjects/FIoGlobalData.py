@@ -4,7 +4,7 @@ from UE4Parse.IoObjects.FScriptObjectDesc import FScriptObjectDesc
 from UE4Parse.Objects.FNameEntrySerialized import FNameEntrySerialized
 
 
-class FLoGlobalData:
+class FIoGlobalData:
     GlobalNameMap: List[FNameEntrySerialized]
     GlobalNameHashes: list
     ScriptObjectByGlobalId: Dict[str, FScriptObjectDesc]

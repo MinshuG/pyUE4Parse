@@ -128,7 +128,7 @@ class FFileIoStoreReader:
             Chunks: Dict
             tempFiles, Chunks = self.ReadIndex("", firstEntry)
 
-            UpdateAndSetIndex(self.FileName, self.ContainerFile, tempFiles, self._directory_index.MountPoint)
+            UpdateAndSetIndex(self.FileName, self.ContainerFile, tempFiles)
 
             time_taken = round(time.time() - starttime, 2)
             logger.info(

@@ -1,8 +1,11 @@
-from enum import Enum, auto
+from enum import IntEnum, auto
 
 
-class EUnrealEngineObjectUE4Version(Enum):
-    VER_UE4_BLUEPRINT_VARS_NOT_READ_ONLY = 0
+class EUnrealEngineObjectUE4Version(IntEnum):
+    Cooked = 0  # not a real ObjectVersion
+    VER_UE4_OLDEST_LOADABLE_PACKAGE = 214
+
+    VER_UE4_BLUEPRINT_VARS_NOT_READ_ONLY = auto()
     VER_UE4_STATIC_MESH_STORE_NAV_COLLISION = auto()
     VER_UE4_ATMOSPHERIC_FOG_DECAY_NAME_CHANGE = auto()
     VER_UE4_SCENECOMP_TRANSLATION_TO_LOCATION = auto()
@@ -307,8 +310,13 @@ class EUnrealEngineObjectUE4Version(Enum):
     VER_UE4_ADDED_PACKAGE_SUMMARY_LOCALIZATION_ID = auto()
     VER_UE4_FIX_WIDE_STRING_CRC = auto()
     VER_UE4_ADDED_PACKAGE_OWNER = auto()
+    VER_UE4_SKINWEIGHT_PROFILE_DATA_LAYOUT_CHANGES = auto()
+    # Added import that can have package different than their outer
+    VER_UE4_NON_OUTER_PACKAGE_IMPORT = auto()
+    # Added DependencyFlags to AssetRegistry
+    VER_UE4_ASSETREGISTRY_DEPENDENCYFLAGS = auto()
+    # Fixed corrupt licensee flag in 4.26 assets
+    VER_UE4_CORRECT_LICENSEE_FLAG = auto()
 
     VER_UE4_AUTOMATIC_VERSION_PLUS_ONE = auto()
-    VER_UE4_AUTOMATIC_VERSION = VER_UE4_AUTOMATIC_VERSION_PLUS_ONE - 1
-
-    VER_UE4_OLDEST_LOADABLE_PACKAGE = 214
+    # VER_UE4_AUTOMATIC_VERSION = VER_UE4_AUTOMATIC_VERSION_PLUS_ONE.value - 1

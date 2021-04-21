@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from UE4Parse.PakFile import FPakCompressedBlock
 from UE4Parse.PakFile import EPakVersion
 from UE4Parse.PakFile import ECompressionFlags
@@ -12,22 +12,21 @@ class FPakEntry:
     Encrypted = (Flags & Flag_Encrypted) != 0
     Deleted = (Flags & Flag_Deleted) != 0
 
-    ContainerName = ""
-    Name = ""
-    Offset = ""
-    Size = 0
-    UncompressedSize = 0
+    ContainerName: str = ""
+    Name: str = ""
+    Offset: int = 0
+    Size: int = 0
+    UncompressedSize: int = 0
 
-    CompressionBlocks: List[FPakCompressedBlock] = None
-    CompressionBlockSize = 0
+    CompressionBlocks: List[FPakCompressedBlock] = []
+    CompressionBlockSize: int = 0
     CompressionMethodIndex: int
 
     StructSize: int
     hasUbulk: bool = False
     hasUexp: bool = False
-    
-    def __init__(self, reader: BinaryStream, Version: EPakVersion = 0, SubVersion: int = 0, case_inSensitive: bool = False, pakName: str = ""):
 
+    def __init__(self, reader: Optional[BinaryStream], Version: EPakVersion = 0, SubVersion: int = 0, pakName: str = ""):
         self.ubulk = None
         self.uexp = None
         if reader is None:
@@ -38,7 +37,7 @@ class FPakEntry:
 
         self.ContainerName = pakName
 
-        name = reader.readFString().lower() if case_inSensitive else reader.readFString()
+        name = reader.readFString()
         self.Name = name[1::] if name.startswith("/") else name
 
         StartOffset = reader.base_stream.tell()

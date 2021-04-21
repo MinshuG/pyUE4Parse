@@ -1,17 +1,18 @@
-from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Globals import Globals
 
+
+# from UE4Parse.BinaryReader import BinaryStream
+
 class FPackageIndex:
-    Index = None
-    Reader = None
-    IsNull: bool = None
-    IsImport: bool = None
-    IsExport: bool = None
-    AsImport: int = None
-    AsExport: int = None
+    Index: int
+    # Reader: BinaryStream
+    IsNull: bool
+    IsImport: bool
+    IsExport: bool
+    AsImport: int
+    AsExport: int
 
-    def __init__(self, reader: BinaryStream) -> None:
-
+    def __init__(self, reader) -> None:
         self.Index = reader.readInt32()
         self.Reader = reader
         self.IsNull = self.Index == 0
@@ -34,8 +35,17 @@ class FPackageIndex:
     def GetValue(self):
         Resource = self.Resource
         if Resource is not None:
-            return {
-                "ObjectName": Resource.ObjectName.string,
-                "OuterIndex": Resource.OuterIndex.GetValue()
-            }
+            return Resource.GetValue()
+            # return {
+            #     "ObjectName": Resource.ObjectName.string,
+            #     "OuterIndex": Resource.OuterIndex.GetValue()
+            # }
         return self.Index
+
+    def __str__(self):
+        if self.IsExport:
+            return f"Export: {self.AsExport}"
+        elif self.IsImport:
+            return f"Import: {self.AsImport}"
+        else:
+            return None

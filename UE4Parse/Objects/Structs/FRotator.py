@@ -2,6 +2,7 @@ from UE4Parse.BinaryReader import BinaryStream
 
 
 class FRotator:
+    SIZE = 4+4+4
     position: int
     Pitch = 0.0
     Yaw = 0.0

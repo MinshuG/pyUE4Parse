@@ -4,20 +4,24 @@ from UE4Parse.Objects.FNameEntrySerialized import FNameEntrySerialized
 class FName:
     Index: int
     Number: int
+    _String: str
     string: str
     isNone: bool
 
     def __init__(self, name: FNameEntrySerialized, index: int = 0, number: int = 0) -> None:
-        self.string = name.Name
+        self._String = name.Name
         self.Index = index
         self.Number = number
         self.isNone = self.string is None or self.string == "None"
 
-    # @property
-    # def isNone(self):
-    #     return self.string is None or self.string == "None"
+    @property
+    def string(self):
+        return self._String if self.Number == 0 else f"{self._String}_{self.Number - 1}"
 
     def GetValue(self):
+        return self.string
+
+    def __str__(self):
         return self.string
 
 

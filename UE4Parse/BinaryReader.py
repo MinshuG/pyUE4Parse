@@ -5,8 +5,11 @@ from struct import *
 from typing import Union
 
 from UE4Parse import Logger
-from UE4Parse.Globals import Globals
+from UE4Parse import Globals as glob
+from UE4Parse.Exceptions.Exceptions import ParserException
+from UE4Parse.Objects.EUEVersion import EUEVersion
 from UE4Parse.Objects.FName import FName, DummyFName
+from UE4Parse.Objects.FPackageIndex import FPackageIndex
 
 logging = Logger.get_logger(__name__)
 
@@ -14,6 +17,9 @@ logging = Logger.get_logger(__name__)
 class BinaryStream:
     NameMap: list
     PackageReader: object
+    version: int
+    game: EUEVersion
+    fake_size: int
 
     def __init__(self, fp: Union[BufferedReader, BytesIO, str, bytes], size: int = -1):
         if isinstance(fp, str):
@@ -26,6 +32,9 @@ class BinaryStream:
             self.base_stream = fp
             self.size = size
 
+        self.game = glob.FGame.UEVersion
+        self.version = self.game.get_ar_ver()
+
     def change_stream(self, fp: Union[BufferedReader, str, bytes]):
         if isinstance(fp, str):
             self.base_stream = open(fp, "rb")
@@ -35,13 +44,21 @@ class BinaryStream:
             self.size = len(fp)
         else:  # self
             self.base_stream = fp.base_stream
+            self.fake_size = self.size + fp.size
             self.size = fp.size
 
     def seek(self, offset, SEEK_SET=1):
         self.base_stream.seek(offset, SEEK_SET)
 
+    @property
+    def position(self):
+        return self.base_stream.tell()
+
     def tell(self):
         return self.base_stream.tell()
+
+    def tellfake(self):
+        return (self.fake_size - self.size) + self.base_stream.tell()
 
     def read(self):
         """read till end"""
@@ -63,10 +80,18 @@ class BinaryStream:
         return self.unpack('B')
 
     def readBool(self):
-        return self.unpack('?')
+        """Booleans in UE are serialized as int32"""
+        return self.readInt32() != 0
+        # return self.unpack('?')
 
     def readSByte(self):
         return self.unpack("b", 1)
+
+    def readInt8(self):
+        return self.unpack('h', 1)
+
+    def readUInt8(self):
+        return self.readByteToInt(1)  # ?
 
     def readInt16(self):
         return self.unpack('h', 2)
@@ -122,30 +147,48 @@ class BinaryStream:
             byte = self.readBytes(length)[:-1]
             return byte.decode("utf-8")
 
-    def readTArray(self, Gatter):
+    def readTArray(self, func):
         SerializeNum = self.readInt32()
         A = []
         for _ in range(SerializeNum):
-            A.append(Gatter())
+            A.append(func())
         return A
 
-    def readTArray_W_Arg(self, Gatter, *args):  # argument
+    def readTArray_W_Arg(self, func, *args):  # argument
         SerializeNum = self.readInt32()
         A = []
         for _ in range(SerializeNum):
-            A.append(Gatter(*args))
+            A.append(func(*args))
         return A
+
+    # https://github.com/FabianFG/JFortniteParse/blob/aa1c3a224c948939ec91270dea655dc677e05a1e/src/main/kotlin/me/fungames/jfortniteparse/ue4/reader/FArchive.kt#L174
+    def readBulkTArray(self, func, *args) -> list:
+        elementSize = self.readInt32()
+        savePos = self.tell()
+        array = self.readTArray_W_Arg(func, *args)
+        if self.tell() != savePos + 4 + len(array) * elementSize:
+            raise ParserException(f"RawArray item size mismatch: expected {elementSize}, serialized {(self.tell() - savePos) / len(array)}")
+        return array
 
     def readFName(self):
         NameMap = self.NameMap
         NameIndex = self.readInt32()
         Number = self.readInt32()
 
-        if 0 <= NameIndex < len(NameMap):
-            return FName(NameMap[NameIndex], NameIndex, Number)
+        if not 0 <= NameIndex < len(NameMap):
+            logging.debug(f"Bad Name Index: {NameIndex}/{len(NameMap)} - Loader Position: {self.base_stream.tell()}")
+            return DummyFName()
 
-        logging.debug(f"Bad Name Index: {NameIndex}/{len(NameMap)} - Loader Position: {self.base_stream.tell()}")
-        return DummyFName()
+        return FName(NameMap[NameIndex], NameIndex, Number)
+
+    def readObject(self):
+        index = FPackageIndex(self)
+        if index.IsNull:
+            return None
+        object = self.PackageReader.findObject(index)
+        if index is None or object is None:
+            logging.warn(f"{index.Index} is not found.")
+        return object
 
     def writeBytes(self, value):
         self.base_stream.write(value)

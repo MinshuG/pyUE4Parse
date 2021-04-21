@@ -14,3 +14,14 @@ class FObjectImport:
         self.ClassName = reader.readFName()
         self.OuterIndex = FPackageIndex(reader)
         self.ObjectName = reader.readFName()
+
+    def __str__(self):
+        return self.ObjectName.GetValue()
+
+    def GetValue(self):
+        return {
+            "ClassPackage": self.ClassPackage.GetValue(),
+            "ClassName": self.ClassName.GetValue(),
+            "OuterIndex": self.OuterIndex.GetValue(),
+            "ObjectName": self.ObjectName.GetValue()
+        }

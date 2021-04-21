@@ -1,8 +1,12 @@
-from typing import List
+from typing import List, Optional
 
 from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.Class.UObjects import UObject
 from UE4Parse.Globals import FGame
 from UE4Parse.Logger import get_logger
+from UE4Parse.Objects.EPixelFormat import EPixelFormat
+from UE4Parse.Objects.EUEVersion import GAME_UE4, Versions
+from UE4Parse.Objects.FGuid import FGuid
 from UE4Parse.Objects.FStripDataFlags import FStripDataFlags
 from UE4Parse.PakFile.PakObjects.EPakVersion import EPakVersion
 from UE4Parse.Textures.Objects.FTexturePlatformData import FTexturePlatformData
@@ -10,37 +14,45 @@ from UE4Parse.Textures.Objects.FTexturePlatformData import FTexturePlatformData
 logger = get_logger(__name__)
 
 
-class UTexture2D:
-    data: List[FTexturePlatformData]
+class UTexture2D(UObject):
+    data: List[FTexturePlatformData] = []
 
-    def __init__(self, reader: BinaryStream, bulk: BinaryStream, bulkOffset) -> None:
+    def __init__(self, reader: BinaryStream, bulk: Optional[BinaryStream], bulkOffset) -> None:
+        super().__init__(reader)
         FStripDataFlags(reader)
         FStripDataFlags(reader)
 
-        bIsCooked = reader.readInt32() != 0
+        # if reader.version < Versions.VER_UE4_TEXTURE_SOURCE_ART_REFACTOR:
+        #     FGuid(reader)
+        if FGame.GameName.lower() == "shootergame":
+            reader.seek(4)
+
+        bIsCooked = reader.readBool()
         if bIsCooked:
-            data = []
             PixelFormatName = reader.readFName()
             pos = reader.base_stream.tell()
             while not PixelFormatName.isNone:
-                try:
-                    SkipOffset = reader.readInt64()
+                SkipOffset = reader.readInt32()
+                if reader.game >= GAME_UE4(20):
+                    SkipOffsetH = reader.readInt32()
+                    assert SkipOffsetH == 0
 
-                    data.append(FTexturePlatformData(reader, ubulk=bulk, ubulkOffset=bulkOffset))
+                data = FTexturePlatformData(reader, ubulk=bulk, ubulkOffset=bulkOffset)
+                self.data.append(data)
+                PixelFormatName = reader.readFName()
 
-                    PixelFormatName = reader.readFName()
-
-                    if FGame.Version.value < EPakVersion.RELATIVE_CHUNK_OFFSETS.value:
-                        break
-                    self.data = data
-                except Exception as e:
-                    logger.debug("Error occurred while reading Texture2D")
+                if FGame.Version.value < EPakVersion.RELATIVE_CHUNK_OFFSETS.value:
                     break
 
-            # self.image = self.getimage()
+                try:
+                    EPixelFormat[PixelFormatName.GetValue()]
+                except:
+                    break
 
-    def GetValue(self, position_value_type: bool = False):
-        return {"FTexturePlatformData": [x.GetValue() for x in self.data]}
+        # self.Dict["FTexturePlatformData"] = self.data
+
+    # def GetValue(self, position_value_type: bool = False):
+    #     return {"FTexturePlatformData": [x.GetValue() for x in self.data]}.update(super(UTexture2D, self).GetValue())
 
         # def getimage(self):
     #     if self.image == None:

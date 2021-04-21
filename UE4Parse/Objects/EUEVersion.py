@@ -1,33 +1,145 @@
-from enum import Enum, auto
+from enum import IntEnum
 
 
-class EUEVersion(Enum):
-    GAME_UE4_0 = 0
-    GAME_UE4_1 = auto()
-    GAME_UE4_2 = auto()
-    GAME_UE4_3 = auto()
-    GAME_UE4_4 = auto()
-    GAME_UE4_5 = auto()
-    GAME_UE4_6 = auto()
-    GAME_UE4_7 = auto()
-    GAME_UE4_8 = auto()
-    GAME_UE4_9 = auto()
-    GAME_UE4_10 = auto()
-    GAME_UE4_11 = auto()
-    GAME_UE4_12 = auto()
-    GAME_UE4_13 = auto()
-    GAME_UE4_14 = auto()
-    GAME_UE4_15 = auto()
-    GAME_UE4_16 = auto()
-    GAME_UE4_17 = auto()
-    GAME_UE4_18 = auto()
-    GAME_UE4_19 = auto()
-    GAME_UE4_20 = auto()
-    GAME_UE4_21 = auto()
-    GAME_UE4_22 = auto()
-    GAME_UE4_23 = auto()
-    GAME_UE4_24 = auto()
-    GAME_UE4_25 = auto()
-    GAME_UE4_26 = auto()
+class Versions(IntEnum):
+    VER_UE4_ASSET_REGISTRY_TAGS = 112
+    VER_UE4_TEXTURE_DERIVED_DATA2 = 124
+    VER_UE4_ADD_COOKED_TO_TEXTURE2D = 125
+    VER_UE4_REMOVED_STRIP_DATA = 130
+    VER_UE4_REMOVE_EXTRA_SKELMESH_VERTEX_INFLUENCES = 134
+    VER_UE4_TEXTURE_SOURCE_ART_REFACTOR = 143
+    VER_UE4_ADD_SKELMESH_MESHTOIMPORTVERTEXMAP = 152
+    VER_UE4_REMOVE_ARCHETYPE_INDEX_FROM_LINKER_TABLES = 163
+    VER_UE4_REMOVE_NET_INDEX = 196
+    VER_UE4_BULKDATA_AT_LARGE_OFFSETS = 198
+    VER_UE4_SUMMARY_HAS_BULKDATA_OFFSET = 212
+    VER_UE4_STATIC_MESH_STORE_NAV_COLLISION = 216
+    VER_UE4_DEPRECATED_STATIC_MESH_THUMBNAIL_PROPERTIES_REMOVED = 242
+    VER_UE4_APEX_CLOTH = 254
+    VER_UE4_STATIC_SKELETAL_MESH_SERIALIZATION_FIX = 269
+    VER_UE4_SUPPORT_32BIT_STATIC_MESH_INDICES = 277
+    VER_UE4_APEX_CLOTH_LOD = 280
+    VAR__UE4_ARRAY_PROPERTY_INNER_TAGS = 282  # note: here's a typo in UE4 code - "VAR_" instead of "internal const val VER_"
+    VER_UE4_KEEP_SKEL_MESH_INDEX_DATA = 283
+    VER_UE4_MOVE_SKELETALMESH_SHADOWCASTING = 302
+    VER_UE4_REFERENCE_SKELETON_REFACTOR = 310
+    VER_UE4_FIXUP_ROOTBONE_PARENT = 312
+    VER_UE4_FIX_ANIMATIONBASEPOSE_SERIALIZATION = 331
+    VER_UE4_SUPPORT_8_BONE_INFLUENCES_SKELETAL_MESHES = 332
+    VER_UE4_SUPPORT_GPUSKINNING_8_BONE_INFLUENCES = 334
+    VER_UE4_ANIM_SUPPORT_NONUNIFORM_SCALE_ANIMATION = 335
+    VER_UE4_ENGINE_VERSION_OBJECT = 336
+    VER_UE4_SKELETON_GUID_SERIALIZATION = 338
+    # UE4.0 source code was released on GitHub. Note: if we don't have any internal const val VER_UE4_...
+    # values between two internal const val VER_UE4_xx constants for instance between internal const val VER_UE4_0 and internal const val VER_UE4_1
+    # it doesn't matter for this framework which version will be serialized serialized -
+    # 4.0 or 4.1 because 4.1 has nothing new for supported object formats compared to 4.0.
+    VER_UE4_0 = 342
+    VER_UE4_MORPHTARGET_CPU_TANGENTZDELTA_FORMATCHANGE = 348
+    VER_UE4_1 = 352
+    VER_UE4_2 = 363
+    VER_UE4_LOAD_FOR_EDITOR_GAME = 365
+    VER_UE4_FTEXT_HISTORY = 368  # used for UStaticMesh versioning
+    VER_UE4_STORE_BONE_EXPORT_NAMES = 370
+    VER_UE4_3 = 382
+    VER_UE4_ADD_STRING_ASSET_REFERENCES_MAP = 384
+    VER_UE4_4 = 385
+    VER_UE4_SKELETON_ADD_SMARTNAMES = 388
+    VER_UE4_SOUND_COMPRESSION_TYPE_ADDED = 392
+    VER_UE4_RENAME_CROUCHMOVESCHARACTERDOWN = 394  # used for UStaticMesh versioning
+    VER_UE4_DEPRECATE_UMG_STYLE_ASSETS = 397  # used for UStaticMesh versioning
+    VER_UE4_5 = 401
+    VER_UE4_6 = 413
+    VER_UE4_RENAME_WIDGET_VISIBILITY = 416  # used for UStaticMesh versioning
+    VER_UE4_ANIMATION_ADD_TRACKCURVES = 417
+    VER_UE4_7 = 434
+    VER_UE4_STRUCT_GUID_IN_PROPERTY_TAG = 441
+    VER_UE4_PACKAGE_SUMMARY_HAS_COMPATIBLE_ENGINE_VERSION = 444
+    VER_UE4_8 = 451
+    VER_UE4_SERIALIZE_TEXT_IN_PACKAGES = 459
+    VER_UE4_9 = 482
+    VER_UE4_10 = VER_UE4_9  # exactly the same file version for 4.9 and 4.10
+    VER_UE4_COOKED_ASSETS_IN_EDITOR_SUPPORT = 485
+    VER_UE4_SOUND_CONCURRENCY_PACKAGE = 489  # used for UStaticMesh versioning
+    VER_UE4_11 = 498
+    VER_UE4_INNER_ARRAY_TAG_INFO = 500
+    VER_UE4_PROPERTY_GUID_IN_PROPERTY_TAG = 503
+    VER_UE4_NAME_HASHES_SERIALIZED = 504
+    VER_UE4_12 = 504
+    VER_UE4_13 = 505
+    VER_UE4_PRELOAD_DEPENDENCIES_IN_COOKED_EXPORTS = 507
+    VER_UE4_TemplateIndex_IN_COOKED_EXPORTS = 508
+    VER_UE4_14 = 508
+    VER_UE4_PROPERTY_TAG_SET_MAP_SUPPORT = 509
+    VER_UE4_ADDED_SEARCHABLE_NAMES = 510
+    VER_UE4_15 = 510
+    VER_UE4_64BIT_EXPORTMAP_SERIALSIZES = 511
+    VER_UE4_16 = 513
+    VER_UE4_17 = 513
+    VER_UE4_ADDED_SOFT_OBJECT_PATH = 514
+    VER_UE4_18 = 514
+    VER_UE4_ADDED_PACKAGE_SUMMARY_LOCALIZATION_ID = 516
+    VER_UE4_19 = 516
+    VER_UE4_20 = 516
+    VER_UE4_21 = 517
+    VER_UE4_22 = 517
+    VER_UE4_23 = 517
+    VER_UE4_ADDED_PACKAGE_OWNER = 518
+    VER_UE4_24 = 518
+    VER_UE4_25 = 518
+    VER_UE4_SKINWEIGHT_PROFILE_DATA_LAYOUT_CHANGES = 519
+    VER_UE4_26 = 519
+
+
+def GAME_UE4(x: int):
+    return 0x1000000 + (x << 4)
+
+
+class EUEVersion(IntEnum):
+    GAME_UE4_0 = GAME_UE4(0)
+    GAME_UE4_1 = GAME_UE4(1)
+    GAME_UE4_2 = GAME_UE4(2)
+    GAME_UE4_3 = GAME_UE4(3)
+    GAME_UE4_4 = GAME_UE4(4)
+    GAME_UE4_5 = GAME_UE4(5)
+    GAME_UE4_6 = GAME_UE4(6)
+    GAME_UE4_7 = GAME_UE4(7)
+    GAME_UE4_8 = GAME_UE4(8)
+    GAME_UE4_9 = GAME_UE4(9)
+    GAME_UE4_10 = GAME_UE4(10)
+    GAME_UE4_11 = GAME_UE4(11)
+    GAME_UE4_12 = GAME_UE4(12)
+    GAME_UE4_13 = GAME_UE4(13)
+    GAME_UE4_14 = GAME_UE4(14)
+    GAME_UE4_15 = GAME_UE4(15)
+    GAME_UE4_16 = GAME_UE4(16)
+    GAME_UE4_17 = GAME_UE4(17)
+    GAME_UE4_18 = GAME_UE4(18)
+    GAME_UE4_19 = GAME_UE4(19)
+    GAME_UE4_20 = GAME_UE4(20)
+    GAME_UE4_21 = GAME_UE4(21)
+    GAME_UE4_22 = GAME_UE4(22)
+    GAME_UE4_23 = GAME_UE4(23)
+    GAME_UE4_24 = GAME_UE4(24)
+    GAME_UE4_25 = GAME_UE4(25)
+    GAME_UE4_26 = GAME_UE4(26)
 
     LATEST = GAME_UE4_26
+
+    GAME_UE4_BASE = 0x1000000
+
+    def get_minor(self):
+        minor = ((self.value - self.GAME_UE4_BASE.value) >> 4)
+        return minor
+
+    def get_ar_ver(self):
+        ue_version = [Versions.VER_UE4_0, Versions.VER_UE4_1, Versions.VER_UE4_2, Versions.VER_UE4_3,
+                      Versions.VER_UE4_4,
+                      Versions.VER_UE4_5, Versions.VER_UE4_6, Versions.VER_UE4_7, Versions.VER_UE4_8,
+                      Versions.VER_UE4_9,
+                      Versions.VER_UE4_10, Versions.VER_UE4_11, Versions.VER_UE4_12, Versions.VER_UE4_13,
+                      Versions.VER_UE4_14, Versions.VER_UE4_15, Versions.VER_UE4_16, Versions.VER_UE4_17,
+                      Versions.VER_UE4_18, Versions.VER_UE4_19, Versions.VER_UE4_20, Versions.VER_UE4_21,
+                      Versions.VER_UE4_22, Versions.VER_UE4_23, Versions.VER_UE4_24, Versions.VER_UE4_25,
+                      Versions.VER_UE4_26]
+        return ue_version[self.get_minor()]

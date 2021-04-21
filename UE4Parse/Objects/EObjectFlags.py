@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import IntEnum
 
 
-class EObjectFlags(Enum):
+class EObjectFlags(IntEnum):
 
     RF_NoFlags = 0x00000000
 
