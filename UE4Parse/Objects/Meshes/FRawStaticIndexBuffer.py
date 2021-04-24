@@ -15,6 +15,11 @@ class FRawStaticIndexBuffer:
         else:
             is32bit = reader.readBool()
             data = bytearray(reader.readBulkTArray(reader.readInt8))
+
+            tr = BinaryStream(data)
+            tr.game = reader.game
+            tr.version = tr.version
+
             if reader.game >= GAME_UE4(25):
                 reader.readBool()
 
@@ -25,11 +30,15 @@ class FRawStaticIndexBuffer:
 
             if is32bit:
                 count = int(len(data) / 4)
-                tr = BinaryStream(data)
                 self.indices32 = [tr.readUInt32() for _ in range(count)]
                 self.indices16 = []
             else:
                 count = int(len(data) / 2)
-                tr = BinaryStream(data)
                 self.indices16 = [tr.readUInt16() for _ in range(count)]
                 self.indices32 = []
+
+    def GetValue(self):
+        return {
+            "indices16": self.indices16,
+            "indices32": self.indices32
+        }

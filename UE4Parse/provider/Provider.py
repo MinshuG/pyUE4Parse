@@ -4,7 +4,7 @@ import json
 import os
 import re
 from collections import Counter
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Globals import Globals
@@ -105,6 +105,8 @@ class Package:
 
 
 class Provider:
+    mainGuid = "00000000000000000000000000000000"
+
     pak_folder: str
     _mounted_files: list = []
     AES_KEYs: dict
@@ -129,7 +131,7 @@ class Provider:
         return self._mounted_files
 
     @property
-    def files(self) -> dict:
+    def files(self) -> Dict[str, Union[FPakEntry, FIoStoreEntry]]:
         """Dict of Files (index of currently mounted paks)"""
         return Globals.Index
 

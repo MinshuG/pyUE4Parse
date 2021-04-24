@@ -44,6 +44,8 @@ class LegacyPackageReader:
         if filever > 0:
             self.reader.version = filever
 
+        self.reader.ubulk_stream = ubulk
+
         if uexp is not None:
             self.reader.change_stream(uexp)
         elif self.PackageFileSummary.FileVersionUE4.value == 0:  # Cooked
@@ -65,12 +67,14 @@ class LegacyPackageReader:
                 raise ParserException("failed to get export type")
             DataExportTypes.append(ExportType)
 
-            ExportData: Any
+            ExportData: Any = None
             self.reader.seek(Export.SerialOffset - self.PackageFileSummary.TotalHeaderSize, 0)
-            pos = self.reader.base_stream.tell()
 
+            self.reader.bulk_offset = Export.SerialSize + self.PackageFileSummary.TotalHeaderSize  # ?
+
+            pos = self.reader.base_stream.tell()
             if ExportType.string == "Texture2D":
-                ExportData = UTexture2D(self.reader, ubulk, Export.SerialSize + self.PackageFileSummary.TotalHeaderSize)
+                ExportData = UTexture2D(self.reader, ubulk, self.reader.bulk_offset)
             elif ExportType.string == "StaticMesh":
                 ExportData = UStaticMesh(self.reader)
             elif ExportType.string == "StringTable":
@@ -90,8 +94,9 @@ class LegacyPackageReader:
             Export.exportObject = ExportData
             DataExports.append(ExportData)
 
-            self.DataExports = DataExports
-            self.DataExportTypes = DataExportTypes
+        self.DataExports = DataExports
+        self.DataExportTypes = DataExportTypes
+        del self.reader
 
     def SerializeNameMap(self):
         if self.PackageFileSummary.NameCount > 0:
@@ -134,12 +139,11 @@ class LegacyPackageReader:
         if index.IsNull:
             return None
         elif index.IsImport:
-            raise NotImplementedError()
-            return
+            return self.ImportMap[index.AsImport]
         else:  # index.IsExport
-            export = self.ExportMap[index.Index-1]
+            export = self.ExportMap[index.AsExport]
             if hasattr(export, "exportObject"):
-                return self.ExportMap[index.Index-1].exportObject
+                return self.ExportMap[index.AsExport].exportObject
             return export
 
 

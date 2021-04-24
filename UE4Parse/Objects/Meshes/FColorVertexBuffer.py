@@ -20,3 +20,10 @@ class FColorVertexBuffer:
             self.data = reader.readBulkTArray(FColor, reader)
         else:
             self.data = []
+
+    def GetValue(self):
+        return {
+            "Stride": self.stride,
+            "NumVertics": self.numVertices,
+            "Data": [x.GetValue() for x in self.data]
+        }

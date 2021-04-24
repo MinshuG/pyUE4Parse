@@ -7,6 +7,7 @@ from UE4Parse.Objects.EUEVersion import Versions, GAME_UE4
 from UE4Parse.Objects.FGuid import FGuid
 from UE4Parse.Objects.FStripDataFlags import FStripDataFlags
 from UE4Parse.Objects.Meshes.FBoxSphereBounds import FBoxSphereBounds
+from UE4Parse.Objects.Meshes.FDistanceFieldVolumeData import FDistanceFieldVolumeData
 from UE4Parse.Objects.Meshes.FEditorObjectVersion import FEditorObjectVersion
 from UE4Parse.Objects.Meshes.FRenderingObjectVersion import FRenderingObjectVersion
 from UE4Parse.Objects.Meshes.FStaticMaterial import FStaticMaterial
@@ -27,8 +28,7 @@ class UStaticMesh(UObject):
     LODsShareStaticLighting = False
     ScreenSize: List[float] = []
     StaticMaterials: List[FStaticMaterial] = []
-
-    # Materials: List[UMaterialInterface] = []
+    Materials = []
 
     def __init__(self, reader: BinaryStream):
         super().__init__(reader)
@@ -40,7 +40,7 @@ class UStaticMesh(UObject):
         if reader.version >= Versions.VER_UE4_STATIC_MESH_STORE_NAV_COLLISION:
             self.NavCollision = reader.readObject()
 
-        if not self.StripData.isEditorDataStripped:
+        if not self.StripData.isEditorDataStripped():
             if reader.version < Versions.VER_UE4_DEPRECATED_STATIC_MESH_THUMBNAIL_PROPERTIES_REMOVED:
                 FRotator(reader)  # dummyThumbnailAngle
                 reader.readFloat()  # dummyThumbnailDistance
@@ -59,10 +59,27 @@ class UStaticMesh(UObject):
             if not bCooked:  # how possible
                 pass  # https://github.com/FabianFG/JFortniteParse/blob/558fb2b96985aad5b90c96c8f28950021cf801a0/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/UStaticMesh.kt#L59
             # if unversioned MinMobileLODIdx int32
-            self.lods = reader.readTArray_W_Arg(FStaticMeshLODResources, reader)
+            self.LODs = reader.readTArray_W_Arg(FStaticMeshLODResources, reader)
 
             if reader.game >= GAME_UE4(23):
-                reader.readUInt8()  # NumInlinedLODs
+                NumInlinedLODs = reader.readUInt8()
+
+            if bCooked:
+                if reader.version >= Versions.VER_UE4_RENAME_CROUCHMOVESCHARACTERDOWN:
+                    isStripped = False
+                    if reader.version >= Versions.VER_UE4_RENAME_WIDGET_VISIBILITY:
+                        stripflag = FStripDataFlags(reader)
+                        isStripped = stripflag.isDataStrippedForServer()
+                        if reader.game >= GAME_UE4(21):
+                            # 4.21 uses additional strip flag for distance field
+                            distanceFieldDataStripFlag = 1
+                            isStripped = isStripped | stripflag.isClassDataStripped(distanceFieldDataStripFlag)  # ?
+                    if not isStripped:
+                        # serialize FDistanceFieldVolumeData for each LOD
+                        for _ in range(len(self.LODs) - 1):  # wut why
+                            hasDistanceDataField = reader.readBool()
+                            if hasDistanceDataField:
+                                FDistanceFieldVolumeData(reader)  # VolumeData
 
             self.Bounds = FBoxSphereBounds(reader)
 
@@ -85,7 +102,6 @@ class UStaticMesh(UObject):
                     self.ScreenSize.append(reader.readFloat())
         # End of FStaticMeshRenderData
 
-        return
         if bCooked and reader.game >= GAME_UE4(20):
             hasOccluderData = reader.readBool()
             if hasOccluderData:
@@ -101,4 +117,7 @@ class UStaticMesh(UObject):
                     # UE4.14+ - "Materials" are deprecated, added StaticMaterials
                     self.StaticMaterials = reader.readTArray_W_Arg(FStaticMaterial, reader)
 
-        breakpoint()
+        if len(self.Materials) == 0 and len(self.StaticMaterials) > 0:
+            material: FStaticMaterial
+            for material in self.StaticMaterials:
+                self.Materials.append(material.MaterialInterface)

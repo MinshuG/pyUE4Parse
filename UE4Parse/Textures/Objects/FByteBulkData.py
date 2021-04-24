@@ -10,17 +10,18 @@ class FByteBulkDataHeader:
 
     def __init__(self, reader: BinaryStream, bulkOffset: int) -> None:
         self.BulkDataFlags = reader.readInt32()
-        if (self.BulkDataFlags & EBulkDataFlags.BULKDATA_Size64Bit.value) != 0:
+        if (self.BulkDataFlags & EBulkDataFlags.BULKDATA_Size64Bit) != 0:
             self.ElementCount = reader.readInt64()
             self.SizeOnDisk = reader.readInt64()
         else:
             self.ElementCount = reader.readInt32()
             self.SizeOnDisk = reader.readInt32()
+
         self.OffsetInFile = reader.readInt64()
-        if (self.BulkDataFlags & EBulkDataFlags.BULKDATA_NoOffsetFixUp) == 0:
+        if not (self.BulkDataFlags & EBulkDataFlags.BULKDATA_NoOffsetFixUp):  # UE4.26 flag
             self.OffsetInFile += bulkOffset
 
-        if (self.BulkDataFlags & EBulkDataFlags.BULKDATA_BadDataVersion.value) != 0:
+        if (self.BulkDataFlags & EBulkDataFlags.BULKDATA_BadDataVersion) != 0:
             reader.seek(2)
 
 
@@ -36,23 +37,20 @@ class FByteBulkData:
 
         if self.Header.ElementCount == 0:
             self.Data = None
-        elif (bulkDataFlags & EBulkDataFlags.BULKDATA_Unused.value) != 0:
+        elif (bulkDataFlags & EBulkDataFlags.BULKDATA_Unused) != 0:
             self.Data = None
-        elif (bulkDataFlags & EBulkDataFlags.BULKDATA_OptionalPayload.value) != 0:
+        elif (bulkDataFlags & EBulkDataFlags.BULKDATA_OptionalPayload) != 0:
             self.Data = None
-        elif (bulkDataFlags & EBulkDataFlags.BULKDATA_ForceInlinePayload.value) != 0:
+        elif (bulkDataFlags & EBulkDataFlags.BULKDATA_ForceInlinePayload) != 0:
             self.Data = reader.readBytes(self.Header.ElementCount)
-        elif (
-            bulkDataFlags & EBulkDataFlags.BULKDATA_PayloadInSeperateFile.value
-        ) != 0:  # ubulk
+        elif (bulkDataFlags & EBulkDataFlags.BULKDATA_PayloadInSeperateFile) != 0:  # ubulk
             ubulk.seek(self.Header.OffsetInFile, 0)
             self.Data = ubulk.readBytes(self.Header.ElementCount)
-        elif (bulkDataFlags & EBulkDataFlags.BULKDATA_PayloadAtEndOfFile.value) != 0:
+        elif (bulkDataFlags & EBulkDataFlags.BULKDATA_PayloadAtEndOfFile) != 0:
             pos = reader.base_stream.tell()
-            # if self.Header.OffsetInFile + self.Header.ElementCount <= len(reader)
-            try:
+            if self.Header.OffsetInFile + self.Header.ElementCount <= reader.size:
                 reader.seek(self.Header.OffsetInFile, 0)
                 self.Data = reader.readBytes(self.Header.ElementCount)
-            except:
+            else:
                 self.Data = None
             reader.seek(pos, 0)

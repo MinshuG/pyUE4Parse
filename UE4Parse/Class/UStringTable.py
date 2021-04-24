@@ -15,5 +15,10 @@ class UStringTable(UObject):
         self.StringTable = FStringTable(reader)
         self.StringTableId = reader.readFName()
 
-        self.Dict["StringTable"] = self.StringTable
-        self.Dict["StringTableId"] = self.StringTableId
+    def GetValue(self) -> dict:
+        return {
+            "StringTable": self.StringTable.GetValue(),
+            "StringTableId": self.StringTableId.GetValue()
+        }
+        # self.Dict["StringTable"] = self.StringTable
+        # self.Dict["StringTableId"] = self.StringTableId

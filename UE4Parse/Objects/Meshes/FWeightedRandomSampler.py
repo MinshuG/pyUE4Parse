@@ -9,6 +9,6 @@ class FWeightedRandomSampler:
     TotalWeight: float
 
     def __init__(self, reader: BinaryStream):
-        self.Prob = reader.readTArray(reader.readFloat())
-        self.Alias = reader.readTArray(reader.readInt32())
+        self.Prob = reader.readTArray(reader.readFloat)
+        self.Alias = reader.readTArray(reader.readInt32)
         self.TotalWeight = reader.readFloat()

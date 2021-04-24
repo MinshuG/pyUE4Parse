@@ -13,3 +13,10 @@ class FPositionVertexBuffer:
         self.Stride = reader.readInt32()
         self.NumVertices = reader.readInt32()
         self.Verts = reader.readBulkTArray(FVector, reader)
+
+    def GetValue(self):
+        return {
+            "Stride": self.Stride,
+            "NumVertices": self.NumVertices,
+            "Vertices": [x.GetValue() for x in self.Verts]
+        }

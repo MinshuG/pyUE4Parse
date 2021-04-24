@@ -35,11 +35,11 @@ class FPackageIndex:
     def GetValue(self):
         Resource = self.Resource
         if Resource is not None:
-            return Resource.GetValue()
-            # return {
-            #     "ObjectName": Resource.ObjectName.string,
-            #     "OuterIndex": Resource.OuterIndex.GetValue()
-            # }
+            # return Resource.GetValue() # too much
+            return {
+                "ObjectName": Resource.ObjectName.string,
+                "OuterIndex": Resource.OuterIndex.GetValue()
+            }
         return self.Index
 
     def __str__(self):

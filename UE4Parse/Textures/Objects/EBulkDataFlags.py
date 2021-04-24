@@ -17,7 +17,7 @@ class EBulkDataFlags(IntEnum):
 	# Forces the payload to be saved inline regardless of its size. 
 	BULKDATA_ForceInlinePayload = 1 << 6
 	# Flag to check if either compression mode is specified. 
-	BULKDATA_SerializeCompressed = (BULKDATA_SerializeCompressedZLIB)
+	BULKDATA_SerializeCompressed = BULKDATA_SerializeCompressedZLIB
 	# Forces the payload to be always streamed regardless of its size. 
 	BULKDATA_ForceStreamPayload = 1 << 7
 	# If set payload is stored in a .upack file alongside the uasset. 

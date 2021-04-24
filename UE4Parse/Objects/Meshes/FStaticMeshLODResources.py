@@ -9,6 +9,7 @@ from UE4Parse.Objects.Meshes.FStaticMeshVertexBuffer import FStaticMeshVertexBuf
 from UE4Parse.Objects.Meshes.FPositionVertexBuffer import FPositionVertexBuffer
 from UE4Parse.Objects.Meshes.FStaticMeshSection import FStaticMeshSection
 from UE4Parse.Objects.Meshes.FWeightedRandomSampler import FWeightedRandomSampler
+from UE4Parse.Textures.Objects.FByteBulkData import FByteBulkData
 
 CDSF_AdjancencyData: int = 1
 CDSF_MinLodData: int = 2
@@ -38,7 +39,7 @@ class FStaticMeshLODResources:
         self.maxDeviation = reader.readFloat()
 
         if reader.game < GAME_UE4(23):
-            if not self.stripFlags.isDataStrippedForServer and not self.stripFlags.isClassDataStripped(
+            if not self.stripFlags.isDataStrippedForServer() and not self.stripFlags.isClassDataStripped(
                     CDSF_MinLodData):
                 self.serializeBuffer_legacy(reader)
             return
@@ -46,11 +47,33 @@ class FStaticMeshLODResources:
         self.is_lod_cooked_out = reader.readBool()
         self.inlined = reader.readBool()
 
-        if not self.stripFlags.isDataStrippedForServer and not self.is_lod_cooked_out:
+        if not self.stripFlags.isDataStrippedForServer() and not self.is_lod_cooked_out:
+            pos = reader.tellfake()
             if self.inlined:
                 self.serializeBuffer(reader)
             else:
-                raise NotImplementedError()
+                bulk: FByteBulkData = FByteBulkData(reader, ubulk=reader.ubulk_stream, bulkOffset=reader.PackageReader.PackageFileSummary.BulkDataStartOffset)
+                if bulk.Header.ElementCount > 0:
+                    tr = BinaryStream(bulk.Data)
+                    tr.game = reader.game
+                    tr.version = reader.version
+                    self.serializeBuffer(tr)
+
+                reader.readUInt32()  # DepthOnlyNumTriangles
+                reader.readUInt32()  # PackedData
+                reader.seek(4*4 + 2*4 + 2*4 + 6*(2*4), 1)
+                """
+                            StaticMeshVertexBuffer = 2x int32, 2x bool
+                            PositionVertexBuffer = 2x int32
+                            ColorVertexBuffer = 2x int32
+                            IndexBuffer = int32 + bool
+                            ReversedIndexBuffer
+                            DepthOnlyIndexBuffer
+                            ReversedDepthOnlyIndexBuffer
+                            WireframeIndexBuffer
+                            AdjacencyIndexBuffer
+                """
+        # FStaticMeshBuffersSize
         reader.readUInt32()  # SerializedBuffersSize
         reader.readUInt32()  # DepthOnlyIBSize
         reader.readUInt32()  # ReversedIBsSize
@@ -65,10 +88,16 @@ class FStaticMeshLODResources:
 
         self.positionVertexBuffer = FPositionVertexBuffer(reader)
         self.vertexBuffer = FStaticMeshVertexBuffer(reader)
+        self.colorVertexBuffer = FColorVertexBuffer(reader)
         self.indexBuffer = FRawStaticIndexBuffer(reader)
 
         if not self.stripFlags.isClassDataStripped(CDSF_ReversedIndexBuffer):
             self.reversedIndexBuffer = FRawStaticIndexBuffer(reader)
+
+        self.depthOnlyIndexBuffer = FRawStaticIndexBuffer(reader)
+
+        if not self.stripFlags.isClassDataStripped(CDSF_ReversedIndexBuffer):
+            self.reversedDepthOnlyIndexBuffer = FRawStaticIndexBuffer(reader)
 
         if not self.stripFlags.isEditorDataStripped():
             self.wireframeIndexBuffer = FRawStaticIndexBuffer(reader)
@@ -76,10 +105,11 @@ class FStaticMeshLODResources:
         if not self.stripFlags.isClassDataStripped(CDSF_AdjancencyData):
             self.adjacencyIndexBuffer = FRawStaticIndexBuffer(reader)
 
+        # UE 4.25+
         if reader.game >= GAME_UE4(25) and not self.stripFlags.isClassDataStripped(CDSF_RaytracingResources):
-            reader.readBulkTArray(reader.readUInt8)  # Raw data
+            reader.readBulkTArray(reader.readByte)  # Raw data
 
+        # 25178
         for i in range(len(self.sections)):
             FWeightedRandomSampler(reader)  # FStaticMeshSectionAreaWeightedTriangleSampler
         FWeightedRandomSampler(reader)  # FStaticMeshAreaWeightedSectionSampler
-

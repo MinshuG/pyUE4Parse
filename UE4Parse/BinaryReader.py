@@ -20,12 +20,14 @@ class BinaryStream:
     version: int
     game: EUEVersion
     fake_size: int
+    ubulk_stream: object
+    bulk_offset: int = -1
 
     def __init__(self, fp: Union[BufferedReader, BytesIO, str, bytes], size: int = -1):
         if isinstance(fp, str):
             self.base_stream = open(fp, "rb")
             self.size = os.path.getsize(fp)
-        elif isinstance(fp, bytes):
+        elif isinstance(fp, bytes) or isinstance(fp, bytearray):
             self.base_stream = BytesIO(fp)
             self.size = len(fp)
         else:
@@ -35,11 +37,11 @@ class BinaryStream:
         self.game = glob.FGame.UEVersion
         self.version = self.game.get_ar_ver()
 
-    def change_stream(self, fp: Union[BufferedReader, str, bytes]):
+    def change_stream(self, fp: Union[BufferedReader, str, bytes, bytearray]):
         if isinstance(fp, str):
             self.base_stream = open(fp, "rb")
             self.size = os.path.getsize(fp)
-        elif isinstance(fp, bytes):
+        elif isinstance(fp, bytes) or isinstance(fp, bytearray):
             self.base_stream = BytesIO(fp)
             self.size = len(fp)
         else:  # self
@@ -68,9 +70,11 @@ class BinaryStream:
         return self.base_stream.read(1)
 
     def readByteToInt(self, length=1):
-        return int.from_bytes(self.base_stream.read(length), "little")
+        return int.from_bytes(self.readBytes(length), "little")
 
     def readBytes(self, length):
+        if self.size == self.position:
+            raise ParserException("Cannot read beyond end of stream")
         return self.base_stream.read(length)
 
     def readChar(self):
@@ -88,7 +92,7 @@ class BinaryStream:
         return self.unpack("b", 1)
 
     def readInt8(self):
-        return self.unpack('h', 1)
+        return self.readByteToInt(1)
 
     def readUInt8(self):
         return self.readByteToInt(1)  # ?
@@ -167,7 +171,8 @@ class BinaryStream:
         savePos = self.tell()
         array = self.readTArray_W_Arg(func, *args)
         if self.tell() != savePos + 4 + len(array) * elementSize:
-            raise ParserException(f"RawArray item size mismatch: expected {elementSize}, serialized {(self.tell() - savePos) / len(array)}")
+            raise ParserException(
+                f"RawArray item size mismatch: expected {elementSize}, serialized {(self.tell() - savePos) / len(array)}")
         return array
 
     def readFName(self):

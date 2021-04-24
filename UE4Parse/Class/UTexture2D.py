@@ -24,7 +24,7 @@ class UTexture2D(UObject):
 
         # if reader.version < Versions.VER_UE4_TEXTURE_SOURCE_ART_REFACTOR:
         #     FGuid(reader)
-        if FGame.GameName.lower() == "shootergame":
+        if FGame.GameName.lower() == "shootergame":  # Custom game?
             reader.seek(4)
 
         bIsCooked = reader.readBool()
@@ -54,7 +54,7 @@ class UTexture2D(UObject):
     # def GetValue(self, position_value_type: bool = False):
     #     return {"FTexturePlatformData": [x.GetValue() for x in self.data]}.update(super(UTexture2D, self).GetValue())
 
-        # def getimage(self):
+    # def getimage(self):
     #     if self.image == None:
     #         sizeX = 0
     #         sizeY = 0

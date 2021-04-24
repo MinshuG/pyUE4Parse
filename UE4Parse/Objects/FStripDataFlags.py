@@ -16,16 +16,14 @@ class FStripDataFlags:
             self.globalStripFlags = 0
             self.classStripFlags = 0
 
-    @property
     def isEditorDataStripped(self):
         return (self.globalStripFlags & 1) != 0
 
-    @property
     def isDataStrippedForServer(self):
-        return (self.globalStripFlags and 2) != 0
+        return (self.globalStripFlags & 2) != 0
 
     def isClassDataStripped(self, flag: int):
-        return (self.classStripFlags and flag) != 0
+        return (self.classStripFlags & flag) != 0
 
     def GetValue(self):
         return {
