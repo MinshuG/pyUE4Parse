@@ -22,7 +22,7 @@ class FPerPlatformInt(FPerPlatform):
         self.Value = reader.readInt32()
 
 
-class FPerPlatformFloat:
+class FPerPlatformFloat(FPerPlatform):
     Cooked: bool
     Value: float
 
