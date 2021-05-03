@@ -1,3 +1,5 @@
+from typing import Union
+
 from UE4Parse.Objects.FNameEntrySerialized import FNameEntrySerialized
 
 
@@ -8,8 +10,8 @@ class FName:
     string: str
     isNone: bool
 
-    def __init__(self, name: FNameEntrySerialized, index: int = 0, number: int = 0) -> None:
-        self._String = name.Name
+    def __init__(self, name: Union[FNameEntrySerialized, str], index: int = 0, number: int = 0) -> None:
+        self._String = name.Name if isinstance(name, FNameEntrySerialized) else name
         self.Index = index
         self.Number = number
         self.isNone = self.string is None or self.string == "None"

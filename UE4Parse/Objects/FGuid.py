@@ -1,3 +1,4 @@
+from typing import Optional
 from UE4Parse.BinaryReader import BinaryStream
 
 
@@ -8,7 +9,9 @@ class FGuid:
     C: int
     D: int
 
-    def __init__(self, reader: BinaryStream):
+    def __init__(self, reader: Optional[BinaryStream] = None):
+        if reader is None:
+            return
         self.A = reader.readUInt32()
         self.B = reader.readUInt32()
         self.C = reader.readUInt32()
@@ -16,6 +19,16 @@ class FGuid:
 
     def read(self):  # both works nvm. nope they don't stupid. now they do
         return self
+
+    def construct(self, A: int, B: int, C: int, D: int):
+        self.A = A
+        self.B = B
+        self.C = C
+        self.D = D
+        return self
+
+    def __eq__(self, o: object) -> bool:
+        return self.GetValue() == o.GetValue()
 
     def GetValue(self):
         def formatter(a):

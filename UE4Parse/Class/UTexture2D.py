@@ -2,11 +2,10 @@ from typing import List, Optional
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Class.UObjects import UObject
-from UE4Parse.Globals import FGame
+from UE4Parse import Globals as glob
 from UE4Parse.Logger import get_logger
 from UE4Parse.Objects.EPixelFormat import EPixelFormat
-from UE4Parse.Objects.EUEVersion import GAME_UE4, Versions
-from UE4Parse.Objects.FGuid import FGuid
+from UE4Parse.Objects.EUEVersion import GAME_UE4
 from UE4Parse.Objects.FStripDataFlags import FStripDataFlags
 from UE4Parse.PakFile.PakObjects.EPakVersion import EPakVersion
 from UE4Parse.Textures.Objects.FTexturePlatformData import FTexturePlatformData
@@ -19,13 +18,9 @@ class UTexture2D(UObject):
 
     def __init__(self, reader: BinaryStream, bulk: Optional[BinaryStream], bulkOffset) -> None:
         super().__init__(reader)
+        reader.seek(4)
         FStripDataFlags(reader)
-        FStripDataFlags(reader)
-
-        # if reader.version < Versions.VER_UE4_TEXTURE_SOURCE_ART_REFACTOR:
-        #     FGuid(reader)
-        if FGame.GameName.lower() == "shootergame":  # Custom game?
-            reader.seek(4)
+        FStripDataFlags(reader)    
 
         bIsCooked = reader.readBool()
         if bIsCooked:
@@ -41,7 +36,7 @@ class UTexture2D(UObject):
                 self.data.append(data)
                 PixelFormatName = reader.readFName()
 
-                if FGame.Version.value < EPakVersion.RELATIVE_CHUNK_OFFSETS.value:
+                if glob.FGame.Version.value < EPakVersion.RELATIVE_CHUNK_OFFSETS.value:
                     break
 
                 try:

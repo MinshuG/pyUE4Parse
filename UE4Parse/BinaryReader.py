@@ -22,6 +22,7 @@ class BinaryStream:
     fake_size: int
     ubulk_stream: object
     bulk_offset: int = -1
+    size = 0
 
     def __init__(self, fp: Union[BufferedReader, BytesIO, str, bytes], size: int = -1):
         if isinstance(fp, str):
@@ -130,7 +131,7 @@ class BinaryStream:
         LoadUCS2Char: bool = length < 0
 
         if LoadUCS2Char:
-            if length == -sys.maxsize - 1:  # maybe?
+            if length == -2147483648:
                 raise Exception("Archive is corrupted.")
 
             length = -length
@@ -142,23 +143,24 @@ class BinaryStream:
             data = []
             for i in range(length):
                 if i == length - 1:
-                    self.readInt16()
+                    self.readUInt16()
                 else:
-                    data.append(self.readInt16())
-            string = ''.join(map(str, [chr(v) for v in data]))
+                    data.append(self.readUInt16())
+            string = ''.join([chr(v) for v in data])
             return string
         else:
             byte = self.readBytes(length)[:-1]
             return byte.decode("utf-8")
 
-    def readTArray(self, func):
+    def readTArray(self, func, *args):
         SerializeNum = self.readInt32()
         A = []
         for _ in range(SerializeNum):
-            A.append(func())
+            A.append(func(*args))
         return A
 
     def readTArray_W_Arg(self, func, *args):  # argument
+        """use readTArray"""
         SerializeNum = self.readInt32()
         A = []
         for _ in range(SerializeNum):
@@ -196,6 +198,7 @@ class BinaryStream:
         return object
 
     def writeBytes(self, value):
+        self.size += len(value)
         self.base_stream.write(value)
 
     def writeChar(self, value):

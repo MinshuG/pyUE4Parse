@@ -91,6 +91,3 @@ def OodleLZ_Decompress(
         return data
     else:
         raise Exception("Oodle dll is not loaded")
-
-
-load_lib()

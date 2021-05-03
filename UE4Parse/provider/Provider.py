@@ -1,18 +1,20 @@
-import base64
 import io
 import json
 import os
-import re
 from collections import Counter
-from typing import Dict, Optional, Union
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures.thread import ThreadPoolExecutor
+from typing import Dict, List, Optional, Union
+from threading import Thread
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Globals import Globals
 from UE4Parse import Globals as glob
 from UE4Parse.IO import IoStoreReader
 from UE4Parse.IO.IoObjects.FIoStoreEntry import FIoStoreEntry
+from UE4Parse.IoObjects.FIoGlobalData import FIoGlobalData
 from UE4Parse.Logger import get_logger
-from UE4Parse.PackageReader import LegacyPackageReader
+from UE4Parse.PackageReader import IoPackageReader, LegacyPackageReader
 from UE4Parse.PakFile import PakReader
 from UE4Parse.PakFile.PakObjects.FPakEntry import FPakEntry
 from UE4Parse.provider.utils import *
@@ -27,15 +29,17 @@ class Package:
     _uexp: BinaryStream
     _ubulk: Optional[BinaryStream] = None
     _is_parsed: bool = False
-    _parsed: LegacyPackageReader
+    _parsed: Union[LegacyPackageReader, IoPackageReader]
+    _provider = None
 
     def __init__(self, uasset: BinaryStream, uexp: BinaryStream, ubulk: BinaryStream,
-                 package: Union[FPakEntry, FIoStoreEntry]):
+                 package: Union[FPakEntry, FIoStoreEntry], provider):
         self._package = package
         self._name = self.get_mount_point() + package.Name
         self._uasset = uasset
         self._uexp = uexp
         self._ubulk = ubulk
+        self._provider = provider
 
     def get_name(self):
         return self._name
@@ -44,7 +48,8 @@ class Package:
         if not self._is_parsed:
             logger.info(f"Parsing {self._name}")
             if isinstance(self._package, FIoStoreEntry):
-                pass
+                self._parsed = IoPackageReader(self._uasset, self._ubulk, glob.Globals.GlobalData, self._provider,
+                                               onlyInfo=False)
             else:
                 self._parsed = LegacyPackageReader(self._uasset, self._uexp, self._ubulk)
             self._is_parsed = True
@@ -86,7 +91,7 @@ class Package:
             write(self._ubulk, package.ubulk)
         return True
 
-    def save_json(self, path):
+    def save_json(self, path, indent=4):
         def write(data, path_):
             mount_point = self.get_mount_point()
 
@@ -97,7 +102,7 @@ class Package:
                 os.makedirs(dir_)
 
             with open(x, "w") as f:
-                json.dump(data, f, indent=4)
+                json.dump(data, f, indent=indent)
 
         jsondata = self.parse_package().get_dict()
         write(jsondata, self._package)
@@ -114,7 +119,7 @@ class Provider:
     IoStores: dict
     caseinsensitive: bool
 
-    def __init__(self, pak_folder: str, caseinsensitive=False, GameInfo: FGame = None):
+    def __init__(self, pak_folder: Union[str, List[str]], caseinsensitive=False, GameInfo: FGame = None):
         """
         pak_folder is pak folder path containing path files. \n
         :param pak_folder:
@@ -156,10 +161,13 @@ class Provider:
             if os.path.isfile(self.pak_folder):
                 pak_names = [self.pak_folder]
                 self.pak_folder = os.path.dirname(pak_names[0])
+        else:
+            raise TypeError(f"unexpected 'pak_folder' type {type(self.pak_folder)}")
 
         paks: dict[str, PakReader.PakReader] = {}
         IoStores: dict[str, IoStoreReader.FFileIoStoreReader] = {}
 
+        globalreader: Optional[IoStoreReader.FFileIoStoreReader] = None
         # just  register them
         for pak_name in pak_names:
             if not os.path.exists(pak_name):
@@ -168,11 +176,16 @@ class Provider:
                 path = pak_name
             if pak_name.endswith(".pak"):
                 paks[pak_name] = PakReader.PakReader(path, self.caseinsensitive)
+                logger.debug(f"Registering PakFile: {path}")
             if pak_name.endswith(".utoc"):
                 ucas_path = path[:-5] + ".ucas"
-
-                IoStores[pak_name] = IoStoreReader.FFileIoStoreReader(ucas_path, BinaryStream(path),
-                                                                      BinaryStream(ucas_path), self.caseinsensitive)
+                logger.debug(f"Registering IoStore: {path[:-5]}")
+                reader = IoStoreReader.FFileIoStoreReader(ucas_path, BinaryStream(path),
+                                                          BinaryStream(ucas_path), self.caseinsensitive)
+                if pak_name.endswith("global.utoc") and globalreader is None:
+                    globalreader = reader
+                    continue
+                IoStores[pak_name] = reader
 
         pog = self.getGUID_PAKNAME_DICT(paks, IoStores)
 
@@ -206,9 +219,9 @@ class Provider:
                 for x in commons:
                     if x[0] != "Engine":
                         return x[0]
-            return ""
+            return glob.FGame.GameName
 
-        # actually read index
+        # read index
         for key, pak_names in pog.items():
             for pak_name in pak_names:
                 if self.AES_KEYs is not None:
@@ -230,6 +243,10 @@ class Provider:
                 except Exception as e:
                     logger.warn(f"An error occurred while reading {pak_name}, {e}")
 
+        if globalreader is not None:
+            logger.info("Reading GlobalData...")
+            glob.Globals.GlobalData = FIoGlobalData(globalreader, list(IoStores.values()))
+
         if len(Globals.Index) > 0:
             files = [file.split("/")[0] for file in Globals.Index.keys()]
             glob.FGame.GameName = most_frequent(files)
@@ -238,7 +255,8 @@ class Provider:
     def get_game_name():
         return FGame.GameName
 
-    def getGUID_PAKNAME_DICT(self, paks, Ios):
+    @staticmethod
+    def getGUID_PAKNAME_DICT(paks, Ios):
         Dict = {}
         for pak_name in paks:
             pak = paks[pak_name]
@@ -287,7 +305,7 @@ class Provider:
             if isinstance(package, FIoStoreEntry):  # IoStorePackage
                 uasset = package.GetData()
                 if package.hasUbulk:
-                    uexp = BinaryStream(package.uexp.GetData())
+                    ubulk = BinaryStream(package.ubulk.GetData())
             else:  # PakPackage
                 container = Globals.Paks[package.ContainerName]
                 reader = container.reader
@@ -299,7 +317,7 @@ class Provider:
                     ubulk = package.ubulk.get_data(reader, key=None,
                                                    compression_method=container.Info.CompressionMethods)
 
-            return Package(uasset, uexp, ubulk, package)
+            return Package(uasset, uexp, ubulk, package, self)
 
 
 def PackageReader(uasset, uexp, ubulk=None, GameInfo: FGame = FGame()) -> LegacyPackageReader:
@@ -323,7 +341,7 @@ def PackageReader(uasset, uexp, ubulk=None, GameInfo: FGame = FGame()) -> Legacy
                 return BinaryStream(io.BytesIO(data), size=len(data))
 
         elif isinstance(anything, (bytes, bytearray)):
-            return BinaryStream(io.BytesIO(anything),size=len(anything))
+            return BinaryStream(io.BytesIO(anything), size=len(anything))
 
     uasset = yeet(uasset)
     uexp = yeet(uexp)

@@ -1,11 +1,11 @@
 import io
 import os
 import time
-from typing import Dict
+from typing import Dict, Optional
 
 from UE4Parse import Logger, Oodle
 from UE4Parse.BinaryReader import BinaryStream, Align
-from UE4Parse.Exceptions.Exceptions import InvalidEncryptionKey
+from UE4Parse.Exceptions.Exceptions import InvalidEncryptionKey, ParserException
 from UE4Parse.IO.IoObjects.EIoStoreTocReadOptions import EIoStoreTocReadOptions
 from UE4Parse.IO.IoObjects.FFileIoStoreContainerFile import FFileIoStoreContainerFile
 from UE4Parse.IO.IoObjects.FIoChunkId import FIoChunkId
@@ -15,7 +15,6 @@ from UE4Parse.IO.IoObjects.FIoOffsetAndLength import FIoOffsetAndLength
 from UE4Parse.IO.IoObjects.FIoStoreEntry import FIoStoreEntry
 from UE4Parse.IO.IoObjects.FIoStoreTocHeader import FIoContainerId
 from UE4Parse.IO.IoObjects.FIoStoreTocResource import FIoStoreTocResource
-from UE4Parse.Objects.FGuid import FGuid
 from UE4Parse.PakFile.PakReader import UpdateAndSetIndex
 
 CrytoAval = True
@@ -25,6 +24,7 @@ except ImportError:
     CrytoAval = False
 
 logger = Logger.get_logger(__name__)
+# from numba import njit
 
 
 class FFileIoStoreReader:
@@ -32,15 +32,14 @@ class FFileIoStoreReader:
     Directory: str
     TocResource: FIoStoreTocResource
     Toc: Dict[str, FIoOffsetAndLength]
-    ContainerFile: FFileIoStoreContainerFile = FFileIoStoreContainerFile()
+    ContainerFile: FFileIoStoreContainerFile
     ContainerId: FIoContainerId
 
-    _directory_index = None
-    _directoryIndexBuffer = b""
+    _directory_index: FIoDirectoryIndexResource
     _aeskey = None
-    EncryptionKeyGuid: FGuid = None
     caseinSensitive: bool
 
+    # @profile
     def __init__(self, dir_: str, tocStream: BinaryStream, containerStream: BinaryStream, caseinSensitive: bool = True,
                  tocReadOptions: EIoStoreTocReadOptions = EIoStoreTocReadOptions.ReadDirectoryIndex):
         """
@@ -53,6 +52,7 @@ class FFileIoStoreReader:
         self.FileName = os.path.basename(dir_)
         self.Directory = dir_
         self.caseinSensitive = caseinSensitive
+        self.ContainerFile = FFileIoStoreContainerFile()
         self.ContainerFile.FileHandle = containerStream
         self.TocResource = FIoStoreTocResource(tocStream, tocReadOptions)
         conUncompressedSize = self.TocResource.Header.TocCompressedBlockEntryCount * self.TocResource.Header.CompressionBlockSize \
@@ -75,6 +75,7 @@ class FFileIoStoreReader:
         self.ContainerId = self.TocResource.Header.ContainerId
 
         self._directoryIndexBuffer = self.TocResource.DirectoryIndexBuffer  # TODO no
+        # del self.TocResource.ChunkIds
 
     @property
     def IsValidIndex(self):
@@ -88,7 +89,8 @@ class FFileIoStoreReader:
     def IsEncrypted(self):
         return self.TocResource.Header.is_encrypted()
 
-    def ReadDirectoryIndex(self, key: str):
+    # @profile
+    def ReadDirectoryIndex(self, key: Optional[str] = None):
         self._aeskey = key
         starttime = time.time()
         if self.HasDirectoryIndex:
@@ -108,15 +110,15 @@ class FFileIoStoreReader:
 
                 stringLen = IndexReader.readInt32()
                 if stringLen > 512 or stringLen < -512:
-                    raise RuntimeError(f"Provided key didn't work with {self.FileName}")
+                    raise ValueError(f"Provided key didn't work with {self.FileName}")
                 if stringLen < 0:
                     IndexReader.base_stream.seek((stringLen - 1) * 2, 1)
                     if IndexReader.readUInt16() != 0:
-                        raise RuntimeError(f"Provided key didn't work with {self.FileName}")
+                        raise ValueError(f"Provided key didn't work with {self.FileName}")
                 else:
                     IndexReader.base_stream.seek(stringLen - 1, 1)
                     if int.from_bytes(IndexReader.readByte(), "little") != 0:
-                        raise RuntimeError(f"Provided key didn't work with {self.FileName}")
+                        raise ValueError(f"Provided key didn't work with {self.FileName}")
                 IndexReader.seek(0, 0)
             del self._directoryIndexBuffer
 
@@ -125,16 +127,17 @@ class FFileIoStoreReader:
             firstEntry = self.GetChildDirectory(FIoDirectoryIndexHandle(FIoDirectoryIndexHandle.Root))
 
             tempFiles: Dict[str, FIoStoreEntry]
-            Chunks: Dict
-            tempFiles, Chunks = self.ReadIndex("", firstEntry)
+            Chunks: Dict[str, str]
+            tempFiles, Chunks = self.ReadIndex("", firstEntry)  # TODO use Chunks IDs
 
             UpdateAndSetIndex(self.FileName, self.ContainerFile, tempFiles)
 
             time_taken = round(time.time() - starttime, 2)
-            logger.info(
-                f"{self.FileName} contains {len(tempFiles)} files, mount point: {self._directory_index.MountPoint}, version: {self.TocResource.Header.Version}, in: {time_taken}s")
+            logger.info("{} contains {} files, mount point: {}, version: {}, in: {}s".format
+                        (self.FileName, len(tempFiles), self._directory_index.MountPoint, self.TocResource.Header.Version, time_taken))
 
             del self._directory_index
+            return tempFiles, Chunks
 
     def GetChildDirectory(self, directory: FIoDirectoryIndexHandle):
         return FIoDirectoryIndexHandle(
@@ -176,7 +179,7 @@ class FFileIoStoreReader:
     def GetFileEntry(self, file: FIoDirectoryIndexHandle):
         return self._directory_index.FileEntries[file.ToIndex()]
 
-    def ReadIndex(self, directoryName: str, dir: FIoDirectoryIndexHandle, ):
+    def ReadIndex(self, directoryName: str, dir: FIoDirectoryIndexHandle):
         outfile = {}
         outchunk = {}
         while dir.isValid():
@@ -209,9 +212,13 @@ class FFileIoStoreReader:
         remaining_size = offsetAndLength.GetLength
         containerStream = self.ContainerFile.FileHandle
         dst: bytes = b""
-        for i in range(firstBlockIndex - 1, lastBlockIndex):
+        counter = 0
+        # i = firstBlockIndex # BlockIndex
+        for i in range(firstBlockIndex,
+                       lastBlockIndex + 1):  # if firstBlockIndex == lastBlockIndex: lastBlockIndex -= 1 ??
+            counter += 1
             compressionBlock = self.TocResource.CompressionBlocks[i]
-            rawSize = Align(compressionBlock.CompressedSize, 16)
+            rawSize = Align(compressionBlock.CompressedSize, AES.block_size)
             uncompressedSize = compressionBlock.UncompressedSize
 
             containerStream.seek(compressionBlock.Offset, 0)
@@ -231,20 +238,24 @@ class FFileIoStoreReader:
 
             sizeInBlock = int(min(compressionBlockSize - offsetInBlock, remaining_size))
             dst += src[offsetInBlock:offsetInBlock + sizeInBlock]
-            offsetInBlock = 0
             remaining_size -= sizeInBlock
 
-        return BinaryStream(dst)
+        result = BinaryStream(dst)
+        result.game = self.ContainerFile.FileHandle.game
+        result.version = self.ContainerFile.FileHandle.version
+        return result
 
 
 def Decompress(compressed_buffer, uncompressed_length, compression_method) -> bytes:
     if compression_method == "Oodle":
-        return Oodle.Decompress(compressed_buffer, uncompressed_length)
+        result = Oodle.Decompress(compressed_buffer, uncompressed_length)
+        assert len(result) == uncompressed_length
+        return result
     else:
-        raise NotImplementedError(compression_method + "is not implemented")
+        raise NotImplementedError(compression_method + " is not implemented")
 
 
 if __name__ == "__main__":
-    cas = r"C:\Program Files\Epic Games\Fortnite\FortniteGame\Content\Paks\pakchunk0-WindowsClient.ucas"
-    toc = r"C:\Program Files\Epic Games\Fortnite\FortniteGame\Content\Paks\pakchunk0-WindowsClient.utoc"
-    FFileIoStoreReader(cas, BinaryStream(toc), BinaryStream(cas)).ReadDirectoryIndex()
+        cas = r"C:\Program Files\Epic Games\Fortnite\FortniteGame\Content\Paks\pakchunk10_s15-WindowsClient.ucas"
+        toc = r"C:\Program Files\Epic Games\Fortnite\FortniteGame\Content\Paks\pakchunk10_s15-WindowsClient.utoc"
+        FFileIoStoreReader(cas, BinaryStream(toc), BinaryStream(cas)).ReadDirectoryIndex()

@@ -9,7 +9,7 @@ from UE4Parse.Objects.Meshes.FStaticMeshVertexBuffer import FStaticMeshVertexBuf
 from UE4Parse.Objects.Meshes.FPositionVertexBuffer import FPositionVertexBuffer
 from UE4Parse.Objects.Meshes.FStaticMeshSection import FStaticMeshSection
 from UE4Parse.Objects.Meshes.FWeightedRandomSampler import FWeightedRandomSampler
-from UE4Parse.Textures.Objects.FByteBulkData import FByteBulkData
+from UE4Parse.Objects.FByteBulkData import FByteBulkData
 
 CDSF_AdjancencyData: int = 1
 CDSF_MinLodData: int = 2

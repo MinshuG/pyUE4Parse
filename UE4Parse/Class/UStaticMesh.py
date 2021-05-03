@@ -49,7 +49,7 @@ class UStaticMesh(UObject):
 
         self.LightingGuid = FGuid(reader)
 
-        self.sockets = reader.readTArray(reader.readObject)
+        self.Sockets = reader.readTArray(reader.readObject)
 
         if not self.StripData.isEditorDataStripped:
             raise ParserException("Mesh with editor data not supported")

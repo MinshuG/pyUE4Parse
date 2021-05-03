@@ -5,7 +5,7 @@ from UE4Parse.BinaryReader import BinaryStream
 
 
 class EType(IntEnum):
-    Export = auto()
+    Export = 0
     ScriptImport = auto()
     PackageImport = auto()
     Null = auto()
@@ -47,6 +47,7 @@ class FPackageObjectIndex:
 
     @property
     def AsExport(self):  # ToExport
+        assert self.IsExport
         return self._typeAndId
 
     def __init__(self, reader: Optional[BinaryStream] = None, type_and_id: Optional[int] = None):
@@ -55,5 +56,6 @@ class FPackageObjectIndex:
         else:
             self._typeAndId = reader.readUInt64()
 
-        # super(FPackageObjectIndex, self).__init__(x=self._typeAndId)
-        # breakpoint()
+    @property
+    def typeAndId(self):
+        return self._typeAndId

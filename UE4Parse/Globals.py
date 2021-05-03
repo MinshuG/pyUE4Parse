@@ -1,16 +1,16 @@
-# from UE4Parse.IoObjects import FIoGlobalData
-from typing import Optional
+from typing import Optional, Any
 
 from UE4Parse.Objects.EUEVersion import EUEVersion
 from UE4Parse.PakFile.PakObjects.EPakVersion import EPakVersion
 
 
-class Globals:
+class Globals: # TODO get rid of this
     PackageReader = None
     Index = {}
+    ChunkIDs = {}
     Paks = {}
     IoStores = {}
-    GlobalData: object
+    GlobalData: Any  # FIoGlobalData
     Triggers = {}
 
 

@@ -1,7 +1,7 @@
 import io
 import os
 import time
-from typing import Dict, Mapping, Optional, Union
+from typing import Dict, Optional, Union
 
 from UE4Parse import Logger
 from UE4Parse.BinaryReader import BinaryStream
@@ -27,11 +27,15 @@ logger = Logger.get_logger(__name__)
 
 class PakReader:
     # @profile
-    def __init__(self, File: str, Case_insensitive: bool = False,) -> None:
+    def __init__(self, File: str, Case_insensitive: bool = False, reader: Optional[BinaryStream]=None) -> None:
         self.MountPoint: str = ""
-        self.reader: BinaryStream = BinaryStream(File)
+        if reader is not None:
+            self.reader = reader
+            self.size: int = reader.size
+        else:
+            self.reader: BinaryStream = BinaryStream(File)
+            self.size: int = os.path.getsize(File)
         self.FileName: str = os.path.basename(File)
-        self.size: int = os.path.getsize(File)
         self.Info = PakInfo(self.reader, self.size)
         self.NumEntries = -1
         self.reader.seek(self.Info.IndexOffset, 0)

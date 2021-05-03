@@ -1,6 +1,6 @@
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Objects.Structs.Vector import FVector
-from UE4Parse.UClass import UClass
+from UE4Parse.Class.UClass import UClass
 
 
 class FBoxSphereBounds(UClass):

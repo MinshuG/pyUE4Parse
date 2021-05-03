@@ -9,8 +9,8 @@ class FScriptObjectEntry:
     OuterIndex: FPackageObjectIndex
     CDOClassIndex: FPackageObjectIndex
 
-    def __init__(self, reader: BinaryStream):
-        self.ObjectName = FMinimalName(reader)
+    def __init__(self, reader: BinaryStream, nameMap):
+        self.ObjectName = FMinimalName(reader, nameMap)
         self.GlobalIndex = FPackageObjectIndex(reader)
         self.OuterIndex = FPackageObjectIndex(reader)
         self.CDOClassIndex = FPackageObjectIndex(reader)

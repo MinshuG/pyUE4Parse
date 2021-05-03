@@ -1,6 +1,7 @@
+from UE4Parse.BinaryReader import BinaryStream
 from typing import List
 from enum import Enum
-# from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.IoObjects.FMinimalName import FMinimalName
 from UE4Parse.Objects.FNameEntrySerialized import FNameEntrySerialized
 
 
@@ -21,9 +22,39 @@ class FMappedName:
     Number: int
     _reader: object
     _globalNameMap: List[FNameEntrySerialized]
+    _localNameMap: List[FNameEntrySerialized]
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, minimalName: FMinimalName = None, globalNameMap=None, localNameMap=None) -> None:
+        if minimalName is None:
+            return
+        self.Index = minimalName.Index.Value
+        self.Number = minimalName.Number
+        self._globalNameMap = globalNameMap
+        self._localNameMap = localNameMap
+
+    def read(self, reader: BinaryStream):
+        self.Index = reader.readUInt32()
+        self.Number = reader.readUInt32()
+        self._reader = reader
+        return self
+
+    def __str__(self):
+        name_map = self._globalNameMap if self.IsGlobal() else self._localNameMap
+        if name_map is None:
+            return None
+        index = self.GetIndex()
+        if len(name_map) > index:
+            return name_map[index].Name
+
+    def GetValue(self):
+        if not self.IsGlobal(): self._localNameMap = self._reader.PackageReader.NameMap
+        return self.__str__()
+
+    def ToString(self):
+        return self.__str__()
+
+    def GetIndex(self):
+        return self.Index & self.IndexMask
 
     def isValid(self):
         return self.Index != self.InvalidIndex and self.Number != self.InvalidIndex

@@ -1,7 +1,7 @@
 from typing import List
 
 from UE4Parse.BinaryReader import BinaryStream
-from UE4Parse.UClass import UClass
+from UE4Parse.Class.UClass import UClass
 from UE4Parse.Objects.EUEVersion import GAME_UE4, Versions
 from UE4Parse.Objects.Structs.Box import FBox
 from UE4Parse.Objects.Structs.Vector import FIntVector, FVector, FVector2D

@@ -52,7 +52,7 @@ class UObject:
 
             expectedPos: int = Tag.Size + pos
             if pos2 + 4 <= expectedPos:
-                wtf = self.reader.readInt32() != 0
+                wtf = self.reader.readBool()
                 if pos2 + 16 <= expectedPos:
                     FGuid(self.reader)
 

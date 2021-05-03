@@ -3,7 +3,7 @@ from typing import Union
 from UE4Parse.BinaryReader import BinaryStream
 
 
-class FNameEntryId(int):
+class FNameEntryId:
     Value: int
 
     def __init__(self, reader: Union[BinaryStream, int]):
@@ -11,5 +11,3 @@ class FNameEntryId(int):
             self.Value = reader.readUInt32()
         else:
             self.Value = reader
-
-        super().__init__(self.Value)

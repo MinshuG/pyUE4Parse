@@ -1,3 +1,7 @@
+from UE4Parse.IoObjects.FExportBundle import FExportBundle
+from UE4Parse.IoObjects.FExportMapEntry import FExportMapEntry
+from UE4Parse.IoObjects.FImportedPackage import FImportedPackage
+from UE4Parse.IoObjects.FPackageSummary import FPackageSummary
 from UE4Parse.Class.UStaticMesh import UStaticMesh
 from typing import List, Any
 
@@ -5,12 +9,14 @@ from UE4Parse.Class.UStringTable import UStringTable
 from UE4Parse.Class.UTexture2D import UTexture2D
 from UE4Parse.Class.UObjects import UObject
 from UE4Parse.IoObjects.FIoGlobalData import FIoGlobalData
+from UE4Parse.IoObjects.IoUtils import resolveObjectIndex
 from UE4Parse.Objects.FName import FName
 from UE4Parse.Objects.FObjectExport import FObjectExport
 from UE4Parse.Objects.FObjectImport import FObjectImport
 from UE4Parse.Objects.FNameEntrySerialized import FNameEntrySerialized
 from UE4Parse.Objects.FPackageFileSummary import FPackageFileSummary
 from UE4Parse.Objects.FPackageIndex import FPackageIndex
+from UE4Parse.IoObjects.FPackageObjectIndex import FPackageObjectIndex
 from UE4Parse.Exceptions.Exceptions import ParserException
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse import ToJson, Logger
@@ -149,6 +155,55 @@ class LegacyPackageReader:
 
 class IoPackageReader:
     GlobalData: FIoGlobalData
+    Summary: FPackageSummary
+    NameMap: List[FNameEntrySerialized]
+    ImportMap: List[FPackageObjectIndex]
+    ExportMap: List[FExportMapEntry]
+    ExportBundle: FExportBundle
+    GraphData: List[FImportedPackage]
 
-    def __init__(self, uasset: BinaryStream, ubulk: BinaryStream, globalData: FIoGlobalData, onlyInfo: bool = False):
+    def __init__(self, uasset: BinaryStream, ubulk: BinaryStream, globalData: FIoGlobalData, provider,
+                 onlyInfo: bool = False):
         reader = uasset
+        reader.ubulk_stream = ubulk
+        reader.PackageReader = self
+        self.reader = reader
+
+        self.Summary = FPackageSummary(reader=reader)
+
+        self.NameMap = []
+
+        nameHashes = []
+        if self.Summary.NameMapNamesSize > 0:
+            reader.seek(self.Summary.NameMapNamesOffset, 0)
+            nameMapReader = BinaryStream(reader.readBytes(self.Summary.NameMapNamesSize))
+
+            reader.seek(self.Summary.NameMapHashesOffset, 0)
+            nameHashReader = BinaryStream(reader.readBytes(self.Summary.NameMapHashesSize))
+
+            FNameEntrySerialized.LoadNameBatch(self.NameMap, nameHashes, nameMapReader, nameHashReader)
+            del nameHashReader
+            del nameMapReader
+
+        self.ImportMap = []
+        reader.seek(self.Summary.ImportMapOffset, 0)
+        import_map_Count = int(
+            (self.Summary.ExportMapOffset - self.Summary.ImportMapOffset) / 8)  # size of FPackageObjectIndex
+        self.ImportMap = [FPackageObjectIndex(reader) for _ in range(import_map_Count)]
+
+        self.ExportMap = []
+        reader.seek(self.Summary.ExportMapOffset, 0)
+        exportMapCount = int((self.Summary.ExportBundlesOffset - self.Summary.ExportMapOffset) / FExportMapEntry.SIZE)
+        self.ExportMap = [FExportMapEntry(reader) for _ in range(exportMapCount)]
+
+        self.ExportBundle = FExportBundle(reader)
+
+        if not onlyInfo:
+            reader.seek(self.Summary.GraphDataOffset, 0)
+            GraphData = reader.readTArray(FImportedPackage, reader)
+
+
+        breakpoint()
+
+    def get_dict(self):
+        return None

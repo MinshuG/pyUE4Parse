@@ -43,3 +43,5 @@ class EObjectFlags(IntEnum):
 
     # Extras
     RF_Load = RF_Public or RF_Standalone or RF_Transactional or RF_ClassDefaultObject or RF_ArchetypeObject or RF_DefaultSubObject or RF_TextExportTransient or RF_InheritableComponentTemplate or RF_DuplicateTransient or RF_NonPIEDuplicateTransient
+
+    RF_PropagateToSubObjects = RF_Public | RF_ArchetypeObject | RF_Transactional | RF_Transient
