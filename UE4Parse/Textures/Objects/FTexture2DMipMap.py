@@ -1,5 +1,5 @@
 from UE4Parse.BinaryReader import BinaryStream
-from .FByteBulkData import FByteBulkData
+from UE4Parse.Objects.FByteBulkData import FByteBulkData
 
 
 class FTexture2DMipMap:
