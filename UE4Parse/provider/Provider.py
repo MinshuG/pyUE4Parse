@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Union
 from threading import Thread
 
 from UE4Parse.BinaryReader import BinaryStream
-from UE4Parse.Globals import Globals
+from UE4Parse.Globals import Globals, FGame
 from UE4Parse import Globals as glob
 from UE4Parse.IO import IoStoreReader
 from UE4Parse.IO.IoObjects.FIoStoreEntry import FIoStoreEntry
