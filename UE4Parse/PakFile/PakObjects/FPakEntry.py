@@ -1,8 +1,9 @@
 from typing import List, Optional
-from UE4Parse.PakFile import FPakCompressedBlock
-from UE4Parse.PakFile import EPakVersion
-from UE4Parse.PakFile import ECompressionFlags
+
 from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.PakFile import ECompressionFlags
+from UE4Parse.PakFile import EPakVersion
+from UE4Parse.PakFile import FPakCompressedBlock
 
 
 class FPakEntry:

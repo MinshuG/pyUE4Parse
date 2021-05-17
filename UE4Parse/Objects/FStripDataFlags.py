@@ -1,7 +1,5 @@
 from UE4Parse.BinaryReader import BinaryStream
-from UE4Parse.Globals import Globals
 from UE4Parse.Objects.EUEVersion import Versions
-from UE4Parse.Objects.EUnrealEngineObjectUE4Version import EUnrealEngineObjectUE4Version
 
 
 class FStripDataFlags:

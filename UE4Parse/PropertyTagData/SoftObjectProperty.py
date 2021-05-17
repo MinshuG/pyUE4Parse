@@ -1,4 +1,5 @@
 from enum import Enum
+
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Objects.Structs.FSoftObjectPath import FSoftObjectPath
 
@@ -13,7 +14,6 @@ class SoftObjectProperty:
     def __init__(self, reader: BinaryStream, readType: Enum) -> None:
         self.position = reader.base_stream.tell()
         self.Value = FSoftObjectPath(reader)
-        reader.seek(4)  # no idea why
         if readType.value == 1:
             reader.seek(16 - (reader.base_stream.tell() - self.position))
 

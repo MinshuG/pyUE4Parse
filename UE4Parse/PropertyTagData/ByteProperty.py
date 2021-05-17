@@ -1,5 +1,5 @@
-from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse import PropertyTagData
+from UE4Parse.BinaryReader import BinaryStream
 
 
 class ByteProperty:

@@ -1,10 +1,10 @@
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Class.UObjects import UObject
-from UE4Parse.Objects.FName import FName
-from UE4Parse.Objects.FPackageIndex import FPackageIndex
-from UE4Parse.Objects.FGuid import FGuid
 from UE4Parse.Objects.EObjectFlags import EObjectFlags
 from UE4Parse.Objects.EUnrealEngineObjectUE4Version import EUnrealEngineObjectUE4Version
+from UE4Parse.Objects.FGuid import FGuid
+from UE4Parse.Objects.FName import FName
+from UE4Parse.Objects.FPackageIndex import FPackageIndex
 
 
 class FObjectExport:
@@ -24,6 +24,7 @@ class FObjectExport:
     bNotAlwaysLoadedForEditorGame: bool = True
     bIsAsset: bool = False
     exportObject: UObject
+    name: FName
 
     def __init__(self, reader: BinaryStream) -> None:
         self.ClassIndex = FPackageIndex(reader)
@@ -79,7 +80,7 @@ class FObjectExport:
             self.CreateBeforeCreateDependencies = 0
 
     def __str__(self):
-        return self.ObjectName.GetValue()
+        return self.ObjectName.__str__()
 
     def GetValue(self):
         return {

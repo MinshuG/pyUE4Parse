@@ -128,6 +128,8 @@ class EUEVersion(IntEnum):
 
     GAME_UE4_BASE = 0x1000000
 
+    GAME_VALORANT = GAME_UE4_24 + 1
+
     def get_minor(self):
         minor = ((self.value - self.GAME_UE4_BASE.value) >> 4)
         return minor

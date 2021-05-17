@@ -18,7 +18,7 @@ class FRawStaticIndexBuffer:
 
             tr = BinaryStream(data)
             tr.game = reader.game
-            tr.version = tr.version
+            tr.version = reader.version
 
             if reader.game >= GAME_UE4(25):
                 reader.readBool()

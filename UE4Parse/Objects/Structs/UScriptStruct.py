@@ -68,7 +68,7 @@ class UScriptStruct:
         if StructName in Structs:
             self.Struct = Structs.get(StructName)(reader)
         else:
-            logger.debug(f"Unsupported Struct {StructName}, using Fallback reader.")
+            # logger.debug(f"Unsupported Struct {StructName}, using Fallback reader.")
             self.Struct = FallBackReader(reader)
 
     def GetValue(self):

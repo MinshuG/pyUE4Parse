@@ -47,6 +47,10 @@ class FPropertyTag:
                 self.InnerType = reader.readFName()
                 self.ValueType = reader.readFName()
 
-        self.HasPropertyGuid = reader.readByteToInt()
-        if self.HasPropertyGuid != 0:
-            self.PropertyGuid = FGuid(reader)
+        HasPropertyGuid = reader.readByteToInt()
+        if HasPropertyGuid != 0:
+            FGuid(reader)
+        self.end_pos = reader.tell()
+
+    def __repr__(self):
+        return f"< {self.Name.string} : {self.Type.string} >"

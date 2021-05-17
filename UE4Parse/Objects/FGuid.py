@@ -1,4 +1,5 @@
 from typing import Optional
+
 from UE4Parse.BinaryReader import BinaryStream
 
 

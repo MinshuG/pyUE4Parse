@@ -30,9 +30,8 @@ class UStaticMesh(UObject):
     StaticMaterials: List[FStaticMaterial] = []
     Materials = []
 
-    def __init__(self, reader: BinaryStream):
-        super().__init__(reader)
-        reader.seek(4)  # IDK WHY
+    def __init__(self, reader: BinaryStream, validpos):
+        super().__init__(reader, validpos)
         self.StripData = FStripDataFlags(reader)
         bCooked = reader.readBool()
         self.BodySetup = reader.readObject()

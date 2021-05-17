@@ -1,5 +1,5 @@
-from UE4Parse.Objects import FName
 from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.Objects import FName
 
 
 class DelegateProperty:

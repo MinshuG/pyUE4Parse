@@ -1,6 +1,8 @@
 from typing import List
+
 from UE4Parse.BinaryReader import BinaryStream
-from UE4Parse import Globals
+from UE4Parse.Exceptions.Exceptions import InvalidMagic, ParserException
+from UE4Parse.Objects.EUEVersion import Versions, EUEVersion
 from UE4Parse.Objects.EUnrealEngineObjectLicenseeUE4Version import EUnrealEngineObjectLicenseeUE4Version
 from UE4Parse.Objects.EUnrealEngineObjectUE4Version import EUnrealEngineObjectUE4Version
 from UE4Parse.Objects.FCompressedChunk import FCompressedChunk
@@ -9,7 +11,6 @@ from UE4Parse.Objects.FEngineVersion import FEngineVersion
 from UE4Parse.Objects.FGenerationInfo import FGenerationInfo
 from UE4Parse.Objects.FGuid import FGuid
 from UE4Parse.PakFile import ECompressionFlags
-from UE4Parse.Exceptions.Exceptions import InvalidMagic, ParserException
 
 PACKAGE_FILE_TAG = 0x9E2A83C1
 PACKAGE_FILE_TAG_SWAPPED = 0xC1832A9E
@@ -78,8 +79,9 @@ class FPackageFileSummary:
 
         self.ThumbnailTableOffset = reader.readInt32()
         self.Guid = FGuid(reader)
-        if Globals.FGame.GameName is not None:
-            if Globals.FGame.GameName.lower() == "shootergame": reader.readInt64()  # valorant
+
+        if reader.game == EUEVersion.GAME_VALORANT:
+            reader.readInt64()  # valorant
 
         self.GenerationCount = reader.readInt32()
         self.Generations = []

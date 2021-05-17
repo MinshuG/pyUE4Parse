@@ -1,7 +1,7 @@
 from typing import List
-from UE4Parse.Objects.FGuid import FGuid
-from UE4Parse.Objects.FCustomVersion import FCustomVersion
+
 from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.Objects.FCustomVersion import FCustomVersion
 
 
 class FCustomVersionContainer:

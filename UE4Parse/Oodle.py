@@ -1,10 +1,10 @@
 # https://github.com/MinshuG/pyUsmap/blob/master/Usmap/Oodle.py
 
 import ctypes
-import os
-import lzma
-import urllib.request
 import io
+import lzma
+import os
+import urllib.request
 
 
 def load_lib() -> bool:

@@ -1,7 +1,8 @@
-from UE4Parse.Globals import Globals
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from UE4Parse.BinaryReader import BinaryStream
 
-# from UE4Parse.BinaryReader import BinaryStream
 
 class FPackageIndex:
     Index: int
@@ -12,7 +13,7 @@ class FPackageIndex:
     AsImport: int
     AsExport: int
 
-    def __init__(self, reader) -> None:
+    def __init__(self, reader: "BinaryStream") -> None:
         self.Index = reader.readInt32()
         self.Reader = reader
         self.IsNull = self.Index == 0

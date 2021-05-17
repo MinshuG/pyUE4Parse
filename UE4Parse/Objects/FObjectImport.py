@@ -1,6 +1,6 @@
+from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Objects.FName import FName
 from UE4Parse.Objects.FPackageIndex import FPackageIndex
-from UE4Parse.BinaryReader import BinaryStream
 
 
 class FObjectImport:

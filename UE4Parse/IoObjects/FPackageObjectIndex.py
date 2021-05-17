@@ -1,5 +1,5 @@
 from enum import IntEnum, auto
-from typing import Optional, TypeVar, Generic
+from typing import Optional
 
 from UE4Parse.BinaryReader import BinaryStream
 

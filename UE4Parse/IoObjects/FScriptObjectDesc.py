@@ -2,7 +2,6 @@ from UE4Parse.IoObjects import FScriptObjectEntry
 from UE4Parse.IoObjects.FMappedName import FMappedName
 from UE4Parse.IoObjects.FPackageObjectIndex import FPackageObjectIndex
 from UE4Parse.Objects.FName import FName
-from UE4Parse.Objects.FNameEntrySerialized import FNameEntrySerialized
 
 
 class FScriptObjectDesc:

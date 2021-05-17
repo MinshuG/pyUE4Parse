@@ -1,8 +1,5 @@
-from UE4Parse import Globals as glob
 
-
-def fixpath(path: str) -> str:
-    GameName = glob.FGame.GameName
+def fixpath(path: str, GameName: str) -> str:
     if path.startswith("/Game/"):
         path = path.replace("/Game/", GameName + "/Content/")
 

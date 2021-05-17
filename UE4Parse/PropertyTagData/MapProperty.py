@@ -19,11 +19,12 @@ class MapProperty:
         NumEntries = reader.readInt32()
         data = {}
         for _ in range(NumEntries):
-            data[str(PropertyTagData.BaseProperty.ReadAsValue(reader, tag, tag.InnerType,
-                                                          PropertyTagData.BaseProperty.ReadType.MAP))] = PropertyTagData.BaseProperty.ReadAsObject(
-                reader, tag,
-                tag.ValueType,
-                PropertyTagData.BaseProperty.ReadType.MAP)  # formatting tho
+            key = str(PropertyTagData.BaseProperty.ReadAsValue(reader, tag, tag.InnerType,
+                                                               PropertyTagData.BaseProperty.ReadType.MAP))
+            value = PropertyTagData.BaseProperty.ReadAsObject( reader, tag, tag.ValueType,
+                                                               PropertyTagData.BaseProperty.ReadType.MAP)
+
+            data[key] = value  # formatting tho
         self.Value = data
 
     def GetValue(self) -> dict:

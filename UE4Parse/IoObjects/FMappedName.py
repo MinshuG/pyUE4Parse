@@ -1,6 +1,7 @@
-from UE4Parse.BinaryReader import BinaryStream
-from typing import List
 from enum import Enum
+from typing import List
+
+from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.IoObjects.FMinimalName import FMinimalName
 from UE4Parse.Objects.FNameEntrySerialized import FNameEntrySerialized
 

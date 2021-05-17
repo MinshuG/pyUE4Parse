@@ -2,8 +2,8 @@ from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Objects.ETextFlag import ETextFlag
 from UE4Parse.Objects.ETextHistoryBase import ETextHistoryBase
 from UE4Parse.Objects.FTextHistory.Base import Base
-from UE4Parse.Objects.FTextHistory._None import _None
 from UE4Parse.Objects.FTextHistory.StringTableEntry import StringTableEntry
+from UE4Parse.Objects.FTextHistory._None import _None
 
 
 class FText:

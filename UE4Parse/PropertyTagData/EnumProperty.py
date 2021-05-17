@@ -1,7 +1,6 @@
-from UE4Parse.Objects import FPropertyTag
 from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.Objects import FPropertyTag
 from UE4Parse.Objects.FName import FName
-from UE4Parse.Globals import Globals
 
 
 class EnumProperty:

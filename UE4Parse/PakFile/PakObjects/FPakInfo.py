@@ -1,8 +1,7 @@
+from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Objects.FGuid import FGuid
 from UE4Parse.PakFile.PakObjects.EPakVersion import EPakVersion
 from UE4Parse.PakFile.PakObjects.FSHAHash import FSHAHash
-from UE4Parse.BinaryReader import BinaryStream
-from UE4Parse.Globals import FGame
 
 
 class PakInfo:
@@ -51,8 +50,8 @@ class PakInfo:
 
         self.Version = EPakVersion(reader.readInt32())
 
-        FGame.Version = self.Version
-        FGame.SubVersion = self.SubVersion
+        # FGame.Version = self.Version
+        # FGame.SubVersion = self.SubVersion
 
         self.SubVersion = 1 if offset == self._SIZE8A and self.Version == EPakVersion.FNAME_BASED_COMPRESSION_METHOD else 0
         self.IndexOffset = reader.readInt64()

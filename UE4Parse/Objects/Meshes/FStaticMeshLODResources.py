@@ -2,14 +2,14 @@ from typing import List
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Objects.EUEVersion import GAME_UE4
+from UE4Parse.Objects.FByteBulkData import FByteBulkData
 from UE4Parse.Objects.FStripDataFlags import FStripDataFlags
 from UE4Parse.Objects.Meshes.FColorVertexBuffer import FColorVertexBuffer
-from UE4Parse.Objects.Meshes.FRawStaticIndexBuffer import FRawStaticIndexBuffer
-from UE4Parse.Objects.Meshes.FStaticMeshVertexBuffer import FStaticMeshVertexBuffer
 from UE4Parse.Objects.Meshes.FPositionVertexBuffer import FPositionVertexBuffer
+from UE4Parse.Objects.Meshes.FRawStaticIndexBuffer import FRawStaticIndexBuffer
 from UE4Parse.Objects.Meshes.FStaticMeshSection import FStaticMeshSection
+from UE4Parse.Objects.Meshes.FStaticMeshVertexBuffer import FStaticMeshVertexBuffer
 from UE4Parse.Objects.Meshes.FWeightedRandomSampler import FWeightedRandomSampler
-from UE4Parse.Objects.FByteBulkData import FByteBulkData
 
 CDSF_AdjancencyData: int = 1
 CDSF_MinLodData: int = 2

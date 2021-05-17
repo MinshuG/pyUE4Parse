@@ -1,9 +1,9 @@
-from UE4Parse.Textures.Objects.FTexture2DMipMap import FTexture2DMipMap
-from UE4Parse.Objects.EPixelFormat import EPixelFormat
-from UE4Parse.BinaryReader import BinaryStream
-from UE4Parse.PakFile.PakObjects.EPakVersion import EPakVersion
-from UE4Parse.Globals import FGame
 from typing import List
+
+from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.Objects.EPixelFormat import EPixelFormat
+from UE4Parse.PakFile.PakObjects.EPakVersion import EPakVersion
+from UE4Parse.Textures.Objects.FTexture2DMipMap import FTexture2DMipMap
 
 
 class FTexturePlatformData:

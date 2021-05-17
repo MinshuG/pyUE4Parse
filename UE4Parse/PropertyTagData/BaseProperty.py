@@ -1,26 +1,26 @@
 from enum import IntEnum, auto
 
-from UE4Parse import Globals, Logger
+from UE4Parse import Logger
 from UE4Parse.Objects import FName
 from UE4Parse.Objects import FPropertyTag
+from UE4Parse.Objects.FGuid import FGuid
 from UE4Parse.PropertyTagData.ArrayProperty import ArrayProperty
+from UE4Parse.PropertyTagData.BoolProperty import BoolProperty
 from UE4Parse.PropertyTagData.ByteProperty import ByteProperty
+from UE4Parse.PropertyTagData.DelegateProperty import DelegateProperty
+from UE4Parse.PropertyTagData.DoubleProperty import DoubleProperty
 from UE4Parse.PropertyTagData.EnumProperty import EnumProperty
+from UE4Parse.PropertyTagData.FloatProperty import FloatProperty
+from UE4Parse.PropertyTagData.IntProperty import *
+from UE4Parse.PropertyTagData.LazyObjectProperty import LazyObjectProperty
+from UE4Parse.PropertyTagData.MapProperty import MapProperty
+from UE4Parse.PropertyTagData.NameProperty import NameProperty
 from UE4Parse.PropertyTagData.ObjectProperty import ObjectProperty
+from UE4Parse.PropertyTagData.SetProperty import SetProperty
 from UE4Parse.PropertyTagData.SoftObjectProperty import SoftObjectProperty
+from UE4Parse.PropertyTagData.StrProperty import StrProperty
 from UE4Parse.PropertyTagData.StructProperty import StructProperty
 from UE4Parse.PropertyTagData.TextProperty import TextProperty
-from UE4Parse.PropertyTagData.BoolProperty import BoolProperty
-from UE4Parse.PropertyTagData.FloatProperty import FloatProperty
-from UE4Parse.PropertyTagData.DoubleProperty import DoubleProperty
-from UE4Parse.PropertyTagData.NameProperty import NameProperty
-from UE4Parse.PropertyTagData.MapProperty import MapProperty
-from UE4Parse.PropertyTagData.StrProperty import StrProperty
-from UE4Parse.PropertyTagData.DelegateProperty import DelegateProperty
-from UE4Parse.PropertyTagData.SetProperty import SetProperty
-from UE4Parse.PropertyTagData.LazyObjectProperty import LazyObjectProperty
-from UE4Parse.PropertyTagData.IntProperty import *
-from UE4Parse.Objects.FGuid import FGuid
 
 logger = Logger.get_logger(__name__)
 
@@ -39,7 +39,6 @@ def switch(toCompare, CompareTo):
 
 
 def ReadAsObject(reader, tag: FPropertyTag = None, type_: FName = None, readType: ReadType = None):
-    # workaround for variable resetting issue (ArrayProperty)
     type_ = type_.string
 
     prop: object

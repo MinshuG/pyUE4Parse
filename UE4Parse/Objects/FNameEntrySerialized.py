@@ -1,5 +1,4 @@
 # from UE4Parse.BinaryReader import BinaryStream # circular
-from typing import List
 
 from UE4Parse.Objects.EUnrealEngineObjectUE4Version import EUnrealEngineObjectUE4Version
 

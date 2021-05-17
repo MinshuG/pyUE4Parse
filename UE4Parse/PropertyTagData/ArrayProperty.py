@@ -1,6 +1,6 @@
-from UE4Parse.Objects.FPropertyTag import FPropertyTag
-from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse import PropertyTagData
+from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.Objects.FPropertyTag import FPropertyTag
 
 
 class ArrayProperty:

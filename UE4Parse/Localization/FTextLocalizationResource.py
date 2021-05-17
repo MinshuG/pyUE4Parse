@@ -1,9 +1,10 @@
 from typing import Dict, List, Optional
-from UE4Parse.BinaryReader import  BinaryStream
+
+from UE4Parse import Logger
+from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.Exceptions import ParserException
 from UE4Parse.Objects.FGuid import FGuid
 from .FTextLocalizationResourceVersion import ELocResVersion
-from UE4Parse import Logger
-from UE4Parse.Exceptions import ParserException
 
 logger = Logger.get_logger(__name__)
 

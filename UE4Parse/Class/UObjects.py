@@ -14,26 +14,33 @@ class UObject:
     position: int
     Dict: dict = {}
 
-    def __init__(self, reader: BinaryStream, structFallback: bool = False) -> None:
+    def __init__(self, reader: BinaryStream, validpos, structFallback: bool = False) -> None:
+        self.Tags = []
         self.reader: BinaryStream = reader
         self.structFallback = structFallback
-        self.Dict = self.read()
+        self.position = self.reader.base_stream.tell()
+        self.Dict = self.read(validpos)
 
     # @property
-    def read(self):
+    def read(self, validpos):
         properties = {}
         num = 1
-        self.position = self.reader.base_stream.tell()
+        tags = []
         while True:
             Tag = FPropertyTag(self.reader)
             if Tag.Name.isNone or Tag.Name.GetValue() == "None":
                 break
+            tags.append(Tag)
+            self.reader.seek(Tag.Size, 1)
 
+        for Tag in tags:
+            self.reader.seek(Tag.end_pos, 0)
             pos = self.reader.base_stream.tell()
             try:
                 obj = BaseProperty.ReadAsObject(
                     self.reader, Tag, Tag.Type, ReadType.NORMAL)
             except Exception as e:
+                # raise e
                 logger.debug(f"Failed to read values for {Tag.Name.string}, {e}")
                 obj = None
 
@@ -43,19 +50,9 @@ class UObject:
                 num += 1
             else:
                 pass
-
             properties[key] = obj
-
-            if obj is None:
-                break
             pos2 = self.reader.base_stream.tell()
-
             expectedPos: int = Tag.Size + pos
-            if pos2 + 4 <= expectedPos:
-                wtf = self.reader.readBool()
-                if pos2 + 16 <= expectedPos:
-                    FGuid(self.reader)
-
             if expectedPos != pos2:
                 behind = expectedPos - pos2
                 logger.debug(
@@ -63,6 +60,12 @@ class UObject:
                 self.reader.seek(Tag.Size + pos, 0)
         if len(properties.keys()) > 0:
             self.Dict = properties
+
+        pos = self.reader.tell()
+        if pos + 4 <= validpos:
+            wtf = self.reader.readBool()
+            if pos + 20 <= validpos and wtf:  # 4+16
+                FGuid(self.reader)
 
         return self.Dict
 

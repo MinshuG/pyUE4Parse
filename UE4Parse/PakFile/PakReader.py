@@ -6,15 +6,13 @@ from typing import Dict, Optional, Union
 from UE4Parse import Logger
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Exceptions.Exceptions import InvalidEncryptionKey
-from UE4Parse.Globals import Globals
-from UE4Parse.PakFile.PakObjects.FPakEntry import FPakEntry
+from UE4Parse.IO.IoObjects.FIoStoreEntry import FIoStoreEntry
 from UE4Parse.PakFile.PakObjects.EPakVersion import EPakVersion
 from UE4Parse.PakFile.PakObjects.FPakCompressedBlock import FPakCompressedBlock
 from UE4Parse.PakFile.PakObjects.FPakDirectoryEntry import FPakDirectoryEntry
+from UE4Parse.PakFile.PakObjects.FPakEntry import FPakEntry
 from UE4Parse.PakFile.PakObjects.FPakInfo import PakInfo
 from UE4Parse.PakFile.PakObjects.FSHAHash import FSHAHash
-from UE4Parse.IO.IoObjects.FIoStoreEntry import FIoStoreEntry
-
 
 CrytoAval = True
 try:
@@ -27,7 +25,7 @@ logger = Logger.get_logger(__name__)
 
 class PakReader:
     # @profile
-    def __init__(self, File: str, Case_insensitive: bool = False, reader: Optional[BinaryStream]=None) -> None:
+    def __init__(self, File: str, Case_insensitive: bool = False, reader: Optional[BinaryStream] = None) -> None:
         self.MountPoint: str = ""
         if reader is not None:
             self.reader = reader
@@ -74,7 +72,7 @@ class PakReader:
             IndexReader.seek(0, 0)
 
         if self.Info.Version.value >= EPakVersion.PATH_HASH_INDEX.value:
-            self.ReadUpdatedIndex(IndexReader, key, self.Case_insensitive)
+            index = self.ReadUpdatedIndex(IndexReader, key, self.Case_insensitive)
         else:
             self.MountPoint = IndexReader.readFString() or ""
 
@@ -94,12 +92,14 @@ class PakReader:
                 else:
                     tempfiles[self.MountPoint + entry.Name] = entry
 
-            UpdateAndSetIndex(self.FileName, self, tempfiles)
+            index = UpdateIndex(self.FileName, self, tempfiles)
             del tempfiles
 
         time_taken = round(time.time() - starttime, 2)
         logger.info(
             f"{self.FileName} contains {self.NumEntries} files, mount point: {self.MountPoint}, version: {self.Info.Version.value}, in: {time_taken}s")
+
+        return index
 
     def ReadUpdatedIndex(self, IndexReader: BinaryStream, key, Case_insensitive: bool) -> dict:
         self.MountPoint = IndexReader.readFString() or ""
@@ -143,6 +143,7 @@ class PakReader:
             PathHash_Reader = BinaryStream(io.BytesIO(PathHashIndexData))
 
         PathHashIndex = PathHash_Reader.readTArray_W_Arg(FPakDirectoryEntry, PathHash_Reader)
+        PathHash_Reader.base_stream.close()
 
         encodedEntryReader = BinaryStream(io.BytesIO(EncodedPakEntries))
         tempentries = {}
@@ -156,8 +157,11 @@ class PakReader:
                 entry = self.BitEntry(path, encodedEntryReader)
                 tempentries[self.MountPoint + path] = entry
 
-        UpdateAndSetIndex(self.FileName, self, tempentries)
+        index = UpdateIndex(self.FileName, self, tempentries)
+
         del tempentries
+        encodedEntryReader.base_stream.close()
+        return index
 
     def BitEntry(self, name: str, reader: BinaryStream):
         # Grab the big bitfield value:
@@ -235,14 +239,14 @@ class PakReader:
 
 
 # @profile
-def UpdateAndSetIndex(FileName, Container, Index: Dict[str, Union[FPakEntry, FIoStoreEntry]]):
-    Globals.Paks[FileName] = Container
-
+def UpdateIndex(FileName, Container, Index: Dict[str, Union[FPakEntry, FIoStoreEntry]]) -> Dict[
+    str, Union[FPakEntry, FIoStoreEntry]]:
     def removeslash(string):
         if string.startswith("/"):
             return string[1:]
         return string
 
+    index: Dict[str, Union[FPakEntry, FIoStoreEntry]] = {}
     for entry, IndexEntry in Index.items():
         if entry.endswith(".uexp") or entry.endswith(".ubulk"):
             continue
@@ -270,4 +274,6 @@ def UpdateAndSetIndex(FileName, Container, Index: Dict[str, Union[FPakEntry, FIo
         else:
             IndexEntry.hasUptnl = False
 
-        Globals.Index[removeslash(PathNoext)] = IndexEntry
+        index[removeslash(PathNoext)] = IndexEntry
+
+    return index

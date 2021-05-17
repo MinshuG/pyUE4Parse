@@ -5,7 +5,7 @@ from typing import Dict, Optional
 
 from UE4Parse import Logger, Oodle
 from UE4Parse.BinaryReader import BinaryStream, Align
-from UE4Parse.Exceptions.Exceptions import InvalidEncryptionKey, ParserException
+from UE4Parse.Exceptions.Exceptions import InvalidEncryptionKey
 from UE4Parse.IO.IoObjects.EIoStoreTocReadOptions import EIoStoreTocReadOptions
 from UE4Parse.IO.IoObjects.FFileIoStoreContainerFile import FFileIoStoreContainerFile
 from UE4Parse.IO.IoObjects.FIoChunkId import FIoChunkId
@@ -15,7 +15,7 @@ from UE4Parse.IO.IoObjects.FIoOffsetAndLength import FIoOffsetAndLength
 from UE4Parse.IO.IoObjects.FIoStoreEntry import FIoStoreEntry
 from UE4Parse.IO.IoObjects.FIoStoreTocHeader import FIoContainerId
 from UE4Parse.IO.IoObjects.FIoStoreTocResource import FIoStoreTocResource
-from UE4Parse.PakFile.PakReader import UpdateAndSetIndex
+from UE4Parse.PakFile.PakReader import UpdateIndex
 
 CrytoAval = True
 try:
@@ -120,6 +120,7 @@ class FFileIoStoreReader:
                     if int.from_bytes(IndexReader.readByte(), "little") != 0:
                         raise ValueError(f"Provided key didn't work with {self.FileName}")
                 IndexReader.seek(0, 0)
+            del self.TocResource.DirectoryIndexBuffer
             del self._directoryIndexBuffer
 
             self._directory_index = FIoDirectoryIndexResource(IndexReader, self.caseinSensitive)
@@ -130,14 +131,14 @@ class FFileIoStoreReader:
             Chunks: Dict[str, str]
             tempFiles, Chunks = self.ReadIndex("", firstEntry)  # TODO use Chunks IDs
 
-            UpdateAndSetIndex(self.FileName, self.ContainerFile, tempFiles)
+            files = UpdateIndex(self.FileName, self.ContainerFile, tempFiles)
 
             time_taken = round(time.time() - starttime, 2)
             logger.info("{} contains {} files, mount point: {}, version: {}, in: {}s".format
                         (self.FileName, len(tempFiles), self._directory_index.MountPoint, self.TocResource.Header.Version, time_taken))
 
             del self._directory_index
-            return tempFiles, Chunks
+            return files, Chunks
 
     def GetChildDirectory(self, directory: FIoDirectoryIndexHandle):
         return FIoDirectoryIndexHandle(
@@ -244,6 +245,9 @@ class FFileIoStoreReader:
         result.game = self.ContainerFile.FileHandle.game
         result.version = self.ContainerFile.FileHandle.version
         return result
+
+    def DoesChunkExist(self, ChunkId: FIoChunkId):
+        return str(ChunkId.Id) in self.Toc
 
 
 def Decompress(compressed_buffer, uncompressed_length, compression_method) -> bytes:

@@ -1,11 +1,9 @@
 import os
-import sys
 from io import BufferedReader, BytesIO
 from struct import *
 from typing import Union
 
 from UE4Parse import Logger
-from UE4Parse import Globals as glob
 from UE4Parse.Exceptions.Exceptions import ParserException
 from UE4Parse.Objects.EUEVersion import EUEVersion
 from UE4Parse.Objects.FName import FName, DummyFName
@@ -18,7 +16,7 @@ class BinaryStream:
     NameMap: list
     PackageReader: object
     version: int
-    game: EUEVersion
+    game: EUEVersion = None
     fake_size: int
     ubulk_stream: object
     bulk_offset: int = -1
@@ -35,9 +33,6 @@ class BinaryStream:
             self.base_stream = fp
             self.size = size
 
-        self.game = glob.FGame.UEVersion
-        self.version = self.game.get_ar_ver()
-
     def change_stream(self, fp: Union[BufferedReader, str, bytes, bytearray]):
         if isinstance(fp, str):
             self.base_stream = open(fp, "rb")
@@ -50,12 +45,19 @@ class BinaryStream:
             self.fake_size = self.size + fp.size
             self.size = fp.size
 
+    def set_ar_version(self, ueversion):
+        self.game = ueversion
+        self.version = self.game.get_ar_ver()
+
     def seek(self, offset, SEEK_SET=1):
         self.base_stream.seek(offset, SEEK_SET)
 
     @property
     def position(self):
         return self.base_stream.tell()
+
+    def close(self):
+        return self.base_stream.close()
 
     def tell(self):
         return self.base_stream.tell()

@@ -1,8 +1,7 @@
-from typing import List, Optional
+from typing import List
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Class.UObjects import UObject
-from UE4Parse import Globals as glob
 from UE4Parse.Logger import get_logger
 from UE4Parse.Objects.EPixelFormat import EPixelFormat
 from UE4Parse.Objects.EUEVersion import GAME_UE4
@@ -16,9 +15,11 @@ logger = get_logger(__name__)
 class UTexture2D(UObject):
     data: List[FTexturePlatformData] = []
 
-    def __init__(self, reader: BinaryStream, bulk: Optional[BinaryStream], bulkOffset) -> None:
-        super().__init__(reader)
-        reader.seek(4)
+    def __init__(self, reader: BinaryStream, validpos) -> None:
+        bulk = reader.ubulk_stream
+        bulkOffset = reader.bulk_offset
+
+        super().__init__(reader, validpos)
         FStripDataFlags(reader)
         FStripDataFlags(reader)    
 
@@ -36,8 +37,8 @@ class UTexture2D(UObject):
                 self.data.append(data)
                 PixelFormatName = reader.readFName()
 
-                if glob.FGame.Version.value < EPakVersion.RELATIVE_CHUNK_OFFSETS.value:
-                    break
+                # if glob.FGame.Version.value < EPakVersion.RELATIVE_CHUNK_OFFSETS.value:
+                #     break
 
                 try:
                     EPixelFormat[PixelFormatName.GetValue()]

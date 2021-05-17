@@ -1,1 +1,1 @@
-from UE4Parse.provider.Provider import Provider, PackageReader
+from UE4Parse.provider.Provider import *

@@ -1,5 +1,4 @@
 from UE4Parse.BinaryReader import BinaryStream
-from UE4Parse.Globals import FGame
 from UE4Parse.Objects.EUEVersion import EUEVersion
 from UE4Parse.Objects.Meshes.FRenderingObjectVersion import FRenderingObjectVersion
 
