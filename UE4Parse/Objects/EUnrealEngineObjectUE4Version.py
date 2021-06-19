@@ -320,3 +320,6 @@ class EUnrealEngineObjectUE4Version(IntEnum):
 
     VER_UE4_AUTOMATIC_VERSION_PLUS_ONE = auto()
     # VER_UE4_AUTOMATIC_VERSION = VER_UE4_AUTOMATIC_VERSION_PLUS_ONE.value - 1
+
+
+UE4Versions = EUnrealEngineObjectUE4Version

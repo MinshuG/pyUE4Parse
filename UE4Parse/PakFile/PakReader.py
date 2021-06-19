@@ -25,7 +25,7 @@ logger = Logger.get_logger(__name__)
 
 class PakReader:
     # @profile
-    def __init__(self, File: str, Case_insensitive: bool = False, reader: Optional[BinaryStream] = None) -> None:
+    def __init__(self, File: str = "", Case_insensitive: bool = False, reader: Optional[BinaryStream] = None) -> None:
         self.MountPoint: str = ""
         if reader is not None:
             self.reader = reader
@@ -40,8 +40,12 @@ class PakReader:
         self.MountArray = self.reader.readBytes(128)
         self.Case_insensitive: bool = Case_insensitive
 
+    def get_encryption_key_guid(self):
+        return self.Info.EncryptionKeyGuid
+
     # @profile
     def ReadIndex(self, key: str = None):
+        self.AesKey = key
         starttime = time.time()
         self.reader.seek(self.Info.IndexOffset, 0)
 
@@ -229,10 +233,11 @@ class PakReader:
         entry.ContainerName = self.FileName
         entry.CompressionBlocks = CompressionBlocks
         entry.Size = size
+        entry.Encrypted = encrypted
         entry.UncompressedSize = uncompressedSize
         entry.Offset = offset
         entry.CompressionMethodIndex = compressionMethodIndex
-        entry.Deleted = False
+        entry.Deleted = Deleted
         entry.StructSize = FPakEntry.GetSize(EPakVersion.LATEST, compressionMethodIndex,
                                              len(CompressionBlocks))
         return entry
@@ -269,7 +274,7 @@ def UpdateIndex(FileName, Container, Index: Dict[str, Union[FPakEntry, FIoStoreE
             IndexEntry.hasUbulk = False
 
         if uptnl in Index:
-            IndexEntry.uptnl = Index[ubulk]
+            IndexEntry.uptnl = Index[uptnl]
             IndexEntry.hasUptnl = True
         else:
             IndexEntry.hasUptnl = False

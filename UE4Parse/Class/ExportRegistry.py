@@ -7,15 +7,23 @@ from .UTexture2D import UTexture2D
 from .World import UWorld
 
 
-exports = {
-    "Texture2D": UTexture2D,
-    "StaticMesh": UStaticMesh,
-    "StringTable": UStringTable,
-    "World": UWorld,
-    "Level": ULevel,
-    "MaterialInstanceConstant": UMaterialInstanceConstant
-}
 
+class Registry:
+    exports = {
+        "Texture2D": UTexture2D,
+        "StaticMesh": UStaticMesh,
+        "StringTable": UStringTable,
+        "World": UWorld,
+        "Level": ULevel,
+        "MaterialInstanceConstant": UMaterialInstanceConstant
+    }
 
-def get_export_reader(export_type: str):
-    return exports.get(export_type, UObject)
+    def __init__(self) -> None:
+        pass
+
+    def get_export_reader(self, export_type: str, export, reader):
+        r = self.exports.get(export_type, UObject)(reader)
+        r.type = export_type
+        r.flag = export.ObjectFlags
+        # r.name = export.ObjectName.string
+        return r

@@ -35,9 +35,9 @@ class FIoStoreEntry:
     def __init__(self, ioStore, userdata: int, name: str):
         self.ioStore = ioStore
 
-        self.ContainerName = ioStore.FileName
+        self.ContainerName = ioStore.FileName[:-5] + ".utoc"
         self.ChunkId = ioStore.TocResource.ChunkIds[userdata]
-        self.OffsetLength = ioStore.Toc[str(self.ChunkId.Id)]
+        self.OffsetLength = ioStore.Toc[self.ChunkId]
 
         caseinSensitive = ioStore.caseinSensitive
 

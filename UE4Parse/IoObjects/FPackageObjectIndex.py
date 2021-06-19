@@ -56,6 +56,16 @@ class FPackageObjectIndex:
         else:
             self._typeAndId = reader.readUInt64()
 
+    def __eq__(self, o: 'FPackageObjectIndex') -> bool:
+        return self.typeAndId == o.typeAndId
+
     @property
     def typeAndId(self):
         return self._typeAndId
+
+    def GetValue(self):
+        return {
+            "typeAndId" : self.typeAndId,
+            "Type": self.Type,
+            "Value": self.Value
+        }

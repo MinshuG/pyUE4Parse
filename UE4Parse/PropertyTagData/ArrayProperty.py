@@ -1,7 +1,7 @@
 from UE4Parse import PropertyTagData
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Objects.FPropertyTag import FPropertyTag
-
+from Usmap.Objects.FPropertyTag import FPropertyTag as usmapTag
 
 class ArrayProperty:
     Value: list
@@ -17,21 +17,22 @@ class ArrayProperty:
             vals.append(val.GetValue())
         return vals
 
-    def ArrayPropertyReader(self, reader, tag) -> list:
+    def ArrayPropertyReader(self, reader: BinaryStream, tag) -> list:
         InnerType = tag.InnerType
 
         length = reader.readInt32()
         Value = []
-        if InnerType.string == "StructProperty":
+        if reader.has_unversioned_properties:
+            InnerTag = tag.InnerData
+            InnerType = tag.InnerType
+        elif InnerType.string == "StructProperty" or InnerType.string == "ArrayProperty":
             InnerTag = FPropertyTag(reader)
         else:
             InnerTag = None
         pos = reader.base_stream.tell()
-
+ 
         for _ in range(length):
             val = PropertyTagData.BaseProperty.ReadAsObject(reader, InnerTag, InnerType,
                                                             PropertyTagData.BaseProperty.ReadType.ARRAY)
             Value.append(val)
-            # if length > 20:
-            #     breakpoint()
         return Value

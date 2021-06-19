@@ -40,7 +40,7 @@ class FMappedName:
         return self
 
     def __str__(self):
-        name_map = self._globalNameMap if self.IsGlobal() else self._localNameMap
+        name_map = self._globalNameMap if self.IsGlobal() else self._reader.PackageReader.NameMap
         if name_map is None:
             return None
         index = self.GetIndex()
@@ -48,11 +48,14 @@ class FMappedName:
             return name_map[index].Name
 
     def GetValue(self):
-        if not self.IsGlobal(): self._localNameMap = self._reader.PackageReader.NameMap
         return self.__str__()
 
     def ToString(self):
         return self.__str__()
+
+    def resolve(self, namemap):
+        self._localNameMap = namemap
+        return self.GetValue()
 
     def GetIndex(self):
         return self.Index & self.IndexMask

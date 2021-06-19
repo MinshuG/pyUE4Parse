@@ -1,6 +1,8 @@
+from UE4Parse.Exceptions.Exceptions import InvalidEncryptionKey
+from UE4Parse.Objects import Decompress
 from typing import List, Optional
 
-from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.BinaryReader import Align, BinaryStream
 from UE4Parse.PakFile import ECompressionFlags
 from UE4Parse.PakFile import EPakVersion
 from UE4Parse.PakFile import FPakCompressedBlock
@@ -10,8 +12,9 @@ class FPakEntry:
     Flags: int = 0
     Flag_Encrypted = 0x01
     Flag_Deleted = 0x02
-    Encrypted = (Flags & Flag_Encrypted) != 0
-    Deleted = (Flags & Flag_Deleted) != 0
+    _Encrypted: bool = None
+    _Deleted = (Flags & Flag_Deleted) != 0
+    # above 5 lines are useless
 
     ContainerName: str = ""
     Name: str = ""
@@ -19,7 +22,7 @@ class FPakEntry:
     Size: int = 0
     UncompressedSize: int = 0
 
-    CompressionBlocks: List[FPakCompressedBlock] = []
+    CompressionBlocks: List[FPakCompressedBlock]
     CompressionBlockSize: int = 0
     CompressionMethodIndex: int
 
@@ -27,12 +30,28 @@ class FPakEntry:
     hasUbulk: bool = False
     hasUexp: bool = False
 
+    @property
+    def Deleted(self):
+        return self._Deleted
+
+    @Deleted.setter
+    def Deleted(self, value):
+        self._Deleted = value
+
+    @property
+    def Encrypted(self):
+        return (self.Flags & self.Flag_Encrypted) != 0 if self._Encrypted is None else self._Encrypted
+
+    @Encrypted.setter
+    def Encrypted(self, value):
+        self._Encrypted = value
+
     def __init__(self, reader: Optional[BinaryStream], Version: EPakVersion = 0, SubVersion: int = 0, pakName: str = ""):
         self.ubulk = None
         self.uexp = None
         if reader is None:
             return
-        self.CompressionBlocks: list = []
+        self.CompressionBlocks = []
         self.CompressionBlockSize = 0
         self.Flags = 0
 
@@ -65,25 +84,49 @@ class FPakEntry:
 
         if Version.value >= EPakVersion.COMPRESSION_ENCRYPTION.value:
             if self.CompressionMethodIndex != 0:
-                self.CompressionBlocks = reader.readTArray(FPakCompressedBlock)
-            self.Flags = reader.readByte()
+                self.CompressionBlocks = reader.readTArray(FPakCompressedBlock, reader)
+            self.Flags = reader.readByteToInt()
             self.CompressionBlockSize = reader.readUInt32()
 
         self.StructSize = reader.base_stream.tell() - StartOffset
 
     def get_data(self, stream: BinaryStream, key, compression_method):
-        if len(compression_method) == 0:
+        if self.CompressionMethodIndex == 0:
             stream.seek(self.Offset + self.StructSize, 0)
             if self.Encrypted:
-                raise NotImplementedError(" Encryption is not implemented")
+                raise NotImplementedError("Encryption is not implemented")
             else:
                 data: bytes = stream.readBytes(self.UncompressedSize)
                 return BinaryStream(data)
         else:
-            raise NotImplementedError("compression is not implemented")
+            return BinaryStream(self._decompress(stream,key,compression_method))
+    
+    def _decompress(self, stream: BinaryStream, key, compressionMethods: list):
+        compressionMethod = compressionMethods[self.CompressionMethodIndex - 1]
 
-    @classmethod
-    def GetSize(cls, PakVersion: EPakVersion, compressionMethod, CompressionBlocksCount):
+        result = bytearray()
+        if self.Encrypted:
+            if key is None:
+                raise InvalidEncryptionKey("File is Encrypted and Key was not provided.")
+            from Crypto.Cipher import AES
+            decryptor = AES.new(bytearray().fromhex(key), AES.MODE_ECB)
+
+        block: FPakCompressedBlock
+        for block in self.CompressionBlocks:
+            stream.seek(self.Offset + block.CompressedStart)
+            uncompressed_size = min(self.CompressionBlockSize, self.UncompressedSize - len(result))
+
+            if self.Encrypted:
+                buffer = stream.read(Align(self.CompressionBlockSize, AES.block_size))
+                buffer = decryptor.decrypt(buffer)
+            else:
+                buffer = stream.read(Align(self.CompressionBlockSize, 16)) # AES.block_size
+            
+            result += Decompress.Decompress(buffer, compressionMethod, uncompressed_size)
+        return result
+
+    @staticmethod
+    def GetSize(PakVersion: EPakVersion, compressionMethod, CompressionBlocksCount):
         serialized_size = 8 + 8 + 8 + 20
         if PakVersion.value >= EPakVersion.FNAME_BASED_COMPRESSION_METHOD.value:
             serialized_size += 4

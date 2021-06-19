@@ -1,5 +1,5 @@
 from UE4Parse.BinaryReader import BinaryStream
-from UE4Parse.Objects import FPropertyTag
+from UE4Parse.Objects.FPropertyTag import FPropertyTag
 from UE4Parse.Objects.FName import FName
 
 
@@ -9,11 +9,31 @@ class EnumProperty:
 
     def __init__(self, reader: BinaryStream, tag: FPropertyTag, readType):
         self.position = reader.base_stream.tell()
-        if readType.value != 69:  # luuuu
-            self.Value = reader.readFName()
+        from .BaseProperty import ReadType
+
+        if readType == ReadType.ZERO: #ZERO
+            self.Value = FName(self.IndexToEnum(reader, tag, 0))
+        elif readType.value == 0:
+            byteValue = 0
+            innerType = getattr(tag, "InnerType", None)
+            if innerType is not None:
+                from .BaseProperty import ReadAsValue
+                byteValue = ReadAsValue(reader, tag.InnerData, innerType, 0)
+            else:
+                byteValue =  reader.readByteToInt()
+
+            self.Value = FName(self.IndexToEnum(reader, tag, byteValue))
         else:
-            byteValue = reader.readInt32() if tag.EnumName.string == "IntProperty" else reader.readByteToInt()
-            self.Value = FName(reader.NameMap[byteValue], byteValue)
+            self.Value = reader.readFName()
 
     def GetValue(self):
         return self.Value.GetValue()
+
+    def IndexToEnum(self, reader: BinaryStream, tag: FPropertyTag, index: int):
+        name = tag.EnumName
+        if name is None:
+            return str(index)
+
+        if reader.has_unversioned_properties:
+            enumVals = reader.getmappings().get_enum(name.string)
+            return tag.EnumName.string + "::" + enumVals[index]

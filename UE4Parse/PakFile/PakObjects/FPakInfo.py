@@ -2,7 +2,7 @@ from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Objects.FGuid import FGuid
 from UE4Parse.PakFile.PakObjects.EPakVersion import EPakVersion
 from UE4Parse.PakFile.PakObjects.FSHAHash import FSHAHash
-
+from ...Exceptions.Exceptions import ParserException
 
 class PakInfo:
     PAK_FILE_MAGIC = 0x5A6F12E1
@@ -22,17 +22,17 @@ class PakInfo:
     _SIZE9 = _SIZE8A + 1  # 222
 
     def __init__(self, reader: BinaryStream, FileSize: int) -> None:
-        self.reader = reader
+        reader = reader
         Offsets_to_Try = [self._SIZE, self._SIZE8, self._SIZE8A, self._SIZE9]
 
         for Offset in Offsets_to_Try:
             if FileSize - Offset > 0:
-                self.reader.seek(FileSize - Offset, 0)
-                info = self.Info(self.reader, Offset)
+                reader.seek(FileSize - Offset, 0)
+                info = self.Info(reader, Offset)
                 if info.Version != EPakVersion.INVALID:
                     return
 
-        raise RuntimeError(f"Unknown Pak Format")
+        raise ParserException(f"Unknown Pak Format")
 
     def Info(self, reader: BinaryStream, offset):
         self.EncryptionKeyGuid = FGuid(reader).read()
@@ -44,7 +44,7 @@ class PakInfo:
             self.SubVersion = 0
             self.IndexOffset = 0
             self.IndexSize = 0
-            self.IndexHash = FSHAHash
+            self.IndexHash = None
             self.CompressionMethods = None
             return self
 
@@ -61,7 +61,7 @@ class PakInfo:
             reader.readByte()  # bIndexIsFrozen
 
         if self.Version.value < EPakVersion.FNAME_BASED_COMPRESSION_METHOD.value:
-            self.CompressionMethods = ["Zlib", "Gzip", "Oodle"]
+            self.CompressionMethods = ["Zlib", "Gzip", "Oodle", "LZ4"]
         else:
             BufferSize: int = self.COMPRESSION_METHOD_NAME_LEN * 4
             Methods: bytes = reader.readBytes(BufferSize)
@@ -80,7 +80,6 @@ class PakInfo:
         if self.Version.value < EPakVersion.INDEX_ENCRYPTION.value:
             self.bEncryptedIndex = False
         if self.Version.value < EPakVersion.ENCRYPTION_KEY_GUID.value:
-            raise NotImplementedError("Encrypted Index pak")
-            # EncryptionKeyGuid = FGuid(0u, 0u, 0u, 0u)
+            self.EncryptionKeyGuid = FGuid().construct(0,0,0,0)
 
         return self

@@ -2,6 +2,7 @@ from typing import List
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Objects.EPixelFormat import EPixelFormat
+from UE4Parse.Objects.EUEVersion import GAME_UE4
 from UE4Parse.PakFile.PakObjects.EPakVersion import EPakVersion
 from UE4Parse.Textures.Objects.FTexture2DMipMap import FTexture2DMipMap
 
@@ -17,17 +18,17 @@ class FTexturePlatformData:
     FirstMipToSerialize: int
 
     def __init__(self, reader: BinaryStream, ubulk: BinaryStream, ubulkOffset: int):
+        self.deserialize(reader, ubulk, ubulkOffset)
+
+    def deserialize(self, reader: BinaryStream, ubulk: BinaryStream, ubulkOffset: int):
         self.SizeX = reader.readInt32()
         self.SizeY = reader.readInt32()
         self.NumSlices = reader.readInt32()  # 1 for normal textures
-
         self.PixelFormat = EPixelFormat[reader.readFString()]
-        self.Serialize(reader, ubulk, ubulkOffset)
 
-    def Serialize(self, reader: BinaryStream, ubulk: BinaryStream, ubulkOffset: int):
         self.FirstMipToSerialize = reader.readInt32() - 1
         self.Mips = reader.readTArray_W_Arg(FTexture2DMipMap, reader, ubulk, ubulkOffset)
-        if FGame.Version.value > EPakVersion.FNAME_BASED_COMPRESSION_METHOD.value or FGame.SubVersion == 1:
+        if reader.game >= GAME_UE4(23):
             self.bIsVirtual = reader.readInt32() != 0
             if self.bIsVirtual:
                 raise NotImplementedError("Virtual Textures ar not Not implemented")

@@ -1,1 +1,2 @@
-from UE4Parse.provider.Provider import *
+from .Provider import *
+from .MappingProvider import MappingProvider, PropMappings

@@ -8,8 +8,12 @@ class UStringTable(UObject):
     StringTable: FStringTable
     StringTableId = FName
 
-    def __init__(self, reader: BinaryStream, validpos):
-        super().__init__(reader, validpos)
+    def __init__(self, reader: BinaryStream):
+        super().__init__(reader)
+    
+    def deserialize(self, validpos):
+        super().deserialize(validpos)
+        reader = self.reader
         self.StringTable = FStringTable(reader)
         self.StringTableId = reader.readFName()
 

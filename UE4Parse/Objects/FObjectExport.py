@@ -24,7 +24,12 @@ class FObjectExport:
     bNotAlwaysLoadedForEditorGame: bool = True
     bIsAsset: bool = False
     exportObject: UObject
-    name: FName
+    name: FName = None
+    type: FName
+
+    @property
+    def type(self) -> FName:
+        return self.ObjectName
 
     def __init__(self, reader: BinaryStream) -> None:
         self.ClassIndex = FPackageIndex(reader)
@@ -37,8 +42,9 @@ class FObjectExport:
         self.OuterIndex = FPackageIndex(reader)
         self.ObjectName = reader.readFName()
 
+        self.ObjectFlags = reader.readUInt32()
         try:
-            self.ObjectFlags = EObjectFlags(reader.readUInt32()) & EObjectFlags.RF_Load.value
+            self.ObjectFlags = EObjectFlags(self.ObjectFlags)# & EObjectFlags.RF_Load.value
         except:
             pass
 
@@ -80,7 +86,7 @@ class FObjectExport:
             self.CreateBeforeCreateDependencies = 0
 
     def __str__(self):
-        return self.ObjectName.__str__()
+        return f"FObjectExport(Name: {self.name.string} Type: {self.type.string})"
 
     def GetValue(self):
         return {

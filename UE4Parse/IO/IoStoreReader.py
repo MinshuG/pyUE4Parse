@@ -1,9 +1,10 @@
+from UE4Parse.Objects.FGuid import FGuid
 import io
 import os
 import time
 from typing import Dict, Optional
 
-from UE4Parse import Logger, Oodle
+from UE4Parse import Logger
 from UE4Parse.BinaryReader import BinaryStream, Align
 from UE4Parse.Exceptions.Exceptions import InvalidEncryptionKey
 from UE4Parse.IO.IoObjects.EIoStoreTocReadOptions import EIoStoreTocReadOptions
@@ -16,6 +17,8 @@ from UE4Parse.IO.IoObjects.FIoStoreEntry import FIoStoreEntry
 from UE4Parse.IO.IoObjects.FIoStoreTocHeader import FIoContainerId
 from UE4Parse.IO.IoObjects.FIoStoreTocResource import FIoStoreTocResource
 from UE4Parse.PakFile.PakReader import UpdateIndex
+from UE4Parse.Objects.Decompress import Decompress
+
 
 CrytoAval = True
 try:
@@ -64,7 +67,7 @@ class FFileIoStoreReader:
             a = chunkOffsetLength.GetOffset + chunkOffsetLength.GetLength > conUncompressedSize
             if a:
                 raise Exception("TocEntry out of container bounds")
-            self.Toc[str(self.TocResource.ChunkIds[i].Id)] = chunkOffsetLength
+            self.Toc[self.TocResource.ChunkIds[i]] = chunkOffsetLength
 
         self.ContainerFile.CompressionMethods = self.TocResource.CompressionMethods
         self.ContainerFile.CompressionBlockSize = self.TocResource.Header.CompressionBlockSize
@@ -76,6 +79,9 @@ class FFileIoStoreReader:
 
         self._directoryIndexBuffer = self.TocResource.DirectoryIndexBuffer  # TODO no
         # del self.TocResource.ChunkIds
+
+    def get_encryption_key_guid(self) -> FGuid:
+        return self.TocResource.Header.EncryptionKeyGuid
 
     @property
     def IsValidIndex(self):
@@ -191,7 +197,7 @@ class FFileIoStoreReader:
                 path = self._directory_index.MountPoint + sub_dir_name + name
                 data = self.GetFileData(file)  # UseData
                 entry = FIoStoreEntry(self, data, path)
-                outchunk[entry.ChunkId.ChunkId] = path
+                outchunk[entry.ChunkId] = path
                 outfile[path] = entry
                 file = self.GetNextFile(file)
 
@@ -201,9 +207,9 @@ class FFileIoStoreReader:
             dir = self.GetNextDirectory(dir)
 
         return outfile, outchunk
-
+ 
     def Read(self, chunkid: FIoChunkId) -> BinaryStream:
-        offsetAndLength: FIoOffsetAndLength = self.Toc[str(chunkid.Id)]
+        offsetAndLength: FIoOffsetAndLength = self.Toc[chunkid]
         compressionBlockSize = self.TocResource.Header.CompressionBlockSize
         firstBlockIndex = int(offsetAndLength.GetOffset / compressionBlockSize)
         lastBlockIndex = int((Align(offsetAndLength.GetOffset + offsetAndLength.GetLength,
@@ -235,28 +241,17 @@ class FFileIoStoreReader:
                 src = compressedBuffer
             else:
                 compressionMethod = self.TocResource.CompressionMethods[compressionBlock.CompressionMethodIndex - 1]
-                src = Decompress(compressedBuffer, uncompressedSize, compressionMethod)
+                src = Decompress(compressedBuffer, compressionMethod, uncompressedSize)
 
             sizeInBlock = int(min(compressionBlockSize - offsetInBlock, remaining_size))
             dst += src[offsetInBlock:offsetInBlock + sizeInBlock]
             remaining_size -= sizeInBlock
 
         result = BinaryStream(dst)
-        result.game = self.ContainerFile.FileHandle.game
-        result.version = self.ContainerFile.FileHandle.version
         return result
 
     def DoesChunkExist(self, ChunkId: FIoChunkId):
-        return str(ChunkId.Id) in self.Toc
-
-
-def Decompress(compressed_buffer, uncompressed_length, compression_method) -> bytes:
-    if compression_method == "Oodle":
-        result = Oodle.Decompress(compressed_buffer, uncompressed_length)
-        assert len(result) == uncompressed_length
-        return result
-    else:
-        raise NotImplementedError(compression_method + " is not implemented")
+        return ChunkId in self.Toc
 
 
 if __name__ == "__main__":

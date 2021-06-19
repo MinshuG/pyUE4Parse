@@ -11,8 +11,11 @@ class UMaterialInstanceConstant(UObject):
     parent: Optional[FPackageIndex]
     ScalarParameterValues: Optional[List[StructProperty]]
 
-    def __init__(self, reader: BinaryStream, validpos):
-        super().__init__(reader, validpos=validpos)
+    def __init__(self, reader: BinaryStream):
+        super().__init__(reader)
+
+    def deserialize(self, validpos):
+        super().deserialize(validpos)
         self.parent = self.Dict.get("Parent", None)
         if self.parent is not None:
             self.parent = self.parent.Value
@@ -21,13 +24,15 @@ class UMaterialInstanceConstant(UObject):
         self.VectorParameterValues = self.Dict.get("VectorParameterValues", None)
         self.TextureParameterValues = self.Dict.get("TextureParameterValues", None)
 
-    # def merge_with_parent(self):
-    #     provider: Provider = self.reader.provider
-    #     pkg = provider.get_package(self.parent)
-    #     parent_mat = pkg.parse_package()
-    #     materialexport = parent_mat.find_export("Material")
-    #     if materialexport is not None:
-    #         materialexport = materialexport.exportObject
-    #     else:
-    #         return
-    #     self.Dict = materialexport.Dict.update(self.Dict)
+        for key, value in self.Dict.items():
+            if hasattr(self, key):
+                continue
+            setattr(self, key, value)
+
+    def get_parent(self):
+        provider: Provider = self.reader.provider
+        pkg = provider.get_package(self.parent)
+        if pkg is not None:
+            parent_mat = pkg.parse_package()
+            return parent_mat
+        return None

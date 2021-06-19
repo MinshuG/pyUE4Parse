@@ -1,3 +1,5 @@
+from contextlib import suppress
+from UE4Parse.Objects.EPackageFlags import EPackageFlags
 from typing import List
 
 from UE4Parse.BinaryReader import BinaryStream
@@ -53,7 +55,8 @@ class FPackageFileSummary:
         self.FolderName = reader.readFString()
 
         self.PackageFlags = reader.readUInt32()
-        # self.PackageFlags = EPackageFlags(self.PackageFlags)
+        with suppress(ValueError):
+            self.PackageFlags = EPackageFlags(self.PackageFlags)
 
         self.NameCount = reader.readInt32()
         self.NameOffset = reader.readInt32()
@@ -110,7 +113,9 @@ class FPackageFileSummary:
             if reader.readInt32() != 0:  # "NumTextureAllocations"
                 raise ParserException("Can't load legacy UE3 file")
 
+        # if reader.Ver >= VER_UE4_ASSET_REGISTRY_TAGS
         self.AssetRegistryDataOffset = reader.readInt32()
+
         self.BulkDataStartOffset = reader.readInt64()
         self.WorldTileInfoDataOffset = reader.readInt32()
         self.ChunkIDs = reader.readTArray(reader.readInt32)
@@ -119,3 +124,6 @@ class FPackageFileSummary:
 
     def GetFileVersionUE4(self):
         return self.FileVersionUE4
+
+    def GetCustomVersions(self):
+        return self.CustomVersionContainer

@@ -20,9 +20,6 @@ class FPackageId:
     def __init__(self, reader: BinaryStream):
         self.Id = reader.readUInt64()
 
-    def CreateIoChunkId(self, chunk_index: int, chunktype: EIoChunkType = EIoChunkType.ExportBundleData):
-        return FIoChunkId().construct(self.Id, chunk_index, chunktype)
-
 
 class FImportedPackage:
     index: FPackageId

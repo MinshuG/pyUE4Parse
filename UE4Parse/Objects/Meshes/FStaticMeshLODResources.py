@@ -84,29 +84,29 @@ class FStaticMeshLODResources:
         # self.vertexBuffer = FStaticMeshVertexBuffer(reader)
 
     def serializeBuffer(self, reader: BinaryStream):
-        strip_flags = FStripDataFlags(reader)
+        stripFlags = FStripDataFlags(reader)
 
         self.positionVertexBuffer = FPositionVertexBuffer(reader)
         self.vertexBuffer = FStaticMeshVertexBuffer(reader)
         self.colorVertexBuffer = FColorVertexBuffer(reader)
         self.indexBuffer = FRawStaticIndexBuffer(reader)
 
-        if not self.stripFlags.isClassDataStripped(CDSF_ReversedIndexBuffer):
+        if not stripFlags.isClassDataStripped(CDSF_ReversedIndexBuffer):
             self.reversedIndexBuffer = FRawStaticIndexBuffer(reader)
 
         self.depthOnlyIndexBuffer = FRawStaticIndexBuffer(reader)
 
-        if not self.stripFlags.isClassDataStripped(CDSF_ReversedIndexBuffer):
+        if not stripFlags.isClassDataStripped(CDSF_ReversedIndexBuffer):
             self.reversedDepthOnlyIndexBuffer = FRawStaticIndexBuffer(reader)
 
-        if not self.stripFlags.isEditorDataStripped():
+        if not stripFlags.isEditorDataStripped():
             self.wireframeIndexBuffer = FRawStaticIndexBuffer(reader)
 
-        if not self.stripFlags.isClassDataStripped(CDSF_AdjancencyData):
+        if not stripFlags.isClassDataStripped(CDSF_AdjancencyData):
             self.adjacencyIndexBuffer = FRawStaticIndexBuffer(reader)
 
         # UE 4.25+
-        if reader.game >= GAME_UE4(25) and not self.stripFlags.isClassDataStripped(CDSF_RaytracingResources):
+        if reader.game >= GAME_UE4(25) and not stripFlags.isClassDataStripped(CDSF_RaytracingResources):
             reader.readBulkTArray(reader.readByte)  # Raw data
 
         # 25178

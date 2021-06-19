@@ -10,7 +10,7 @@ class FSoftObjectPath:
     def __init__(self, reader: BinaryStream) -> None:
         self.position = reader.base_stream.tell()
         self.AssetPathName = reader.readFName()
-        self.SubPathString = reader.readString()
+        self.SubPathString = reader.readFString()
 
     def GetValue(self):
         return {

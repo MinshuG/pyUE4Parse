@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import List
+from typing import List, Tuple
 
 from UE4Parse.BinaryReader import BinaryStream
 
@@ -30,8 +30,15 @@ class FExportBundleEntry:
 
 class FExportBundle:
     Header: FExportBundleHeader
-    Entries: List[FExportBundleEntry]
+    Entries: Tuple[FExportBundleEntry]
 
     def __init__(self, reader: BinaryStream):
-        self.Header = FExportBundleHeader(reader)
-        self.Entries = [FExportBundleEntry(reader) for _ in range(self.Header.EntryCount)]
+        self.Header = FExportBundleHeader(reader) # multiple header?
+        self.Entries = tuple(FExportBundleEntry(reader) for _ in range(self.Header.EntryCount))
+
+    def getOrder(self):
+        y = []
+        for x in self.Entries:
+            if x.CommandType == EExportCommandType.ExportCommandType_Serialize:
+                y.append(min(self.Header.EntryCount - 1, x.LocalExportIndex))
+        return y

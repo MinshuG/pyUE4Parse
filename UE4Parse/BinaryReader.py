@@ -1,7 +1,9 @@
+
+from UE4Parse.Objects.EPackageFlags import EPackageFlags
 import os
 from io import BufferedReader, BytesIO
 from struct import *
-from typing import Union
+from typing import Set, Tuple, TypeVar, Union, TYPE_CHECKING
 
 from UE4Parse import Logger
 from UE4Parse.Exceptions.Exceptions import ParserException
@@ -9,18 +11,25 @@ from UE4Parse.Objects.EUEVersion import EUEVersion
 from UE4Parse.Objects.FName import FName, DummyFName
 from UE4Parse.Objects.FPackageIndex import FPackageIndex
 
+if TYPE_CHECKING:
+    from UE4Parse.Objects.FGuid import FGuid
+    from UE4Parse.PackageReader import LegacyPackageReader, IoPackageReader
+    from UE4Parse.provider.MappingProvider import MappingProvider
+
 logging = Logger.get_logger(__name__)
 
+T = TypeVar("T")
 
 class BinaryStream:
     NameMap: list
-    PackageReader: object
+    PackageReader: Union['LegacyPackageReader', 'IoPackageReader']
     version: int
     game: EUEVersion = None
     fake_size: int
     ubulk_stream: object
     bulk_offset: int = -1
     size = 0
+    mappings: 'MappingProvider'
 
     def __init__(self, fp: Union[BufferedReader, BytesIO, str, bytes], size: int = -1):
         if isinstance(fp, str):
@@ -49,8 +58,25 @@ class BinaryStream:
         self.game = ueversion
         self.version = self.game.get_ar_ver()
 
+    def CustomVer(self, key: 'FGuid') -> int:
+        Summary = self.PackageReader.get_summary()
+        CustomVersion = Summary.GetCustomVersions().GetVersion(key)
+        return CustomVersion if CustomVersion is not None else -1
+
+    @property
+    def has_unversioned_properties(self):
+        return bool(self.PackageReader.get_summary().PackageFlags & EPackageFlags.PKG_UnversionedProperties)
+
     def seek(self, offset, SEEK_SET=1):
         self.base_stream.seek(offset, SEEK_SET)
+
+    def getmappings(self):
+        if hasattr(self,"mappings"):
+            return self.mappings
+        raise ParserException("mappings are not attached")
+
+    def get_name_map(self):
+        return self.PackageReader.NameMap
 
     @property
     def position(self):
@@ -65,8 +91,9 @@ class BinaryStream:
     def tellfake(self):
         return (self.fake_size - self.size) + self.base_stream.tell()
 
-    def read(self):
-        """read till end"""
+    def read(self, length = -1):
+        if length > 0:
+            return self.readBytes(length)
         return self.base_stream.read()
 
     def readByte(self):
@@ -154,38 +181,31 @@ class BinaryStream:
             byte = self.readBytes(length)[:-1]
             return byte.decode("utf-8")
 
-    def readTArray(self, func, *args):
+    def readTArray(self, func: T, *args) -> Tuple[T]:
         SerializeNum = self.readInt32()
-        A = []
-        for _ in range(SerializeNum):
-            A.append(func(*args))
+        A = tuple(func(*args) for _ in range(SerializeNum))
         return A
 
-    def readTArray_W_Arg(self, func, *args):  # argument
+    def readTArray_W_Arg(self, func: T, *args) -> Set[T]:  # argument
         """use readTArray"""
-        SerializeNum = self.readInt32()
-        A = []
-        for _ in range(SerializeNum):
-            A.append(func(*args))
-        return A
+        return self.readTArray(func, *args)
 
-    # https://github.com/FabianFG/JFortniteParse/blob/aa1c3a224c948939ec91270dea655dc677e05a1e/src/main/kotlin/me/fungames/jfortniteparse/ue4/reader/FArchive.kt#L174
     def readBulkTArray(self, func, *args) -> list:
         elementSize = self.readInt32()
         savePos = self.tell()
-        array = self.readTArray_W_Arg(func, *args)
+        array = self.readTArray(func, *args)
         if self.tell() != savePos + 4 + len(array) * elementSize:
             raise ParserException(
                 f"RawArray item size mismatch: expected {elementSize}, serialized {(self.tell() - savePos) / len(array)}")
         return array
 
     def readFName(self):
-        NameMap = self.NameMap
+        NameMap = self.get_name_map()
         NameIndex = self.readInt32()
         Number = self.readInt32()
 
         if not 0 <= NameIndex < len(NameMap):
-            logging.debug(f"Bad Name Index: {NameIndex}/{len(NameMap)} - Loader Position: {self.base_stream.tell()}")
+            logging.debug(f"Bad Name Index: {NameIndex}/{len(NameMap)} - Reader Position: {self.base_stream.tell()}")
             return DummyFName()
 
         return FName(NameMap[NameIndex], NameIndex, Number)

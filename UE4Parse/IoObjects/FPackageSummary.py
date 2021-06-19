@@ -1,6 +1,7 @@
+from UE4Parse.Objects.EPackageFlags import EPackageFlags
 from .FMappedName import FMappedName
 from ..BinaryReader import BinaryStream
-
+from contextlib import suppress
 
 class FPackageSummary:
     Name: FMappedName
@@ -21,6 +22,8 @@ class FPackageSummary:
         self.Name = FMappedName().read(reader)
         self.SourceName = FMappedName().read(reader)
         self.PackageFlags = reader.readUInt32()
+        with suppress(ValueError):
+            self.PackageFlags = EPackageFlags(self.PackageFlags)
         self.CookedHeaderSize = reader.readUInt32()
         self.NameMapNamesOffset = reader.readInt32()
         self.NameMapNamesSize = reader.readInt32()

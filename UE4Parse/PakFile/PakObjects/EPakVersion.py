@@ -1,7 +1,7 @@
-from enum import Enum, auto
+from enum import IntEnum, auto
 
 
-class EPakVersion(Enum):
+class EPakVersion(IntEnum):
     INITIAL = 1
     NO_TIMESTAMPS = 2
     COMPRESSION_ENCRYPTION = 3  # UE4.13+

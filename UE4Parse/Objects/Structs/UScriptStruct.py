@@ -25,8 +25,11 @@ def switch(toCompare, CompareTo):
         return False
 
 
-def FallBackReader(reader: BinaryStream):
-    return UObjects.UObject(reader, True)
+def FallBackReader(reader: BinaryStream, structName = None):
+    fallbackobj = UObjects.UObject(reader, True)
+    fallbackobj.type = structName
+    fallbackobj.deserialize(0)
+    return fallbackobj
 
 
 class UScriptStruct:
@@ -69,7 +72,7 @@ class UScriptStruct:
             self.Struct = Structs.get(StructName)(reader)
         else:
             # logger.debug(f"Unsupported Struct {StructName}, using Fallback reader.")
-            self.Struct = FallBackReader(reader)
+            self.Struct = FallBackReader(reader, StructName)
 
     def GetValue(self):
         return self.Struct.GetValue()

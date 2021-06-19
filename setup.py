@@ -19,6 +19,6 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3",
     ],
-    install_requires=["pycryptodome"],
+    install_requires=["pycryptodome", "lz4"],
     packages=find_packages(),
 )

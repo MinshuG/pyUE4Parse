@@ -53,6 +53,9 @@ class FNameEntrySerialized:
 
     def __str__(self):
         return self.Name
+    
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(Name={self.Name})"
 
     def GetValue(self):
         return self.Name

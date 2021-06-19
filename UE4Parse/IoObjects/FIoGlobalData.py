@@ -39,10 +39,12 @@ class FIoGlobalData:
             # scriptObjectByGlobalIdKeys.append(scriptObjectEntry.GlobalIndex)
             # scriptObjectByGlobalIdValues.append(
             #     FScriptObjectDesc(self.GlobalNameMap[mappedName.GetIndex()], mappedName, scriptObjectEntry))
-            ScriptObjectByGlobalId[str(scriptObjectEntry.GlobalIndex.typeAndId)] = FScriptObjectDesc(self.GlobalNameMap[mappedName.GetIndex()], mappedName, scriptObjectEntry)
+            ScriptObjectByGlobalId[scriptObjectEntry.GlobalIndex.typeAndId] = FScriptObjectDesc(self.GlobalNameMap[mappedName.GetIndex()], mappedName, scriptObjectEntry)
 
+        self.ScriptObjectByGlobalId = ScriptObjectByGlobalId
+        
         # rest TODO
-
+        return
         for IoStore in allreaders:
             reader = IoStore.ContainerFile.FileHandle
 

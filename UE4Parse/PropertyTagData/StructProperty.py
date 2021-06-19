@@ -1,3 +1,4 @@
+from UE4Parse.Objects.FName import FName
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Objects.Structs.UScriptStruct import UScriptStruct
 
@@ -8,7 +9,7 @@ class StructProperty:
 
     def __init__(self, reader: BinaryStream, tag) -> None:
         self.position = reader.base_stream.tell()
-        struct_name = tag.StructName.string
+        struct_name = tag.StructName.string if isinstance(tag.StructName, FName) else tag.StructName
         self.Value = UScriptStruct(reader, struct_name).Struct
 
     def GetValue(self):

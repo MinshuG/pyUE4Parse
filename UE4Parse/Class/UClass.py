@@ -2,7 +2,8 @@
 import inspect
 
 
-class UClass:  # ik this should be base class for other all but who cares
+class UClass: 
+    """not real a uclass""" # TODO make it real
     def __init__(self):
         pass
 

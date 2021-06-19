@@ -1,8 +1,8 @@
 from enum import IntEnum, auto
 
 from UE4Parse import Logger
-from UE4Parse.Objects import FName
-from UE4Parse.Objects import FPropertyTag
+from UE4Parse.Objects.FName import FName
+from UE4Parse.Objects.FPropertyTag import FPropertyTag
 from UE4Parse.Objects.FGuid import FGuid
 from UE4Parse.PropertyTagData.ArrayProperty import ArrayProperty
 from UE4Parse.PropertyTagData.BoolProperty import BoolProperty
@@ -26,9 +26,16 @@ logger = Logger.get_logger(__name__)
 
 
 class ReadType(IntEnum):
+    """
+    `NORMAL` = `0`\n
+    `MAP` = `1`\n
+    `ARRAY` = `2`\n
+    `ZERO` = `3`\n
+    """
     NORMAL = 0
     MAP = auto()
     ARRAY = auto()
+    ZERO = auto()
 
 
 def switch(toCompare, CompareTo):
@@ -39,7 +46,11 @@ def switch(toCompare, CompareTo):
 
 
 def ReadAsObject(reader, tag: FPropertyTag = None, type_: FName = None, readType: ReadType = None):
-    type_ = type_.string
+    type_ = type_.string  if isinstance(type_, FName) else type_
+
+    if type_ != "EnumProperty" and readType == ReadType.ZERO:
+        print(f"ReadType::Zero and it's not EnumProperty, {type_!r}")
+
 
     prop: object
     if switch("ByteProperty", type_):
@@ -95,7 +106,7 @@ def ReadAsObject(reader, tag: FPropertyTag = None, type_: FName = None, readType
     elif switch("EnumProperty", type_):
         prop = EnumProperty(reader, tag, readType)
     elif switch("Guid", type_):
-        prop = FGuid(reader).read()
+        prop = FGuid(reader)
     else:
         return None
 

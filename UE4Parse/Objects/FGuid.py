@@ -3,6 +3,7 @@ from typing import Optional
 from UE4Parse.BinaryReader import BinaryStream
 
 
+# TODO Implement EGuidFormats
 class FGuid:
     position: int
     A: int
@@ -28,10 +29,15 @@ class FGuid:
         self.D = D
         return self
 
-    def __eq__(self, o: object) -> bool:
-        return self.GetValue() == o.GetValue()
+    def __eq__(self, o: 'FGuid') -> bool:
+        return ((self.A ^ o.A) | (self.B ^ o.B) | (self.C ^ o.C) | (self.D ^ o.D)) == 0
+        # return self.GetValue() == o.GetValue()
 
     def GetValue(self):
         def formatter(a):
             return format(a, '08x')
+
         return f"{formatter(self.A)}{formatter(self.B)}{formatter(self.C)}{formatter(self.D)}".upper()
+
+    def __hash__(self) -> int:
+        return hash(self.GetValue())

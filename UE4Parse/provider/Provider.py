@@ -1,3 +1,7 @@
+from logging import NOTSET
+from UE4Parse.provider.MappingProvider import MappingProvider
+from UE4Parse.IoObjects.FImportedPackage import FPackageId
+from UE4Parse.Localization.FTextLocalizationResource import FTextLocalizationResource
 import io
 import json
 import os
@@ -18,7 +22,6 @@ from UE4Parse.provider.utils import *
 
 logger = get_logger(__name__)
 
-
 class FGame:
     UEVersion: EUEVersion = EUEVersion.LATEST
     GameName: Optional[str] = None
@@ -26,36 +29,60 @@ class FGame:
     # SubVersion = 0
 
 
-class Package:
+class PackageProvider:
     _package: Union[FPakEntry, FIoStoreEntry]
     _name: str
     _uasset: BinaryStream
     _uexp: BinaryStream
     _ubulk: Optional[BinaryStream] = None
+    _uptnl: Optional[BinaryStream] = None
     _is_parsed: bool = False
     _parsed: Union[LegacyPackageReader, IoPackageReader]
-    _provider = None
+    _provider: 'Provider' = None
 
-    def __init__(self, uasset: BinaryStream, uexp: BinaryStream, ubulk: BinaryStream,
-                 package: Union[FPakEntry, FIoStoreEntry], provider):
+    def __init__(self, uasset: BinaryStream, uexp: BinaryStream, ubulk: BinaryStream, uptnl: BinaryStream,
+                package: Union[FPakEntry, FIoStoreEntry], provider):
         self._provider = provider
         self._package = package
         self._uasset = uasset
         self._uexp = uexp
         self._ubulk = ubulk
+        self._uptnl = uptnl
         self._name = self.get_mount_point() + package.Name
 
     def get_name(self):
         return self._name
 
-    def parse_package(self):
+    def parse_package(self, *args, **kwargs):
+        """
+        kwargs:
+                `onlyInfo`: `bool` Used by `IoPackageReader'
+        """
+
         if not self._is_parsed:
             logger.info(f"Parsing {self._name}")
-            if isinstance(self._package, FIoStoreEntry):
-                self._parsed = IoPackageReader(self._uasset, self._ubulk, self._provider,
-                                               onlyInfo=False)
+
+            ext =  os.path.splitext(os.path.basename(self._name))[1]
+            if ext in [".uasset", ".umap", ".uptnl"]:
+                if isinstance(self._package, FIoStoreEntry):
+                    self._uasset.mappings = self._provider.mappingProvider
+                    onlyInfo = kwargs.get("onlyInfo") or False
+                    self._parsed = IoPackageReader(self._uasset, self._ubulk, self._uptnl, self._provider,
+                                                onlyInfo=onlyInfo)
+                else:
+                    self._parsed = LegacyPackageReader(self._uasset, self._uexp, self._ubulk, self._provider)
+            elif ext in [".locres"]:
+                self._parsed = FTextLocalizationResource(self._uasset)
+            elif ext == ".locmeta":
+                self._parsed = None
+                print("TODO locmeta")
+            elif ext in [".ufont", ".uproject", ".upluginmanifest", ".ini", ".pem"]:
+                self._uasset.seek(0)
+                self._parsed = self._uasset.read()
             else:
-                self._parsed = LegacyPackageReader(self._uasset, self._uexp, self._ubulk, self._provider)
+                print(f"Unknown Type: [{ext}] {self._name}")
+                raise Exception("Unknown Type")
+                self._parsed = None                
             self._is_parsed = True
         return self._parsed
 
@@ -63,7 +90,7 @@ class Package:
         path_ = self._package
         container = self._provider.Paks[path_.ContainerName] if path_.ContainerName in self._provider.Paks else \
             self._provider.IoStores[
-                path_.ContainerName]
+                path_.ContainerName] # .utoc
 
         mount_point = container.MountPoint if isinstance(container,
                                                          PakReader.PakReader) else container.ContainerFile.MountPoint
@@ -102,6 +129,9 @@ class Package:
             mount_point = self.get_mount_point()
 
             mounted_path = os.path.join(mount_point, path_.Name)
+            if mounted_path.startswith("/"):
+                mounted_path =  mounted_path[1:]
+
             x = os.path.splitext(os.path.join(path, mounted_path))[0] + ".json"
             dir_ = os.path.dirname(x)
             if not os.path.exists(dir_):
@@ -125,11 +155,11 @@ class Provider:
     IoStores: dict
     caseinsensitive: bool
     GlobalData: FIoGlobalData
-    files: Dict[str, Union[FPakEntry, FIoStoreEntry]]
     GameInfo: FGame
     files: Dict[str, Union[FPakEntry, FIoStoreEntry]]
+    mappingProvider: MappingProvider = None
 
-    def __init__(self, pak_folder: Union[str, List[str]], caseinsensitive=False, GameInfo: FGame = FGame()):
+    def __init__(self, pak_folder: Union[str, List[str]], caseinsensitive=False, GameInfo: FGame = FGame(), mappings: MappingProvider = None):
         """
         pak_folder is pak folder path containing path files. \n
         :param pak_folder:
@@ -140,11 +170,71 @@ class Provider:
         self.caseinsensitive = caseinsensitive
         self.files = {}
         self.GameInfo = GameInfo
+        self._AES_Keys = {}
+        self.Paks: dict[str, PakReader.PakReader] = {}
+        self.IoStores: dict[str, IoStoreReader.FFileIoStoreReader] = {}
+        self.GlobalData = None
+        self.mappingProvider = mappings
+        self._intialize()
+
+    def _intialize(self) -> None:
+        if isinstance(self.pak_folder, list):
+            pak_names = self.pak_folder
+            self.pak_folder = os.path.dirname(pak_names[0])
+        elif os.path.isdir(self.pak_folder):
+            pak_names = os.listdir(self.pak_folder)
+        elif isinstance(self.pak_folder, str):
+            if os.path.isfile(self.pak_folder):
+                pak_names = [self.pak_folder]
+                self.pak_folder = os.path.dirname(pak_names[0])
+        else:
+            raise TypeError(f"unexpected 'pak_folder' type {type(self.pak_folder)}") # path doesn't exit
+
+        globalreader: Optional[IoStoreReader.FFileIoStoreReader] = None
+        # just  register them
+        for pak_name in pak_names:
+            if not os.path.exists(pak_name):
+                path = os.path.join(self.pak_folder, pak_name)
+            else:
+                path = pak_name
+            reader, pak_name = self._register_file(pak_name,path)
+
+            if reader is None:
+                continue
+            if pak_name.endswith("global.utoc") and globalreader is None:
+                globalreader = reader
+                continue
+
+            if isinstance(reader, PakReader.PakReader):
+                self.Paks[pak_name] = reader
+            else:
+                self.IoStores[pak_name] = reader
+
+        if globalreader is not None:
+            logger.info("Reading GlobalData...")
+            self.GlobalData = FIoGlobalData(globalreader, list(self.IoStores.values()))
 
     @property
     def mounted_paks(self) -> list:
         """List of currently mounted paks"""
         return self._mounted_files
+
+    def _register_file(self, con_file, path):
+        pak_name = con_file
+
+        if pak_name.endswith(".pak"):
+                # self.Paks[os.path.basename(pak_name)] = 
+                reader = PakReader.PakReader(path, self.caseinsensitive)
+                return reader, os.path.basename(pak_name)
+                # logger.debug(f"Registering PakFile: {path}")
+        if pak_name.endswith(".utoc"):
+            ucas_path = path[:-5] + ".ucas"
+            logger.debug(f"Registering IoStore: {path[:-5]}")
+            reader = IoStoreReader.FFileIoStoreReader(ucas_path, BinaryStream(path),
+                                                        BinaryStream(ucas_path), self.caseinsensitive)
+            return reader, os.path.basename(pak_name)
+
+        return None, None
 
     def export_type_event(self, *args, **kwargs):
         if len(args) > 0:
@@ -174,45 +264,7 @@ class Provider:
             AES_KEYs = {}
         self.AES_KEYs = AES_KEYs
 
-        if isinstance(self.pak_folder, list):
-            pak_names = self.pak_folder
-            self.pak_folder = os.path.dirname(pak_names[0])
-        elif os.path.isdir(self.pak_folder):
-            pak_names = os.listdir(self.pak_folder)
-        elif isinstance(self.pak_folder, str):
-            if os.path.isfile(self.pak_folder):
-                pak_names = [self.pak_folder]
-                self.pak_folder = os.path.dirname(pak_names[0])
-        else:
-            raise TypeError(f"unexpected 'pak_folder' type {type(self.pak_folder)}")
-
-        paks: dict[str, PakReader.PakReader] = {}
-        IoStores: dict[str, IoStoreReader.FFileIoStoreReader] = {}
-
-        globalreader: Optional[IoStoreReader.FFileIoStoreReader] = None
-        # just  register them
-        for pak_name in pak_names:
-            if not os.path.exists(pak_name):
-                path = os.path.join(self.pak_folder, pak_name)
-            else:
-                path = pak_name
-            if pak_name.endswith(".pak"):
-                paks[os.path.basename(pak_name)] = PakReader.PakReader(path, self.caseinsensitive)
-                logger.debug(f"Registering PakFile: {path}")
-            if pak_name.endswith(".utoc"):
-                ucas_path = path[:-5] + ".ucas"
-                logger.debug(f"Registering IoStore: {path[:-5]}")
-                reader = IoStoreReader.FFileIoStoreReader(ucas_path, BinaryStream(path),
-                                                          BinaryStream(ucas_path), self.caseinsensitive)
-                if pak_name.endswith("global.utoc") and globalreader is None:
-                    globalreader = reader
-                    continue
-                IoStores[os.path.basename(ucas_path)] = reader
-
-        pog = self.getGUID_PAKNAME_DICT(paks, IoStores)
-
-        self.IoStores = IoStores
-        self.Paks = paks
+        pog = self.getGUID_PAKNAME_DICT(self.Paks, self.IoStores)
 
         def fixKey(aes: str):
             # isbase64 = re.findall(r'^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$', aes)
@@ -254,24 +306,26 @@ class Provider:
 
                 try:  # IoStore
                     if pak_name.endswith(".ucas") or pak_name.endswith(".utoc"):
-                        tocIndex, chunks = IoStores[pak_name].ReadDirectoryIndex(key=aeskey)
+                        container = self.IoStores[pak_name]
+                        tocIndex, chunks = container.ReadDirectoryIndex(key=aeskey)
                         self.files.update(tocIndex)
                         if pak_name not in self._mounted_files:
                             self._mounted_files.append(pak_name)
+                        self._AES_Keys[container.get_encryption_key_guid()]  = aeskey
                 except Exception as e:
                     logger.warn(f"An error occurred while reading {pak_name}, {e}")
+                    # raise e
 
                 try:  # pak
                     if pak_name.endswith(".pak"):
-                        self.files.update(paks[pak_name].ReadIndex(key=aeskey))
+                        container = self.Paks[pak_name]
+                        self.files.update(container.ReadIndex(key=aeskey))
                         if pak_name not in self._mounted_files:
                             self._mounted_files.append(pak_name)
+                        self._AES_Keys[container.get_encryption_key_guid()]  = aeskey
                 except Exception as e:
                     logger.warn(f"An error occurred while reading {pak_name}, {e}")
-
-        if globalreader is not None:
-            logger.info("Reading GlobalData...")
-            self.GlobalData = FIoGlobalData(globalreader, list(IoStores.values()))
+                    # raise e
 
         if len(self.files) > 0:
             files = [file.split("/")[0] for file in self.files.keys()]
@@ -304,12 +358,24 @@ class Provider:
                 return key
         return None
 
-    def get_package(self, name: Union[str, FPackageIndex]) -> Optional[Package]:
-        """Load Package into memory"""
-        if isinstance(name, FPackageIndex):
-            name = name.Resource.ObjectName.__str__()
+    def find_package_by_Id(self, Id: FPackageId) -> Optional[str]:
+        # chunkId = Id.Id
+        for name, package in self.files.items():
+            if isinstance(package, FIoStoreEntry):
+                if Id.Id == package.ChunkId.ChunkId:
+                    return name
+        return None
 
-        name = os.path.splitext(name)[0]  # remove extension
+    def get_package(self, name: Union[str, FPackageId]) -> Optional[PackageProvider]:
+        """Load Package into memory"""
+        if isinstance(name, FPackageId):
+            foundname = self.find_package_by_Id(name)
+            if foundname is None:
+                logger.error(f"Requested Package {name.Id!r} not found.")
+                return None
+            name = foundname
+
+        name = os.path.splitext(name)[0]
         if name is not None:
             name = fixpath(name, self.GameInfo.GameName)
         name = name.lower() if self.caseinsensitive else name
@@ -331,22 +397,27 @@ class Provider:
 
             uexp = None
             ubulk = None
+            uptnl = None
             if isinstance(package, FIoStoreEntry):  # IoStorePackage
                 uasset = package.GetData()
                 if package.hasUbulk:
                     ubulk = BinaryStream(package.ubulk.GetData())
+                if package.hasUptnl:
+                    uptnl = BinaryStream(package.uptnl.GetData())
             else:  # PakPackage
                 container = self.Paks[package.ContainerName]
                 reader = container.reader
 
-                uasset = package.get_data(reader, key=None, compression_method=container.Info.CompressionMethods)
+                key = self._AES_Keys.get(container.get_encryption_key_guid(), None)
+
+                uasset = package.get_data(reader, key=key, compression_method=container.Info.CompressionMethods)
                 if package.hasUexp:
-                    uexp = package.uexp.get_data(reader, key=None, compression_method=container.Info.CompressionMethods)
+                    uexp = package.uexp.get_data(reader, key=key, compression_method=container.Info.CompressionMethods)
                 if package.hasUbulk:
-                    ubulk = package.ubulk.get_data(reader, key=None,
+                    ubulk = package.ubulk.get_data(reader, key=key,
                                                    compression_method=container.Info.CompressionMethods)
 
-            return Package(uasset, uexp, ubulk, package, self)
+            return PackageProvider(uasset, uexp, ubulk, uptnl, package, self)
 
     def readpackage(self, uasset, uexp, ubulk=None) -> LegacyPackageReader:
         """

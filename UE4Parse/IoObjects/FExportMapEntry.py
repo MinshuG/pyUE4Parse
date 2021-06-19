@@ -1,9 +1,14 @@
+from UE4Parse.Objects.FName import FName
 from enum import IntEnum
+from typing import TYPE_CHECKING
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.IoObjects.FMappedName import FMappedName
 from UE4Parse.IoObjects.FPackageObjectIndex import FPackageObjectIndex
 from UE4Parse.Objects.EObjectFlags import EObjectFlags
+
+if TYPE_CHECKING:
+    from UE4Parse.Class.UObjects import UObject
 
 
 class EExportFilterFlags(IntEnum):
@@ -24,6 +29,7 @@ class FExportMapEntry:
     GlobalImportIndex: FPackageObjectIndex
     ObjectFlags: EObjectFlags
     FilterFlags: EExportFilterFlags
+    exportObject: 'UObject'
 
     def __init__(self, reader: BinaryStream):
         self.CookedSerialOffset = reader.readUInt64()
@@ -43,10 +49,7 @@ class FExportMapEntry:
         self.FilterFlags = EExportFilterFlags(reader.readByteToInt())
         reader.seek(3)
 
-    def GetValue(self):
-        return {
-            "ClassIndex": "TODO",  # self.ClassIndex.GetValue(),
-            "SuperIndex": "TODO",  # self.SuperIndex.GetValue(),
-            "OuterIndex": "TODO",  # self.OuterIndex.GetValue(),
-            "ObjectName": self.ObjectName.GetValue()
-        }
+    @property
+    def type(self):
+        return FName(self.ObjectName.GetValue())
+

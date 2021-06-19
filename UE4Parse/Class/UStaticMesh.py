@@ -29,9 +29,14 @@ class UStaticMesh(UObject):
     ScreenSize: List[float] = []
     StaticMaterials: List[FStaticMaterial] = []
     Materials = []
+    
+    def __init__(self, reader: BinaryStream):
+        super().__init__(reader)
+    
+    def deserialize(self, validpos) -> None:
+        super().deserialize(validpos)
+        reader = self.reader
 
-    def __init__(self, reader: BinaryStream, validpos):
-        super().__init__(reader, validpos)
         self.StripData = FStripDataFlags(reader)
         bCooked = reader.readBool()
         self.BodySetup = reader.readObject()
@@ -58,7 +63,7 @@ class UStaticMesh(UObject):
             if not bCooked:  # how possible
                 pass  # https://github.com/FabianFG/JFortniteParse/blob/558fb2b96985aad5b90c96c8f28950021cf801a0/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/UStaticMesh.kt#L59
             # if unversioned MinMobileLODIdx int32
-            self.LODs = reader.readTArray_W_Arg(FStaticMeshLODResources, reader)
+            self.LODs = reader.readTArray_W_Arg(FStaticMeshLODResources, reader) #TODO fix this
 
             if reader.game >= GAME_UE4(23):
                 NumInlinedLODs = reader.readUInt8()
@@ -104,7 +109,7 @@ class UStaticMesh(UObject):
         if bCooked and reader.game >= GAME_UE4(20):
             hasOccluderData = reader.readBool()
             if hasOccluderData:
-                reader.readTArray_W_Arg(FVector, reader)  # Vertices
+                reader.readTArray(FVector, reader)  # Vertices
                 reader.readTArray(reader.readUInt16)  # Indics
 
         if reader.game >= GAME_UE4(14):

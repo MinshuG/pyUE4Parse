@@ -75,10 +75,10 @@ class FTextLocalizationResource:
             Entries: Dict[str, str] = {}
             for i in range(KeyCount):
                 if VersionNumber >= ELocResVersion.Optimized_CRC32:
-                    reader.seek(4) # StrHash uint
+                    reader.seek(4)  # StrHash uint
 
                 Key: str = reader.readFString();
-                reader.seek(4) # SourceStringHash
+                reader.seek(4)  # SourceStringHash
 
                 EntryLocalizedString: str
                 if VersionNumber >= ELocResVersion.Compact:

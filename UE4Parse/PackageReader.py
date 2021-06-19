@@ -1,9 +1,10 @@
-from typing import List, TYPE_CHECKING, Optional, Union
+from UE4Parse.IoObjects.IoUtils import resolveObjectIndex
+from typing import List, TYPE_CHECKING, Optional, Tuple, Union
 
 from UE4Parse import ToJson, Logger
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Exceptions.Exceptions import ParserException
-from UE4Parse.IoObjects.FExportBundle import FExportBundle
+from UE4Parse.IoObjects.FExportBundle import EExportCommandType, FExportBundle, FExportBundleHeader
 from UE4Parse.IoObjects.FExportMapEntry import FExportMapEntry
 from UE4Parse.IoObjects.FImportedPackage import FImportedPackage
 from UE4Parse.IoObjects.FIoGlobalData import FIoGlobalData
@@ -15,7 +16,7 @@ from UE4Parse.Objects.FObjectExport import FObjectExport
 from UE4Parse.Objects.FObjectImport import FObjectImport
 from UE4Parse.Objects.FPackageFileSummary import FPackageFileSummary
 from UE4Parse.Objects.FPackageIndex import FPackageIndex
-from .Class import ExportRegistry
+from .Class.ExportRegistry import Registry
 
 if TYPE_CHECKING:
     from .provider import Provider
@@ -23,11 +24,31 @@ if TYPE_CHECKING:
 logger = Logger.get_logger(__name__)
 
 
-class LegacyPackageReader:
+class Package:
+    NameMap: List[FNameEntrySerialized] = []
+    ImportMap: Tuple[Union[FObjectImport, FPackageObjectIndex]] = []
+    ExportMap: Tuple[FObjectExport, FExportMapEntry] = []
+    Summary: Union[FPackageFileSummary, FPackageSummary]
+    Provider: 'Provider'
+
+    def get_summary(self) -> FPackageFileSummary:
+        return self.Summary
+
+    def get_dict(self):
+        return ToJson.ToJson(self)
+
+    def find_export(self, export_name: str) -> Optional[Union[FObjectExport, FExportMapEntry]]:
+        for export in self.ExportMap:
+            if export_name == export.name.string:
+                return export
+        return None
+
+
+class LegacyPackageReader(Package):
     NameMap: List[FNameEntrySerialized] = []
     ImportMap: List[FObjectImport] = []
     ExportMap: List[FObjectExport] = []
-    PackageFileSummary: FPackageFileSummary
+    Summary: FPackageFileSummary
 
     # @profile
     def __init__(self, uasset: BinaryStream, uexp: BinaryStream = None, ubulk: BinaryStream = None,
@@ -38,6 +59,7 @@ class LegacyPackageReader:
         self.reader.PackageReader = self
 
         self.PackageFileSummary = FPackageFileSummary(self.reader)
+        self.Summary = self.PackageFileSummary
         pos = self.reader.tell()
         self.NameMap = self.SerializeNameMap()
         self.reader.NameMap = self.NameMap
@@ -75,7 +97,8 @@ class LegacyPackageReader:
             self.reader.bulk_offset = Export.SerialSize + self.PackageFileSummary.TotalHeaderSize  # ?
 
             pos = self.reader.base_stream.tell()
-            ExportData = ExportRegistry.get_export_reader(ExportType.string)(self.reader, pos + Export.SerialSize)
+            ExportData = Registry().get_export_reader(ExportType.string, Export, self.reader)
+            ExportData.deserialize(pos + Export.SerialSize)
             Export.exportObject = ExportData
 
             # export event
@@ -115,8 +138,8 @@ class LegacyPackageReader:
             return OutExportMap
         return []
 
-    def get_dict(self):
-        return ToJson.ToJson(self)
+    def get_summary(self) -> FPackageFileSummary:
+        return self.PackageFileSummary
 
     def find_export(self, export_name: str) -> Optional[FObjectExport]:
         for export in self.ExportMap:
@@ -129,29 +152,28 @@ class LegacyPackageReader:
             return None
         elif index.IsImport:
             return self.ImportMap[index.AsImport]
-        else:  # index.IsExport
+        else:
             export = self.ExportMap[index.AsExport]
-            # if hasattr(export, "exportObject"):
-            #     return self.ExportMap[index.AsExport].exportObject
             return export
 
 
-class IoPackageReader:
+class IoPackageReader(Package):
     GlobalData: FIoGlobalData
     Summary: FPackageSummary
-    NameMap: List[FNameEntrySerialized]
-    ImportMap: List[FPackageObjectIndex]
-    ExportMap: List[FExportMapEntry]
+    NameMap: Tuple[FNameEntrySerialized]
+    ImportMap: Tuple[FPackageObjectIndex]
+    ExportMap: Tuple[FExportMapEntry]
     ExportBundle: FExportBundle
-    GraphData: List[FImportedPackage]
-    ImportedPackages: list
+    GraphData: Tuple[FImportedPackage]
+    ImportedPackages: List['IoPackageReader']
 
-    def __init__(self, uasset: BinaryStream, ubulk: BinaryStream, provider: "Provider", onlyInfo: bool = False):
+    def __init__(self, uasset: BinaryStream, ubulk: BinaryStream, uptnl: BinaryStream, provider: "Provider", onlyInfo: bool = False):
         reader = uasset
-        reader.ubulk_stream = ubulk
-        self.reader.game = provider.GameInfo.UEVersion
+        reader.ubulk_stream = ubulk or uptnl
+        reader.game = provider.GameInfo.UEVersion
         reader.PackageReader = self
         self.reader = reader
+        self.Provider = provider
 
         self.Summary = FPackageSummary(reader=reader)
 
@@ -169,24 +191,44 @@ class IoPackageReader:
             del nameHashReader
             del nameMapReader
 
-        self.ImportMap = []
+        self.ImportMap = ()
         reader.seek(self.Summary.ImportMapOffset, 0)
         import_map_Count = int(
             (self.Summary.ExportMapOffset - self.Summary.ImportMapOffset) / 8)  # size of FPackageObjectIndex
-        self.ImportMap = [FPackageObjectIndex(reader) for _ in range(import_map_Count)]
+        self.ImportMap = tuple(FPackageObjectIndex(reader) for _ in range(import_map_Count))
 
-        self.ExportMap = []
+        self.ExportMap = ()
         reader.seek(self.Summary.ExportMapOffset, 0)
         exportMapCount = int((self.Summary.ExportBundlesOffset - self.Summary.ExportMapOffset) / FExportMapEntry.SIZE)
-        self.ExportMap = [FExportMapEntry(reader) for _ in range(exportMapCount)]
+        self.ExportMap = tuple(FExportMapEntry(reader) for _ in range(exportMapCount))
 
+        reader.seek(self.Summary.ExportBundlesOffset, 0)
         self.ExportBundle = FExportBundle(reader)
 
-        if not onlyInfo:
-            reader.seek(self.Summary.GraphDataOffset, 0)
-            self.GraphData = reader.readTArray(FImportedPackage, reader)
+        if onlyInfo:
+            return
+        reader.seek(self.Summary.GraphDataOffset, 0)
+        self.GraphData = reader.readTArray(FImportedPackage, reader)
+        self.ImportedPackages = tuple(provider.get_package(iD.index).parse_package(onlyInfo=True) for iD in self.GraphData)
 
-        breakpoint()
+        allExportDataOffset = self.Summary.GraphDataOffset + self.Summary.GraphDataSize
+        currentExportDataOffset = allExportDataOffset
 
-    def get_dict(self):
-        return None
+        for i in range(self.ExportBundle.Header.EntryCount):
+            export_entry = self.ExportBundle.Entries[self.ExportBundle.Header.FirstEntryIndex + i]
+            if export_entry.CommandType == EExportCommandType.ExportCommandType_Serialize:
+                Export =  self.ExportMap[export_entry.LocalExportIndex] #self.ExportMap[i]
+
+                self.reader.seek(currentExportDataOffset, 0)
+
+                ExportName = resolveObjectIndex(self, provider.GlobalData, index=Export.ClassIndex).getName()
+                ExportData = Registry().get_export_reader(ExportName.string, Export, self.reader)
+                ExportData.deserialize(currentExportDataOffset + Export.CookedSerialSize)
+                Export.name = ExportName
+                Export.exportObject = ExportData
+
+                position = self.reader.base_stream.tell()
+                if position != currentExportDataOffset + Export.CookedSerialSize:
+                    logger.debug(
+                        f"Didn't read ExportType {ExportName.string} properly, at {position}, should be: {currentExportDataOffset + Export.CookedSerialSize} behind: {currentExportDataOffset + Export.CookedSerialSize - position}")
+                currentExportDataOffset += Export.CookedSerialSize
