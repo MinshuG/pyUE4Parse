@@ -115,7 +115,10 @@ class BinaryStream:
 
     def readBool(self):
         """Booleans in UE are serialized as int32"""
-        return self.readInt32() != 0
+        val = self.readInt32()
+        if val not in [0,1]:
+            raise ParserException("Invalid boolean value")
+        return val != 0
         # return self.unpack('?')
 
     def readSByte(self):

@@ -12,7 +12,8 @@ class bitarray:
     
     def addTrueAt(self, index: int):
         if len(self.__bools) < index:
-            raise NotImplementedError()
+            pass
+            # raise NotImplementedError()
         else:
             self.__bools[index] = True
 
@@ -105,9 +106,9 @@ class FUnversionedHeader:
             num = int(numBits / 32)
             num = divide_round_up(numBits, 32)
             for i in range(num):
-                data.addTrueAt(reader.readByte())
+                data.addTrueAt(reader.readByteToInt())
         trimed = data.trim(0, numBits)
         return trimed
 
 def divide_round_up(dividend, divisor):
-    return (dividend + divisor - 1) / divisor
+    return round((dividend + divisor - 1) / divisor)

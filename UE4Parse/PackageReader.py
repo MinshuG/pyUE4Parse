@@ -98,7 +98,10 @@ class LegacyPackageReader(Package):
 
             pos = self.reader.base_stream.tell()
             ExportData = Registry().get_export_reader(ExportType.string, Export, self.reader)
-            ExportData.deserialize(pos + Export.SerialSize)
+            try:
+                ExportData.deserialize(pos + Export.SerialSize)
+            except Exception as e:
+                logger.error(f"Could not read {ExportType.string} correctly")
             Export.exportObject = ExportData
 
             # export event

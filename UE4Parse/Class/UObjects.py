@@ -34,9 +34,6 @@ class UObject:
         else:
             self.Dict = self.deserializeVersioned()
 
-        if self.structFallback:
-            return
-
         pos = self.reader.tell()
         if pos + 4 <= validpos:
             val = self.reader.readInt32()
@@ -51,23 +48,17 @@ class UObject:
     def deserializeVersioned(self):
         properties = {}
         num = 1
-        tags = []
         while True:
             Tag = FPropertyTag(self.reader)
-            if Tag.Name.isNone or Tag.Name.GetValue() == "None":
+            if Tag.Name.isNone:
                 break
-            tags.append(Tag)
-            self.reader.seek(Tag.Size, 1)
-
-        for Tag in tags:
-            self.reader.seek(Tag.end_pos, 0)
             pos = self.reader.base_stream.tell()
             try:
                 obj = BaseProperty.ReadAsObject(
                     self.reader, Tag, Tag.Type, ReadType.NORMAL)
             except Exception as e:
                 # raise e
-                logger.debug(f"Failed to read values for {Tag.Name.string}, {e}")
+                logger.debug(f"Failed to read values for {Tag.Name}, {e}")
                 obj = None
 
             key = Tag.Name.string
@@ -82,7 +73,7 @@ class UObject:
             if expectedPos != pos2:
                 behind = expectedPos - pos2
                 logger.debug(
-                    f"Didn't read {key} correctly (at {pos2}, should be {Tag.Size + pos}, {behind} behind)")
+                    f"Didn't read {Tag!r} correctly (at {pos2}, should be {Tag.Size + pos}, {behind} behind)")
                 self.reader.seek(Tag.Size + pos, 0)
 
         return properties

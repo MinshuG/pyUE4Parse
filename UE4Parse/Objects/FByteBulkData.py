@@ -33,7 +33,7 @@ class FByteBulkData:
         self, reader: BinaryStream, ubulk: BinaryStream, bulkOffset: int
     ) -> None:
         self.Header = FByteBulkDataHeader(reader, bulkOffset)
-        bulkDataFlags = self.Header.BulkDataFlags
+        bulkDataFlags = EBulkDataFlags(self.Header.BulkDataFlags)
 
         if self.Header.ElementCount == 0:
             self.Data = None

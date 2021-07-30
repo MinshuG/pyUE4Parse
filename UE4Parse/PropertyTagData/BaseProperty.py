@@ -39,10 +39,10 @@ class ReadType(IntEnum):
 
 
 def switch(toCompare, CompareTo):
-    if toCompare == CompareTo:
-        return True
-    else:
-        return False
+    return toCompare == CompareTo
+    #     return True
+    # else:
+    #     return False
 
 
 def ReadAsObject(reader, tag: FPropertyTag = None, type_: FName = None, readType: ReadType = None):
@@ -51,10 +51,15 @@ def ReadAsObject(reader, tag: FPropertyTag = None, type_: FName = None, readType
     if type_ != "EnumProperty" and readType == ReadType.ZERO:
         print(f"ReadType::Zero and it's not EnumProperty, {type_!r}")
 
-
     prop: object
     if switch("ByteProperty", type_):
-        prop = ByteProperty(reader,  readType,tag)
+        if enum := getattr(tag, "EnumName", None):
+            if not enum.isNone:
+                prop = EnumProperty(reader, tag, readType)
+            else:
+                prop = ByteProperty(reader,  readType,tag)
+        else:
+            prop = ByteProperty(reader,  readType,tag)
     elif switch("BoolProperty", type_):
         prop = BoolProperty(reader, tag, readType)
     elif switch("IntProperty", type_):

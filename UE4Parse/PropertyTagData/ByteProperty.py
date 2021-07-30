@@ -6,7 +6,7 @@ class ByteProperty:
     position: int
     Value: str
 
-    def __init__(self, reader: BinaryStream, readType, tag): #TODO: handle enums
+    def __init__(self, reader: BinaryStream, readType, tag):
         self.position = reader.base_stream.tell()
 
         if readType == PropertyTagData.BaseProperty.ReadType.NORMAL:

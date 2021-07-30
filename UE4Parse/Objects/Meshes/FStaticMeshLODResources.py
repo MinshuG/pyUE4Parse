@@ -53,12 +53,13 @@ class FStaticMeshLODResources:
                 self.serializeBuffer(reader)
             else:
                 bulk: FByteBulkData = FByteBulkData(reader, ubulk=reader.ubulk_stream, bulkOffset=reader.PackageReader.PackageFileSummary.BulkDataStartOffset)
-                if bulk.Header.ElementCount > 0:
+                if bulk.Header.ElementCount > 0 and bulk.Data is not None:
                     tr = BinaryStream(bulk.Data)
                     tr.game = reader.game
                     tr.version = reader.version
                     self.serializeBuffer(tr)
-
+                else:
+                    return #??
                 reader.readUInt32()  # DepthOnlyNumTriangles
                 reader.readUInt32()  # PackedData
                 reader.seek(4*4 + 2*4 + 2*4 + 6*(2*4), 1)

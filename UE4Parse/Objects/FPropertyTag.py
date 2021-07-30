@@ -89,4 +89,4 @@ class FPropertyTag:
         self.end_pos = reader.tell()
 
     def __repr__(self):
-        return f"< {self.Name.string} : {self.Type.string} >"
+        return f"<{self.Name.string} : {self.Type.string}>"

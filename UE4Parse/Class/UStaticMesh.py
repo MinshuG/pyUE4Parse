@@ -3,7 +3,7 @@ from typing import List, Any
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Class.UObjects import UObject
 from UE4Parse.Exceptions.Exceptions import ParserException
-from UE4Parse.Objects.EUEVersion import Versions, GAME_UE4
+from UE4Parse.Objects.EUEVersion import EUEVersion, Versions, GAME_UE4
 from UE4Parse.Objects.FGuid import FGuid
 from UE4Parse.Objects.FStripDataFlags import FStripDataFlags
 from UE4Parse.Objects.Meshes.FBoxSphereBounds import FBoxSphereBounds
@@ -60,9 +60,8 @@ class UStaticMesh(UObject):
 
         # FStaticMeshRenderData
         if bCooked:
-            if not bCooked:  # how possible
-                pass  # https://github.com/FabianFG/JFortniteParse/blob/558fb2b96985aad5b90c96c8f28950021cf801a0/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/UStaticMesh.kt#L59
-            # if unversioned MinMobileLODIdx int32
+            minMobileLODIdx = reader.readInt32() if reader.game >= GAME_UE4(27) else 0
+
             self.LODs = reader.readTArray_W_Arg(FStaticMeshLODResources, reader) #TODO fix this
 
             if reader.game >= GAME_UE4(23):

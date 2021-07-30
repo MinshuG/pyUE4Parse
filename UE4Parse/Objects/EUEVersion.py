@@ -123,6 +123,7 @@ class EUEVersion(IntEnum):
     GAME_UE4_24 = GAME_UE4(24)
     GAME_UE4_25 = GAME_UE4(25)
     GAME_UE4_26 = GAME_UE4(26)
+    GAME_UE4_27 = GAME_UE4(27)
 
     LATEST = GAME_UE4_26
 

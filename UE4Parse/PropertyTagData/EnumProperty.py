@@ -13,7 +13,7 @@ class EnumProperty:
 
         if readType == ReadType.ZERO: #ZERO
             self.Value = FName(self.IndexToEnum(reader, tag, 0))
-        elif readType.value == 0:
+        elif readType == ReadType.NORMAL:
             byteValue = 0
             innerType = getattr(tag, "InnerType", None)
             if innerType is not None:
@@ -33,6 +33,8 @@ class EnumProperty:
         name = tag.EnumName
         if name is None:
             return str(index)
+        elif name is not None and not reader.has_unversioned_properties:
+            return str(name) + "::" + str(reader.NameMap[index])
 
         if reader.has_unversioned_properties:
             enumVals = reader.getmappings().get_enum(name.string)

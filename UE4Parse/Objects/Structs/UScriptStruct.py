@@ -18,11 +18,8 @@ from UE4Parse.Objects.Structs.Vector import *  # FVector2D, FVector, FVector4
 logger = Logger.get_logger(__name__)
 
 
-def switch(toCompare, CompareTo):
-    if toCompare == CompareTo:
-        return True
-    else:
-        return False
+def switch(toCompare, CompareTo): # wtf was this?
+    return toCompare == CompareTo
 
 
 def FallBackReader(reader: BinaryStream, structName = None):
