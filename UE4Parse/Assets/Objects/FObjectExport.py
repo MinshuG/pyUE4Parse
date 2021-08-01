@@ -28,7 +28,7 @@ class FObjectExport:
     type: FName
 
     @property
-    def type(self) -> FName:
+    def name(self) -> FName:
         return self.ObjectName
 
     def __init__(self, reader: BinaryStream) -> None:

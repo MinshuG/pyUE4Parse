@@ -21,7 +21,7 @@ def ToJson(PackageReader: 'Package'):
     #     Dict["ImportMap"].append(Import.GetValue())
 
     for Export in ExportMap:
-        Dict["Exports"].append({"ExportType": Export.name.string, "ExportName": Export.type.string, "ExportValue": Export.exportObject.GetValue()})
+        Dict["Exports"].append({"ExportType": Export.type.string, "ExportName": Export.name.string, "ExportValue": Export.exportObject.GetValue()})
         # Dict["ExportMap"].append(Export.GetValue())
 
     if NameMap is not None:

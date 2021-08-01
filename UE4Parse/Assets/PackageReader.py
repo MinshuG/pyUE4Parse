@@ -90,7 +90,7 @@ class LegacyPackageReader(Package):
                 ExportType = self.ImportMap[Export.ClassIndex.AsImport].ObjectName
             else:
                 raise ParserException("failed to get export type")
-            Export.name = ExportType
+            Export.type = ExportType
 
             self.reader.seek(Export.SerialOffset - self.PackageFileSummary.TotalHeaderSize, 0)
 
