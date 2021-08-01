@@ -1,12 +1,9 @@
 from setuptools import setup, find_packages
 import pathlib
 
-
 HERE = pathlib.Path(__file__).parent
 
-
 README = (HERE / "README.md").read_text()
-
 
 setup(
     name="UE4Parse",
@@ -19,6 +16,6 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3",
     ],
-    install_requires=["pycryptodome", "lz4", "pyUsmap", "pillow"],
+    install_requires=["pycryptodome", "lz4", "pyUsmap", "pillow", "quicktex"],
     packages=find_packages(),
 )

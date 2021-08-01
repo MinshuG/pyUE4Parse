@@ -26,11 +26,11 @@ class FTexturePlatformData:
         self.PixelFormat = EPixelFormat[reader.readFString()]
 
         self.FirstMipToSerialize = reader.readInt32()
-        self.Mips = reader.readTArray_W_Arg(FTexture2DMipMap, reader, ubulk, ubulkOffset)
+        self.Mips = reader.readTArray(FTexture2DMipMap, reader, ubulk, ubulkOffset)
         if reader.game >= GAME_UE4(23):
             self.bIsVirtual = reader.readInt32() != 0
             if self.bIsVirtual:
-                raise NotImplementedError("Virtual Textures ar not Not implemented")
+                raise NotImplementedError("Virtual Textures are not implemented")
 
     def GetValue(self):
         return {

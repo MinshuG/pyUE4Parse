@@ -1,4 +1,4 @@
-from typing import List, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Exports.UObjects import UObject
@@ -16,10 +16,11 @@ logger = get_logger(__name__)
 
 
 class UTexture2D(UObject):
-    data: List[FTexturePlatformData] = []
+    data: List[FTexturePlatformData]
 
     def __init__(self, reader: BinaryStream) -> None:
         super().__init__(reader)
+        self.data = []
 
     def deserialize(self, validpos):
         reader = self.reader
@@ -49,17 +50,15 @@ class UTexture2D(UObject):
                 except:
                     break
 
-    def GetValue(self, position_value_type: bool = False):
-        return {"FTexturePlatformData": [x.GetValue() for x in self.data]}.update(super(UTexture2D, self).GetValue())
+    def GetValue(self):
+        props = super().GetValue()
+        props["FTexturePlatformData"] = [x.GetValue() for x in self.data]
+        return props
 
-    def decode(self, mip_index = -1) -> 'Image':
+    def decode(self, mip_index = -1) -> Optional['Image']:
         if len(self.data) == 0:
             return # no data
 
-        sizeX = 0
-        sizeY = 0
-        sizeZ = 0
-        data: bytes = None
         PlatformData = self.data[0]
         mip_index = PlatformData.FirstMipToSerialize if mip_index == -1 else mip_index
 

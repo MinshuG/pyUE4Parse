@@ -101,8 +101,8 @@ class LegacyPackageReader(Package):
             try:
                 ExportData.deserialize(pos + Export.SerialSize)
             except Exception as e:
-                raise e
-                logger.error(f"Could not read {ExportType.string} correctly")
+                # raise e
+                logger.error(f"Could not read {ExportType.string} correctly, {e}")
             Export.exportObject = ExportData
 
             # export event
