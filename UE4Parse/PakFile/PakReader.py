@@ -5,6 +5,7 @@ from typing import Dict, Optional, Union
 
 from UE4Parse import Logger
 from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.Encryption.FAESKey import FAESKey
 from UE4Parse.Exceptions.Exceptions import InvalidEncryptionKey
 from UE4Parse.IO.IoObjects.FIoStoreEntry import FIoStoreEntry
 from UE4Parse.PakFile.PakObjects.EPakVersion import EPakVersion
@@ -44,13 +45,13 @@ class PakReader:
         return self.Info.EncryptionKeyGuid
 
     # @profile
-    def ReadIndex(self, key: str = None):
+    def ReadIndex(self, key: Optional[FAESKey] = None):
         self.AesKey = key
         starttime = time.time()
         self.reader.seek(self.Info.IndexOffset, 0)
 
         if not self.Info.bEncryptedIndex:
-            IndexReader = self.reader
+            index_reader = self.reader
         else:
             if not CrytoAval:
                 raise ImportError(
@@ -58,27 +59,25 @@ class PakReader:
             if key is None:
                 raise InvalidEncryptionKey("Index is Encrypted and Key was not provided.")
 
-            bytekey = bytearray.fromhex(key)
-            decryptor = AES.new(bytekey, AES.MODE_ECB)
-            IndexReader = BinaryStream(io.BytesIO(decryptor.decrypt(self.reader.readBytes(self.Info.IndexSize))))
+            index_reader = BinaryStream(io.BytesIO(key.decrypt(self.reader.readBytes(self.Info.IndexSize))))
 
-            stringLen = IndexReader.readInt32()
+            stringLen = index_reader.readInt32()
             if stringLen > 512 or stringLen < -512:
                 raise InvalidEncryptionKey(f"Provided key didn't work with {self.FileName}")
             if stringLen < 0:
-                IndexReader.base_stream.seek((stringLen - 1) * 2, 1)
-                if IndexReader.readUInt16() != 0:
+                index_reader.base_stream.seek((stringLen - 1) * 2, 1)
+                if index_reader.readUInt16() != 0:
                     raise InvalidEncryptionKey(f"Provided key didn't work with {self.FileName}")
             else:
-                IndexReader.base_stream.seek(stringLen - 1, 1)
-                if int.from_bytes(IndexReader.readByte(), "little") != 0:
+                index_reader.base_stream.seek(stringLen - 1, 1)
+                if int.from_bytes(index_reader.readByte(), "little") != 0:
                     raise InvalidEncryptionKey(f"Provided key didn't work with {self.FileName}")
-            IndexReader.seek(0, 0)
+            index_reader.seek(0, 0)
 
         if self.Info.Version.value >= EPakVersion.PATH_HASH_INDEX.value:
-            index = self.ReadUpdatedIndex(IndexReader, key, self.Case_insensitive)
+            index = self.ReadUpdatedIndex(index_reader, key, self.Case_insensitive)
         else:
-            self.MountPoint = IndexReader.readFString() or ""
+            self.MountPoint = index_reader.readFString() or ""
 
             if self.MountPoint.startswith("../../.."):
                 self.MountPoint = self.MountPoint[8::]
@@ -86,11 +85,11 @@ class PakReader:
             # if self.Case_insensitive:
             #     self.MountPoint = self.MountPoint.lower()
 
-            self.NumEntries = IndexReader.readInt32()
+            self.NumEntries = index_reader.readInt32()
 
             tempfiles: Dict[str, FPakEntry] = {}
             for _ in range(self.NumEntries):
-                entry = FPakEntry(IndexReader, self.Info.Version, self.Info.SubVersion, self.FileName)
+                entry = FPakEntry(index_reader, self.Info.Version, self.Info.SubVersion, self.FileName)
                 if self.Case_insensitive:
                     tempfiles[self.MountPoint.lower() + entry.Name.lower()] = entry
                 else:
@@ -140,9 +139,7 @@ class PakReader:
 
         PathHashIndexData: bytes = self.reader.base_stream.read(FullDirectoryIndexSize)
         if self.Info.bEncryptedIndex:
-            bytekey = bytearray.fromhex(key)
-            decryptor = AES.new(bytekey, AES.MODE_ECB)
-            PathHash_Reader = BinaryStream(io.BytesIO(decryptor.decrypt(PathHashIndexData)))
+            PathHash_Reader = BinaryStream(io.BytesIO(self.AesKey.decrypt(PathHashIndexData)))
         else:
             PathHash_Reader = BinaryStream(io.BytesIO(PathHashIndexData))
 

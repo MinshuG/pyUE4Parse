@@ -19,6 +19,6 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3",
     ],
-    install_requires=["pycryptodome", "lz4"],
+    install_requires=["pycryptodome", "lz4", "pyUsmap", "pillow"],
     packages=find_packages(),
 )

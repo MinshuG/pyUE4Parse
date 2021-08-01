@@ -3,7 +3,7 @@ from enum import IntEnum, auto
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Exceptions import Exceptions
 from UE4Parse.IO.IoObjects.FFileIoStoreContainerFile import EIoContainerFlags
-from UE4Parse.Objects.FGuid import FGuid
+from UE4Parse.Assets.Objects.FGuid import FGuid
 
 
 class EIoStoreTocVersion(IntEnum):

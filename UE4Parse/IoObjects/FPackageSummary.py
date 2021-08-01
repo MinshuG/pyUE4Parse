@@ -1,4 +1,4 @@
-from UE4Parse.Objects.EPackageFlags import EPackageFlags
+from UE4Parse.Assets.Objects.EPackageFlags import EPackageFlags
 from .FMappedName import FMappedName
 from ..BinaryReader import BinaryStream
 from contextlib import suppress

@@ -1,5 +1,4 @@
-
-from UE4Parse.Objects.EPackageFlags import EPackageFlags
+from UE4Parse.Assets.Objects.EPackageFlags import EPackageFlags
 import os
 from io import BufferedReader, BytesIO
 from struct import *
@@ -7,26 +6,28 @@ from typing import Set, Tuple, TypeVar, Union, TYPE_CHECKING
 
 from UE4Parse import Logger
 from UE4Parse.Exceptions.Exceptions import ParserException
-from UE4Parse.Objects.EUEVersion import EUEVersion
-from UE4Parse.Objects.FName import FName, DummyFName
-from UE4Parse.Objects.FPackageIndex import FPackageIndex
+from UE4Parse.Assets.Objects.EUEVersion import EUEVersion
+from UE4Parse.Assets.Objects.FName import FName, DummyFName
+from UE4Parse.Assets.Objects.FPackageIndex import FPackageIndex
 
 if TYPE_CHECKING:
-    from UE4Parse.Objects.FGuid import FGuid
-    from UE4Parse.PackageReader import LegacyPackageReader, IoPackageReader
-    from UE4Parse.provider.MappingProvider import MappingProvider
+    from UE4Parse.Assets.Exports.UObjects import UObject
+    from UE4Parse.Assets.Objects.FGuid import FGuid
+    from UE4Parse.Assets.PackageReader import Package
+    from UE4Parse.Provider.MappingProvider import MappingProvider
 
 logging = Logger.get_logger(__name__)
 
 T = TypeVar("T")
 
+
 class BinaryStream:
     NameMap: list
-    PackageReader: Union['LegacyPackageReader', 'IoPackageReader']
+    PackageReader: Union['Package']
     version: int
     game: EUEVersion = None
     fake_size: int
-    ubulk_stream: object
+    ubulk_stream: 'BinaryStream'
     bulk_offset: int = -1
     size = 0
     mappings: 'MappingProvider'
@@ -71,7 +72,7 @@ class BinaryStream:
         self.base_stream.seek(offset, SEEK_SET)
 
     def getmappings(self):
-        if hasattr(self,"mappings"):
+        if hasattr(self, "mappings"):
             return self.mappings
         raise ParserException("mappings are not attached")
 
@@ -91,7 +92,7 @@ class BinaryStream:
     def tellfake(self):
         return (self.fake_size - self.size) + self.base_stream.tell()
 
-    def read(self, length = -1):
+    def read(self, length=-1):
         if length > 0:
             return self.readBytes(length)
         return self.base_stream.read()
@@ -116,7 +117,7 @@ class BinaryStream:
     def readBool(self):
         """Booleans in UE are serialized as int32"""
         val = self.readInt32()
-        if val not in [0,1]:
+        if val not in [0, 1]:
             raise ParserException("Invalid boolean value")
         return val != 0
         # return self.unpack('?')
@@ -189,7 +190,7 @@ class BinaryStream:
         A = tuple(func(*args) for _ in range(SerializeNum))
         return A
 
-    def readTArray_W_Arg(self, func: T, *args) -> Set[T]:  # argument
+    def readTArray_W_Arg(self, func: T, *args) -> Tuple[T]:  # argument
         """use readTArray"""
         return self.readTArray(func, *args)
 
@@ -213,7 +214,7 @@ class BinaryStream:
 
         return FName(NameMap[NameIndex], NameIndex, Number)
 
-    def readObject(self):
+    def readObject(self) -> 'UObject':
         index = FPackageIndex(self)
         if index.IsNull:
             return None

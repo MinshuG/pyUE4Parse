@@ -9,7 +9,7 @@ from UE4Parse.IoObjects.FMappedName import FMappedName
 from UE4Parse.IoObjects.FPackageObjectIndex import FPackageObjectIndex
 from UE4Parse.IoObjects.FScriptObjectDesc import FScriptObjectDesc
 from UE4Parse.IoObjects.FScriptObjectEntry import FScriptObjectEntry
-from UE4Parse.Objects.FNameEntrySerialized import FNameEntrySerialized
+from UE4Parse.Assets.Objects.FNameEntrySerialized import FNameEntrySerialized
 
 
 class FIoGlobalData:

@@ -1,3 +1,6 @@
+class UnknownPixelFormatException(Exception):
+    pass
+
 class InvalidMagic(Exception):
     pass
 

@@ -3,7 +3,7 @@ from typing import List
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.IoObjects.FMinimalName import FMinimalName
-from UE4Parse.Objects.FNameEntrySerialized import FNameEntrySerialized
+from UE4Parse.Assets.Objects.FNameEntrySerialized import FNameEntrySerialized
 
 
 class EType(Enum):

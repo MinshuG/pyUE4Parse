@@ -1,14 +1,14 @@
-from UE4Parse.Objects.FName import FName
+from UE4Parse.Assets.Objects.FName import FName
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.IoObjects.FMappedName import FMappedName
 from UE4Parse.IoObjects.FPackageObjectIndex import FPackageObjectIndex
-from UE4Parse.Objects.EObjectFlags import EObjectFlags
+from UE4Parse.Assets.Objects.EObjectFlags import EObjectFlags
 
 if TYPE_CHECKING:
-    from UE4Parse.Class.UObjects import UObject
+    from UE4Parse.Assets.Exports.UObjects import UObject
 
 
 class EExportFilterFlags(IntEnum):

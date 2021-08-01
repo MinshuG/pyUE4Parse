@@ -2,7 +2,7 @@ from typing import Optional
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.IoObjects.FNameEntryId import FNameEntryId
-from UE4Parse.Objects.FName import FName
+from UE4Parse.Assets.Objects.FName import FName
 
 
 class FMinimalName:

@@ -17,3 +17,11 @@ api.py
 /testing-api
 test2.py
 oo2core_8_win64.dll
+/setup.build/*
+/setup.dist
+/setup.onefile
+/UE4Parse.build
+/setup.onefile-build
+/.eggs
+mappings/++Fortnite+Release-17.00-CL-16593740-Windows_oo.usmap
+build.bat

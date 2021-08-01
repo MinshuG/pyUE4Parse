@@ -1,14 +1,13 @@
-from UE4Parse.Objects.FName import FName
+from UE4Parse.Assets.Objects.FName import FName
 from UE4Parse.IoObjects.FExportMapEntry import FExportMapEntry
 from typing import TYPE_CHECKING
-from UE4Parse.Exceptions.Exceptions import ParserException
 from UE4Parse.IoObjects.FIoGlobalData import FIoGlobalData
 from UE4Parse.IoObjects.FPackageObjectIndex import FPackageObjectIndex
 from UE4Parse.IoObjects.FScriptObjectDesc import FScriptObjectDesc
 
 if TYPE_CHECKING:
-    from ..PackageReader import IoPackageReader
-    from UE4Parse.Class.UObjects import UObject
+    from UE4Parse.Assets.PackageReader import IoPackageReader
+    from UE4Parse.Assets.Exports.UObjects import UObject
 
 def resolveObjectIndex(pkg: 'IoPackageReader', globaldata: FIoGlobalData, index: FPackageObjectIndex):
     if index.IsScriptImport:

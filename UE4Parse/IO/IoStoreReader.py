@@ -1,4 +1,4 @@
-from UE4Parse.Objects.FGuid import FGuid
+from UE4Parse.Assets.Objects.FGuid import FGuid
 import io
 import os
 import time
@@ -17,7 +17,7 @@ from UE4Parse.IO.IoObjects.FIoStoreEntry import FIoStoreEntry
 from UE4Parse.IO.IoObjects.FIoStoreTocHeader import FIoContainerId
 from UE4Parse.IO.IoObjects.FIoStoreTocResource import FIoStoreTocResource
 from UE4Parse.PakFile.PakReader import UpdateIndex
-from UE4Parse.Objects.Decompress import Decompress
+from UE4Parse.Assets.Objects.Decompress import Decompress
 
 
 CrytoAval = True

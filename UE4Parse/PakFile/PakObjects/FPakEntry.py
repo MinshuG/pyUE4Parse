@@ -1,6 +1,7 @@
+from UE4Parse.Encryption.FAESKey import FAESKey
 from UE4Parse.Exceptions.Exceptions import InvalidEncryptionKey
-from UE4Parse.Objects import Decompress
-from typing import List, Optional
+from UE4Parse.Assets.Objects import Decompress
+from typing import List, Optional, Tuple
 
 from UE4Parse.BinaryReader import Align, BinaryStream
 from UE4Parse.PakFile import ECompressionFlags
@@ -22,7 +23,7 @@ class FPakEntry:
     Size: int = 0
     UncompressedSize: int = 0
 
-    CompressionBlocks: List[FPakCompressedBlock]
+    CompressionBlocks: Tuple[FPakCompressedBlock]
     CompressionBlockSize: int = 0
     CompressionMethodIndex: int
 
@@ -46,7 +47,8 @@ class FPakEntry:
     def Encrypted(self, value):
         self._Encrypted = value
 
-    def __init__(self, reader: Optional[BinaryStream], Version: EPakVersion = 0, SubVersion: int = 0, pakName: str = ""):
+    def __init__(self, reader: Optional[BinaryStream], Version: EPakVersion = 0, SubVersion: int = 0,
+                 pakName: str = ""):
         self.ubulk = None
         self.uexp = None
         if reader is None:
@@ -90,26 +92,24 @@ class FPakEntry:
 
         self.StructSize = reader.base_stream.tell() - StartOffset
 
-    def get_data(self, stream: BinaryStream, key, compression_method):
+    def get_data(self, stream: BinaryStream, key: FAESKey, compression_method) -> BinaryStream:
         if self.CompressionMethodIndex == 0:
             stream.seek(self.Offset + self.StructSize, 0)
             if self.Encrypted:
-                raise NotImplementedError("Encryption is not implemented")
+                return BinaryStream(key.decrypt(stream.read()))
             else:
                 data: bytes = stream.readBytes(self.UncompressedSize)
                 return BinaryStream(data)
         else:
-            return BinaryStream(self._decompress(stream,key,compression_method))
-    
-    def _decompress(self, stream: BinaryStream, key, compressionMethods: list):
-        compressionMethod = compressionMethods[self.CompressionMethodIndex - 1]
+            return BinaryStream(self._decompress(stream, key, compression_method))
+
+    def _decompress(self, stream: BinaryStream, key: FAESKey, compression_methods: list):
+        compression_method = compression_methods[self.CompressionMethodIndex - 1]
 
         result = bytearray()
         if self.Encrypted:
             if key is None:
                 raise InvalidEncryptionKey("File is Encrypted and Key was not provided.")
-            from Crypto.Cipher import AES
-            decryptor = AES.new(bytearray().fromhex(key), AES.MODE_ECB)
 
         block: FPakCompressedBlock
         for block in self.CompressionBlocks:
@@ -117,12 +117,12 @@ class FPakEntry:
             uncompressed_size = min(self.CompressionBlockSize, self.UncompressedSize - len(result))
 
             if self.Encrypted:
-                buffer = stream.read(Align(self.CompressionBlockSize, AES.block_size))
-                buffer = decryptor.decrypt(buffer)
+                buffer = stream.read(Align(self.CompressionBlockSize, key.block_size))
+                buffer = key.decrypt(buffer)
             else:
-                buffer = stream.read(Align(self.CompressionBlockSize, 16)) # AES.block_size
-            
-            result += Decompress.Decompress(buffer, compressionMethod, uncompressed_size)
+                buffer = stream.read(Align(self.CompressionBlockSize, key.block_size))  # AES.block_size
+
+            result += Decompress.Decompress(buffer, compression_method, uncompressed_size)
         return result
 
     @staticmethod

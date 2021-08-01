@@ -3,7 +3,7 @@ from typing import List
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.IO.IoObjects.FIoStoreTocCompressedBlockEntry import FIoStoreTocCompressedBlockEntry
-from UE4Parse.Objects.FGuid import FGuid
+from UE4Parse.Assets.Objects.FGuid import FGuid
 from UE4Parse.PakFile.PakObjects.FSHAHash import FSHAHash
 
 
