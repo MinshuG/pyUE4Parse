@@ -29,14 +29,22 @@ def unpackRGB(packed):
 
 
 class DXTBuffer:
-    def __init__(self, width, height):
+    _BITS_PER_PIXEL = 4
+
+    def __init__(self, width, height, Z = 0):
         self.width = width
         self.height = height
+        self.SizeZ = Z
 
         self.block_countx = self.width // 4
         self.block_county = self.height // 4
 
-        self.decompressed_buffer = ["X"] * ((width * height) * 2)  # Dont ask me why
+        
+        self.bitsPerSecond = self.width * self._BITS_PER_PIXEL
+        self.sizeOfPlane = self.bitsPerSecond * self.height # SizeY
+
+        self.decompressed_buffer = ["X"] * (self.SizeZ * self.sizeOfPlane + height * self.bitsPerSecond + self.bitsPerSecond)
+        # self.decompressed_buffer = ["X"] * ((width * height) * 2)  # Dont ask me why
 
     def DXT5Decompress(self, file):
 
@@ -145,8 +153,13 @@ class DXTBuffer:
                 pixel_color = (0, 0, 0, alpha)
 
         # While not surpassing the image dimensions, assign pixels the colors
-        if (x + i) < self.width:
-            self.decompressed_buffer[(y + j) * self.width + (x + i)] = (
+        if (x + i) < self.width and ((y + j) < self.height):
+
+            # z = 0
+            # offset = (z * self.sizeOfPlane + (y + j) * (self.width * self._BITS_PER_PIXEL) + (x + i) * self._BITS_PER_PIXEL + 3)
+
+            offset = (x + i) * self.width + (y + j)
+            self.decompressed_buffer[offset] = (
                 struct.pack("<B", pixel_color[0])
                 + struct.pack("<B", pixel_color[1])
                 + struct.pack("<B", pixel_color[2])
