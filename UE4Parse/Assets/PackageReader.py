@@ -1,3 +1,4 @@
+from UE4Parse.Assets.Exports.UObjects import UObject
 from UE4Parse.IoObjects.IoUtils import resolveObjectIndex
 from typing import List, TYPE_CHECKING, Optional, Tuple, Union
 
@@ -37,11 +38,11 @@ class Package:
     def get_dict(self):
         return ToJson.ToJson(self)
 
-    def find_export(self, export_name: str) -> Optional[Union[FObjectExport, FExportMapEntry]]:
-        for export in self.ExportMap:
-            if export_name == export.name.string:
-                return export
-        return None
+    def find_export(self, export_name: str) -> Optional[UObject]:
+        pass
+
+    def find_export_of_type(self, export_type: str) -> Optional[UObject]:
+        pass
 
 
 class LegacyPackageReader(Package):
@@ -145,10 +146,16 @@ class LegacyPackageReader(Package):
     def get_summary(self) -> FPackageFileSummary:
         return self.PackageFileSummary
 
-    def find_export(self, export_name: str) -> Optional[FObjectExport]:
+    def find_export(self, export_name: str) -> Optional[UObject]:
         for export in self.ExportMap:
             if export_name == export.name.string:
-                return export
+                return export.exportObject
+        return None
+
+    def find_export_of_type(self, export_type: str) -> Optional[UObject]:
+        for export in self.ExportMap:
+            if export_type == export.type.string:
+                return export.exportObject
         return None
 
     def findObject(self, index: FPackageIndex) -> Optional[Union[FObjectExport, FObjectImport]]:

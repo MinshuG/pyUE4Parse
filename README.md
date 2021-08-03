@@ -1,7 +1,10 @@
 **unfinished pak and ue4 asset parser**
 
 
-### Usages
+## Usages
+
+<details>
+<summary>Basic Usages</summary>
 
 ```python
 from UE4Parse.Provider import FGame, Provider, MappingProvider
@@ -35,5 +38,22 @@ package = provider.get_package(package_path)
 if package is not None:
     package.save_package("Assets")  # saves .uasset, .uexp etc.
     package.save_json("Assets")  # saves serialized json
-
 ```
+</details>
+<details>
+<summary>Converting Textures</summary>
+
+```python
+package = provider.get_package(somepackagepath)
+parsed_package = package.parse_package()
+if texture := parsed_package.find_export_of_type("Texture2D"):
+    image = texture.decode()  # returns PIL Image object
+    image.save(f"{os.path.basename(os.path.splitext(package.get_name())[0])}.png", "PNG")  # save image
+    # for more information refer to https://pillow.readthedocs.io/en/stable/reference/Image.html?highlight=Image#PIL.Image.Image
+```
+</details>
+
+
+## Links
+
+- [Trello](https://trello.com/b/yp0hx22L/pyue4parse)
