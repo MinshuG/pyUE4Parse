@@ -8,6 +8,7 @@ from UE4Parse.Assets.Objects.EUEVersion import GAME_UE4, Versions
 from UE4Parse.Assets.Objects.FStripDataFlags import FStripDataFlags
 from UE4Parse.Assets.Exports.Texture.Objects.FTexturePlatformData import FTexturePlatformData
 from .Decoder import TextureDecoder
+from ...Objects.FName import FName
 
 if TYPE_CHECKING:
     from PIL.Image import Image
@@ -17,16 +18,21 @@ logger = get_logger(__name__)
 
 class UTexture2D(UObject):
     data: List[FTexturePlatformData]
+    isNormalMap: bool
 
     def __init__(self, reader: BinaryStream) -> None:
         super().__init__(reader)
         self.data = []
+        self.isNormalMap = False
 
     def deserialize(self, validpos):
         reader = self.reader
         bulk = reader.ubulk_stream
         bulkOffset = reader.bulk_offset
         super().deserialize(validpos)
+
+        if compression_settings := self.try_get("CompressionSettings"):
+            self.isNormalMap = compression_settings.lower().endswith("TC_Normalmap".lower())
 
         FStripDataFlags(reader)
         FStripDataFlags(reader)
@@ -70,5 +76,5 @@ class UTexture2D(UObject):
         sizeZ = Mip.SizeZ
 
         image = TextureDecoder(data, sizeX, sizeY, sizeZ, PlatformData.PixelFormat)
-        image.decode()
+        image.decode(self.isNormalMap)
         return image.decoded_image

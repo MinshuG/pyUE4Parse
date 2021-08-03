@@ -154,7 +154,4 @@ class UObject:
         return {"Properties": properties}
 
     def try_get(self, key: str) -> Optional[object]:
-        for key_, value in self.Dict.items():
-            if key_ == key:
-                return value
-        return None
+        return self.Dict.get(key, None)
