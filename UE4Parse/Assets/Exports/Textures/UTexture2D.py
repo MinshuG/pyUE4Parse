@@ -6,9 +6,8 @@ from UE4Parse.Logger import get_logger
 from UE4Parse.Assets.Objects.EPixelFormat import EPixelFormat
 from UE4Parse.Assets.Objects.EUEVersion import GAME_UE4, Versions
 from UE4Parse.Assets.Objects.FStripDataFlags import FStripDataFlags
-from UE4Parse.Assets.Exports.Texture.Objects.FTexturePlatformData import FTexturePlatformData
+from UE4Parse.Assets.Exports.Textures.Objects.FTexturePlatformData import FTexturePlatformData
 from .Decoder import TextureDecoder
-from ...Objects.FName import FName
 
 if TYPE_CHECKING:
     from PIL.Image import Image
@@ -32,7 +31,7 @@ class UTexture2D(UObject):
         super().deserialize(validpos)
 
         if compression_settings := self.try_get("CompressionSettings"):
-            self.isNormalMap = compression_settings.lower().endswith("TC_Normalmap".lower())
+            self.isNormalMap = str(compression_settings).lower().endswith("TC_Normalmap".lower())
 
         FStripDataFlags(reader)
         FStripDataFlags(reader)

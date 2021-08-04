@@ -57,3 +57,12 @@ if texture := parsed_package.find_export_of_type("Texture2D"):
 ## Links
 
 - [Trello](https://trello.com/b/yp0hx22L/pyue4parse)
+
+## Notes for Developers
+
+- Use pyximport for developement purposes 
+
+    ```python 
+    import pyximport
+    pyximport.install()
+    ```

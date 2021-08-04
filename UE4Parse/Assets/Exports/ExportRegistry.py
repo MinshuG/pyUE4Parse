@@ -3,7 +3,7 @@ from .MaterialInstanceConstant import UMaterialInstanceConstant
 from .UObjects import UObject
 from UE4Parse.Assets.Exports.StaticMesh.UStaticMesh import UStaticMesh
 from .UStringTable import UStringTable
-from UE4Parse.Assets.Exports.Texture.UTexture2D import UTexture2D
+from UE4Parse.Assets.Exports.Textures.UTexture2D import UTexture2D
 from .World import UWorld
 
 
