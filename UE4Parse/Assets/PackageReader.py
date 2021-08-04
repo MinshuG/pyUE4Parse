@@ -182,7 +182,7 @@ class IoPackageReader(Package):
                  onlyInfo: bool = False):
         reader = uasset
         reader.ubulk_stream = ubulk or uptnl
-        reader.game = provider.GameInfo.UEVersion
+        reader.set_ar_version(provider.GameInfo.UEVersion)
         reader.PackageReader = self
         self.reader = reader
         self.Provider = provider
@@ -199,7 +199,9 @@ class IoPackageReader(Package):
             reader.seek(self.Summary.NameMapHashesOffset, 0)
             nameHashReader = BinaryStream(reader.readBytes(self.Summary.NameMapHashesSize))
 
-            FNameEntrySerialized.LoadNameBatch(self.NameMap, nameHashes, nameMapReader, nameHashReader)
+            name_map = []
+            FNameEntrySerialized.LoadNameBatch(name_map, nameHashes, nameMapReader, nameHashReader)
+            self.NameMap = tuple(name_map)
             del nameHashReader
             del nameMapReader
 
@@ -216,6 +218,10 @@ class IoPackageReader(Package):
 
         reader.seek(self.Summary.ExportBundlesOffset, 0)
         self.ExportBundle = FExportBundle(reader)
+
+        if provider.GlobalData is None:
+            logger.error("Missing global data can't serialize")
+            return
 
         if onlyInfo:
             return
@@ -234,14 +240,20 @@ class IoPackageReader(Package):
 
                 self.reader.seek(currentExportDataOffset, 0)
 
-                ExportName = resolveObjectIndex(self, provider.GlobalData, index=Export.ClassIndex).getName()
-                ExportData = Registry().get_export_reader(ExportName.string, Export, self.reader)
+                export_type = resolveObjectIndex(self, provider.GlobalData, index=Export.ClassIndex).getName()
+                ExportData = Registry().get_export_reader(export_type.string, Export, self.reader)
                 ExportData.deserialize(currentExportDataOffset + Export.CookedSerialSize)
-                Export.name = ExportName
+                Export.type = export_type
                 Export.exportObject = ExportData
 
                 position = self.reader.base_stream.tell()
                 if position != currentExportDataOffset + Export.CookedSerialSize:
                     logger.debug(
-                        f"Didn't read ExportType {ExportName.string} properly, at {position}, should be: {currentExportDataOffset + Export.CookedSerialSize} behind: {currentExportDataOffset + Export.CookedSerialSize - position}")
+                        f"Didn't read ExportType {export_type.string} properly, at {position}, should be: {currentExportDataOffset + Export.CookedSerialSize} behind: {currentExportDataOffset + Export.CookedSerialSize - position}")
                 currentExportDataOffset += Export.CookedSerialSize
+
+    def find_export_of_type(self, export_type: str) -> Optional[UObject]:
+        for export in self.ExportMap:
+            if export_type == export.type.string:
+                return export.exportObject
+        return None

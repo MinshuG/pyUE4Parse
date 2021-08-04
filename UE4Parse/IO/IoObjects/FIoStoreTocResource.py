@@ -47,11 +47,11 @@ class FIoStoreTocResource:
         
         self.ChunkOffsetLengths = tuple([FIoOffsetAndLength(reader) for x in range(self.Header.TocEntryCount)])
 
-        self.CompressionBlocks = tuple(FIoStoreTocCompressedBlockEntry(reader) for x in range(self.Header.TocCompressedBlockEntryCount))
+        self.CompressionBlocks = tuple(FIoStoreTocCompressedBlockEntry(reader) for x in range(self.Header.TocCompressedBlockEntryCount))  # can this be optimized more?
 
         self.CompressionMethods = tuple(reader.readBytes(self.Header.CompressionMethodNameLength).rstrip(b'\x00').decode("utf-8") for x in range(self.Header.CompressionMethodNameCount))
 
-        self.ChunkBlockSignatures = {}
+        self.ChunkBlockSignatures = ()
         isSigned = self.Header.ContainerFlags & (1 << 2) != 0
         if isSigned:
             hash_size = reader.readInt32()

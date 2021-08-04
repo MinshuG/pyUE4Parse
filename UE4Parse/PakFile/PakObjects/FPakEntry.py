@@ -7,9 +7,10 @@ from UE4Parse.BinaryReader import Align, BinaryStream
 from UE4Parse.PakFile import ECompressionFlags
 from UE4Parse.PakFile import EPakVersion
 from UE4Parse.PakFile import FPakCompressedBlock
+from UE4Parse.Provider.Common import GameFile
 
 
-class FPakEntry:
+class FPakEntry(GameFile):
     Flags: int = 0
     Flag_Encrypted = 0x01
     Flag_Deleted = 0x02

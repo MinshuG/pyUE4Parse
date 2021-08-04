@@ -43,6 +43,8 @@ class BinaryStream:
             self.base_stream = fp
             self.size = size
 
+        self.readBytes = self.base_stream.read
+
     def change_stream(self, fp: Union[BufferedReader, str, bytes, bytearray]):
         if isinstance(fp, str):
             self.base_stream = open(fp, "rb")
@@ -101,12 +103,12 @@ class BinaryStream:
         return self.base_stream.read(1)
 
     def readByteToInt(self, length=1):
-        return int.from_bytes(self.readBytes(length), "little")
+        return int.from_bytes(self.base_stream.read(length), "little")
 
-    def readBytes(self, length):
-        if self.size == self.position:
-            raise ParserException("Cannot read beyond end of stream")
-        return self.base_stream.read(length)
+    # def readBytes(self, length): # more performance issues
+    #     # if self.size == self.position:  # performance issues
+    #     #     raise ParserException("Cannot read beyond end of stream")
+    #     return self.base_stream.read(length)
 
     def readChar(self):
         return self.unpack('b')
@@ -182,7 +184,7 @@ class BinaryStream:
             string = ''.join([chr(v) for v in data])
             return string
         else:
-            byte = self.readBytes(length)[:-1]
+            byte = self.base_stream.read(length)[:-1]
             return byte.decode("utf-8")
 
     def readTArray(self, func: T, *args) -> Tuple[T]:
@@ -269,15 +271,18 @@ class BinaryStream:
         return self.writeBytes(pack(fmt, data))
 
     def unpack(self, fmt, length=1):
-        return unpack(fmt, self.readBytes(length))[0]
+        return unpack(fmt, self.base_stream.read(length))[0]
 
 
 def Align(val: int, alignment: int):
     return val + alignment - 1 & ~(alignment - 1)
 
 
-def convert_each_byte_to_int(bytes_):
-    ints = ""
-    for x in bytes_:
-        ints += str(x)
-    return int(ints)
+def convert_each_byte_to_int(bytes_: bytearray):  # slow
+    return int("".join([str(x) for x in bytes_]))
+
+
+if __name__ == "__main__":
+    a = bytearray(b'\x05\x04\x03\x04\x04\x04\x04\x04\x04')
+    print(convert_each_byte_to_int(a))
+    print(int(a))

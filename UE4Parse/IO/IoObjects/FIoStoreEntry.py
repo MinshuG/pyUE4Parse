@@ -1,21 +1,21 @@
-from UE4Parse.BinaryReader import Align
-from UE4Parse.IO.IoObjects.FIoChunkId import FIoChunkId
-from UE4Parse.IO.IoObjects.FIoOffsetAndLength import FIoOffsetAndLength
+from typing import TYPE_CHECKING
+from UE4Parse.Provider.Common import GameFile
+
+if TYPE_CHECKING:
+    from UE4Parse.IO.IoObjects.FIoChunkId import FIoChunkId
+    from UE4Parse.IO.IoObjects.FIoOffsetAndLength import FIoOffsetAndLength
 
 
-class FIoStoreEntry:
+class FIoStoreEntry(GameFile):
     ioStore = None  # FFileIoStoreReader
     UserData: int
-    ContainerName: str
     Name: str
     Size: int = 0
-    UncompressedSize: int = 0
-    StructSize: int = 0
     CompressionMethodIndex: int
 
     Encrypted: bool = False
-    ChunkId: FIoChunkId
-    OffsetLength: FIoOffsetAndLength
+    ChunkId: 'FIoChunkId'
+    OffsetLength: 'FIoOffsetAndLength'
 
     hasUbulk: bool = False
     hasUexp: bool = False
@@ -32,31 +32,42 @@ class FIoStoreEntry:
     def Length(self) -> int:
         return self.OffsetLength.GetLength
 
-    def __init__(self, ioStore, userdata: int, name: str):
-        self.ioStore = ioStore
+    @property
+    def ContainerName(self) -> str:
+        return self.ioStore.FileName[:-5] + ".utoc"
 
-        self.ContainerName = ioStore.FileName[:-5] + ".utoc"
-        self.ChunkId = ioStore.TocResource.ChunkIds[userdata]
-        self.OffsetLength = ioStore.Toc[self.ChunkId]
+    @property
+    def Encrypted(self) -> bool:
+        return self.ioStore.TocResource.Header.is_encrypted()
 
-        caseinSensitive = ioStore.caseinSensitive
+    @property
+    def OffsetLength(self) -> 'FIoOffsetAndLength':
+        return self.ioStore.Toc[self.ChunkId]
 
-        self.Name = name.lower() if caseinSensitive else name
+    @property
+    def ChunkId(self) -> 'FIoChunkId':
+        return self.ioStore.TocResource.ChunkIds[self._userdata]
 
-        compressionBlockSize = ioStore.TocResource.Header.CompressionBlockSize
-        firstBlockIndex = int(self.Offset / compressionBlockSize) - 1
-        lastBlockIndex = int((Align(self.Offset + self.Length, compressionBlockSize) - 1) / compressionBlockSize)
+    def __init__(self, io_store, userdata: int, name: str):
+        self.ioStore = io_store
+        self._userdata = userdata
 
-        for i in range(firstBlockIndex, lastBlockIndex):
-            compressionBlock = ioStore.TocResource.CompressionBlocks[i]
-            self.UncompressedSize += compressionBlock.UncompressedSize
-            self.CompressionMethodIndex = compressionBlock.CompressionMethodIndex
+        self.Name = name.lower() if io_store.caseinSensitive else name
 
-            rawSize = Align(compressionBlock.CompressedSize, 16)
-            self.Size += rawSize
+        # compressionBlockSize = ioStore.TocResource.Header.CompressionBlockSize
+        # firstBlockIndex = int(self.Offset / compressionBlockSize) - 1
+        # lastBlockIndex = int((Align(self.Offset + self.Length, compressionBlockSize) - 1) / compressionBlockSize)
 
-            if ioStore.TocResource.Header.is_encrypted():
-                self.Encrypted = True
+        # for i in range(firstBlockIndex, lastBlockIndex):
+        #     compressionBlock = ioStore.TocResource.CompressionBlocks[i]
+        #     self.UncompressedSize += compressionBlock.UncompressedSize
+        #     self.CompressionMethodIndex = compressionBlock.CompressionMethodIndex
+        #
+        #     rawSize = Align(compressionBlock.CompressedSize, 16)
+        #     self.Size += rawSize
+        #
+        #     if ioStore.TocResource.Header.is_encrypted():
+        #         self.Encrypted = True
 
     def GetData(self):
         return self.ioStore.Read(self.ChunkId)

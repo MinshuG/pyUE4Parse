@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from UE4Parse.Assets.PackageReader import IoPackageReader
     from UE4Parse.Assets.Exports.UObjects import UObject
 
+
 def resolveObjectIndex(pkg: 'IoPackageReader', globaldata: FIoGlobalData, index: FPackageObjectIndex):
     if index.IsScriptImport:
         return ResolveScriptObject(globaldata.ScriptObjectByGlobalId[index.typeAndId], pkg, globaldata)
@@ -23,8 +24,10 @@ def resolveObjectIndex(pkg: 'IoPackageReader', globaldata: FIoGlobalData, index:
     else:
         return None
 
+
 class ResolveExportObject:
-    def __init__(self, pkg: 'IoPackageReader', exportEntry: FExportMapEntry, importedPkg: 'IoPackageReader' = None) -> None:
+    def __init__(self, pkg: 'IoPackageReader', exportEntry: FExportMapEntry,
+                 importedPkg: 'IoPackageReader' = None) -> None:
         self.pkg = pkg
         self.entry = exportEntry
         if importedPkg is None:
@@ -36,7 +39,7 @@ class ResolveExportObject:
 
     def getOuter(self):
         return resolveObjectIndex(self.pkg, self.pkg.Provider.GlobalData, self.entry.OuterIndex)
-    
+
     def getSuper(self):
         return resolveObjectIndex(self.pkg, self.pkg.Provider.GlobalData, self.entry.SuperIndex)
 
@@ -71,6 +74,7 @@ class ResolveExportObject:
         if outer is not None:
             Dict.update({"OuterIndex": outer.GetValue()})
         return Dict
+
 
 class ResolveScriptObject:
     def __init__(self, scriptObject: FScriptObjectDesc, pkg, globaldata):

@@ -1,19 +1,6 @@
 from UE4Parse.BinaryReader import BinaryStream
 
 
-def concat(*args):
-    s = ""
-    for a in args:
-        for b in a:
-            s += str(b)
-    c = int(s)
-    return c
-
-
-def toint(byte) -> int:
-    return int.from_bytes(byte, "little", signed=False)
-
-
 class FIoStoreTocCompressedBlockEntry:
     OffsetBits = 40
     OffsetMask = (1 << OffsetBits) - 1
@@ -32,23 +19,23 @@ class FIoStoreTocCompressedBlockEntry:
 
     @property
     def CompressedSize(self):
-        return toint(self.size)
+        return int.from_bytes(self.size, "little", signed=False)
         # Size = self.Data + 1
         # return (Size >> self.SizeShift) & self.SizeMask
 
     @property
     def UncompressedSize(self):
-        return toint(self.uncompressed_size)
+        return int.from_bytes(self.uncompressed_size, "little", signed=False)
         # uncompressedSize = self.Data + 2
         # return uncompressedSize & self.SizeMask
 
     @property
     def CompressionMethodIndex(self):
-        return toint(self.compression_method)
+        return int.from_bytes(self.compression_method, "little", signed=False)
         # Index = self.Data + 2
         # return Index >> self.SizeBits
 
     @property
     def Offset(self):
-        return toint(self.offset)
+        return int.from_bytes(self.offset, "little", signed=False)
         # return self.Data & self.OffsetMask

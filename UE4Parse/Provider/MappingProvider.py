@@ -8,13 +8,13 @@ from Usmap import Usmap
 
 
 class PropMappings:
-    
+
     def __init__(self, struct: Struct, provider: 'MappingProvider') -> None:
         self.struct = struct
         self.provider = provider
 
     def TryGetProp(self, index: int):
-        if index <= self.struct.PropertyCount: # len(props)
+        if index <= self.struct.PropertyCount-1:  # len(props)
             return self.struct.props[index]
         elif self.struct.SuperIndex is not None:
             super_ = self.provider.get_schema_by_index(self.struct.SuperIndex)
@@ -22,10 +22,11 @@ class PropMappings:
                 return None
             return super_.TryGetProp(index - self.struct.PropertyCount)
 
+
 class MappingProvider:
     __mappings: Usmap
 
-    def __init__(self, fp = None) -> None:
+    def __init__(self, fp=None) -> None:
         if fp == None:
             if self._check_mappings():
                 filepath = self._find_latest_Mappings()
@@ -41,7 +42,7 @@ class MappingProvider:
         if schema is None:
             return None
         return PropMappings(schema, self)
-    
+
     def get_schema_by_index(self, Index: int):
         """Index: `int` NameMap Entry Index"""
         if Index > len(self.__mappings.NameMap):
@@ -72,7 +73,7 @@ class MappingProvider:
             raise e
         return False
 
-    def _dl_mappings(self,path):
+    def _dl_mappings(self, path):
         ENDPOINT = "https://benbot.app/api/v1/mappings"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",

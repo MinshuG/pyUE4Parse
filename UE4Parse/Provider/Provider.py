@@ -229,7 +229,7 @@ class Provider:
             # self.Paks[os.path.basename(pak_name)] =
             reader = PakReader.PakReader(path, self.caseinsensitive)
             return reader, os.path.basename(pak_name)
-            # logger.debug(f"Registering PakFile: {path}")
+            logger.debug(f"Registering PakFile: {path}")
         if pak_name.endswith(".utoc"):
             ucas_path = path[:-5] + ".ucas"
             logger.debug(f"Registering IoStore: {path[:-5]}")
