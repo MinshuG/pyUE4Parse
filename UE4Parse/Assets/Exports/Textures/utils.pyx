@@ -17,3 +17,4 @@ def build_blue_channel(bytearray data, int size_x, int size_y):
             data[offset+2] = floor((t + 1.0) * 127.5)
         else:
             data[offset+2] = 255
+        offset += 4

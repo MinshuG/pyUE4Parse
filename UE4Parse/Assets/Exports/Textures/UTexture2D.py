@@ -60,9 +60,9 @@ class UTexture2D(UObject):
         props["FTexturePlatformData"] = [x.GetValue() for x in self.data]
         return props
 
-    def decode(self, mip_index = -1) -> Optional['Image']:
+    def decode(self, mip_index=-1) -> Optional['Image']:
         if len(self.data) == 0:
-            return # no data
+            return  # no data
 
         PlatformData = self.data[0]
         mip_index = PlatformData.FirstMipToSerialize if mip_index == -1 else mip_index

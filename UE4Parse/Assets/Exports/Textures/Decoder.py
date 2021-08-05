@@ -33,12 +33,18 @@ class TextureDecoder:
             from quicktex.s3tc.bc3 import BC3Decoder, BC3Texture
             t = BC3Texture.from_bytes(self.data.read(), self.sizeX, self.sizeY)
             image_bytes = BC3Decoder().decode(t).tobytes()
-            self.decoded_image = Image.frombytes("RGBA", (self.sizeX, self.sizeY), image_bytes)
+            if is_normal_map:
+                image_bytes = bytearray(image_bytes)
+                build_blue_channel(image_bytes, self.sizeX, self.sizeY)
+            self.decoded_image = Image.frombytes("RGBA", (self.sizeX, self.sizeY), bytes(image_bytes))
         elif self.pixel_format == EPixelFormat.PF_BC5:  # missing some channel probably same as astc?
             from quicktex.s3tc.bc5 import BC5Decoder, BC5Texture
             t = BC5Texture.from_bytes(self.data.read(), self.sizeX, self.sizeY)
             image_bytes = BC5Decoder(0, 1).decode(t).tobytes()
-            self.decoded_image = Image.frombytes("RGBA", (self.sizeX, self.sizeY), image_bytes)
+            if is_normal_map:
+                image_bytes = bytearray(image_bytes)
+                build_blue_channel(image_bytes, self.sizeX, self.sizeY)
+            self.decoded_image = Image.frombytes("RGBA", (self.sizeX, self.sizeY), bytes(image_bytes))
         elif self.pixel_format == EPixelFormat.PF_BC4:
             from quicktex.s3tc.bc4 import BC4Decoder, BC4Texture
             t = BC4Texture.from_bytes(self.data.read(), self.sizeX, self.sizeY)
@@ -48,7 +54,7 @@ class TextureDecoder:
             from astc_decomp import decompress_astc
             block_width, block_height = str(self.pixel_format.name).lstrip("PF_ASTC_").split("x")
 
-            is_srgb: bool = is_normal_map # Normal Maps are Linear
+            is_srgb: bool = not is_normal_map  # Normal Maps are Linear
             image_bytes = decompress_astc(self.data.read(), self.sizeX, self.sizeY, block_width, block_height, is_srgb)
             if is_normal_map:
                 image_bytes = bytearray(image_bytes)

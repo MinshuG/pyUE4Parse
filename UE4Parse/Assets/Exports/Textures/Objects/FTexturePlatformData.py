@@ -25,7 +25,8 @@ class FTexturePlatformData:
         self.NumSlices = reader.readInt32()  # 1 for normal textures
         self.PixelFormat = EPixelFormat[reader.readFString()]
 
-        self.FirstMipToSerialize = reader.readInt32()
+        first_mip = reader.readInt32()
+        self.FirstMipToSerialize = first_mip-1 if first_mip > 0 else first_mip
         self.Mips = reader.readTArray(FTexture2DMipMap, reader, ubulk, ubulkOffset)
         if reader.game >= GAME_UE4(23):
             self.bIsVirtual = reader.readInt32() != 0

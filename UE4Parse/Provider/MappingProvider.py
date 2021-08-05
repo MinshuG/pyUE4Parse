@@ -70,8 +70,8 @@ class MappingProvider:
             self._dl_mappings(mappings_path)
             return True
         except Exception as e:
-            raise e
-        return False
+            pass
+        return os.path.exists(mappings_path)
 
     def _dl_mappings(self, path):
         ENDPOINT = "https://benbot.app/api/v1/mappings"
