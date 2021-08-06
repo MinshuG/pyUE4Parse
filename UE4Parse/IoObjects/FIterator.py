@@ -27,13 +27,13 @@ class FIterator:
     _remainingFragmentValues: int
     _zeroMask: bitarray
     _zeroMaskIndex: int
-    _fragmentIt: int # CIterator
+    _fragmentIt: int  # CIterator
 
     def __init__(self, header: FUnversionedHeader) -> None:
         self._zeroMask = header.ZeroMask
-        self._fragments = header.Fragments # CIterator(itertools.cycle(header.Fragments))
+        self._fragments = header.Fragments  # CIterator(itertools.cycle(header.Fragments))
 
-        self.bDone = not header.hasValues()
+        self.bDone = False
         self._fragmentIt = 0
 
         self._zeroMaskIndex = 0
@@ -66,7 +66,7 @@ class FIterator:
             if self.Current.IsLast:
                 self.bDone = True
             else:
-                self._fragmentIt += 1 # next(self._fragmentIt)
+                self._fragmentIt += 1  # next(self._fragmentIt)
                 self.Skip()
         return True
 

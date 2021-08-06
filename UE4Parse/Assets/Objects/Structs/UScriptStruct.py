@@ -23,7 +23,7 @@ def switch(toCompare, CompareTo):  # wtf was this?
     return toCompare == CompareTo
 
 
-def FallBackReader(reader: BinaryStream, structName = None):
+def FallBackReader(reader: BinaryStream, structName=None):
     fallbackobj = UObjects.UObject(reader, True)
     fallbackobj.type = structName
     fallbackobj.deserialize(0)

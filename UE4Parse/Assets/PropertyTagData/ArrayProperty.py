@@ -1,7 +1,10 @@
+from UE4Parse import Logger
+
 from UE4Parse.Assets import PropertyTagData
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Objects.FPropertyTag import FPropertyTag
 
+logger = Logger.get_logger(__name__)
 
 class ArrayProperty:
     Value: list
@@ -9,13 +12,11 @@ class ArrayProperty:
 
     def __init__(self, reader: BinaryStream, tag: FPropertyTag):
         self.position = reader.base_stream.tell()
-        self.Value = self.ArrayPropertyReader(reader, tag)
+        self.Value = []
+        self.ArrayPropertyReader(reader, tag)
 
     def GetValue(self):
-        vals = []
-        for val in self.Value:
-            vals.append(val.GetValue())
-        return vals
+        return [x.GetValue() for x in self.Value]
 
     def ArrayPropertyReader(self, reader: BinaryStream, tag) -> list:
         InnerType = tag.InnerType
@@ -29,10 +30,11 @@ class ArrayProperty:
             InnerTag = FPropertyTag(reader)
         else:
             InnerTag = None
-        pos = reader.base_stream.tell()
  
-        for _ in range(length):
-            val = PropertyTagData.BaseProperty.ReadAsObject(reader, InnerTag, InnerType,
-                                                            PropertyTagData.BaseProperty.ReadType.ARRAY)
-            Value.append(val)
-        return Value
+        for i in range(length):
+            try:
+                val = PropertyTagData.BaseProperty.ReadAsObject(reader, InnerTag, InnerType,
+                                                                PropertyTagData.BaseProperty.ReadType.ARRAY)
+                self.Value.append(val)
+            except Exception as e:
+                logger.warn(f"Failed to read array property of type {InnerType} at ${reader.position} index {i}, {e}")

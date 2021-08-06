@@ -39,15 +39,23 @@ class ReadType(IntEnum):
     ZERO = auto()
 
 
+class ZERORead:  # TODO
+    def __init__(self):
+        pass
+
+    def GetValue(self):
+        return None
+
+
 def switch(toCompare, CompareTo):
     return toCompare == CompareTo
 
 
 def ReadAsObject(reader, tag: FPropertyTag = None, type_: FName = None, readType: ReadType = None):
-    type_ = type_.string  if isinstance(type_, FName) else type_
+    type_ = type_.string if isinstance(type_, FName) else type_
 
     if type_ != "EnumProperty" and readType == ReadType.ZERO:
-        print(f"ReadType::Zero and it's not EnumProperty, {type_!r}")
+        return ZERORead()
 
     prop: object
     if switch("ByteProperty", type_):

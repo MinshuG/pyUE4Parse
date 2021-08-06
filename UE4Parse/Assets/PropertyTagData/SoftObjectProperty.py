@@ -13,12 +13,15 @@ class SoftObjectProperty:
 
     def __init__(self, reader: BinaryStream, readType: 'ReadType') -> None:
         self.position = reader.base_stream.tell()
-        self.Value = FSoftObjectPath(reader)
-
         from .BaseProperty import ReadType
-        if reader.has_unversioned_properties:
-            return
-        if readType == ReadType.MAP:
+
+        if readType == ReadType.ZERO:
+            self.Value = FSoftObjectPath(None)
+        else:
+            self.Value = FSoftObjectPath(reader)
+
+
+        if not reader.has_unversioned_properties and readType == ReadType.MAP:
             reader.seek(16 - (reader.base_stream.tell() - self.position))
 
     def GetValue(self):

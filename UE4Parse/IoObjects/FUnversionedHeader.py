@@ -1,15 +1,20 @@
 from typing import Any, Tuple
 from ..BinaryReader import BinaryStream
 
+
 class bitarray:
     """list of bools"""
-    
+
     def __init__(self, size) -> None:
         if isinstance(size, list):
             self.__bools = size
+        elif isinstance(size, bytes):
+            self.__bools = []
+            for x in size:
+                self.__bools.append(bool(x))
         else:
             self.__bools = [False] * size
-    
+
     def addTrueAt(self, index: int):
         if len(self.__bools) - 1 <= index:
             extra = [False] * (index - len(self.__bools) + 1)
@@ -19,13 +24,17 @@ class bitarray:
             self.__bools[index] = True
 
     def trim(self, where: int, to: int):
-        if len(self.__bools) >= to+1:
+        if len(self.__bools) >= to + 1:
             return bitarray(self.__bools[where:])  # ?
             raise ValueError("trim value id more than length of object")
         return bitarray(self.__bools[where:to])
 
     def contains(self, what: bool):
-        return any(i == what for i in self.__bools)
+        for x in self.__bools:
+            if x == what:
+                return True
+        return False
+        # return any(i == what for i in self.__bools)
 
     def __str__(self) -> str:
         return str(self.__bools)
@@ -43,13 +52,14 @@ class bitarray:
         except IndexError:
             return False
 
+
 class FFragment:
     _SkipMax = 127
     _ValueMax = 127
     _SkipNumMask = 0x007f
     _HasZeroMask = 0x0080
     _ValueNumShift = 9
-    _IsLastMask  = 0x0100
+    _IsLastMask = 0x0100
 
     SkipNum: int
     HasAnyZeroes: bool
@@ -73,7 +83,7 @@ class FUnversionedHeader:
 
     def __init__(self, reader: BinaryStream) -> None:
         fragments = []
-        
+
         zeroMaskNum = 0
         unmaskedNum = 0
         while True:
@@ -90,7 +100,7 @@ class FUnversionedHeader:
 
         if zeroMaskNum > 0:
             self.ZeroMask = self.LoadZeroMaskData(reader, zeroMaskNum)
-            self.HasNonZeroValues = unmaskedNum > 0 | self.ZeroMask.contains(True) # probably not correct
+            self.HasNonZeroValues = unmaskedNum > 0 or self.ZeroMask.contains(True)  # this work no idea how
         else:
             self.ZeroMask = bitarray(0)
             self.HasNonZeroValues = unmaskedNum > 0
@@ -98,18 +108,19 @@ class FUnversionedHeader:
         self.Fragments = tuple(fragments)
 
     def LoadZeroMaskData(self, reader: BinaryStream, numBits: int) -> bitarray:
-        data = bitarray(32)
         if numBits <= 8:
-            data.addTrueAt(reader.readByteToInt())
+            bits = reader.readByte()
+            data = bitarray(bits)
         elif numBits <= 16:
-            data.addTrueAt(reader.readUInt16())
+            bits = reader.readBytes(2)
+            data = bitarray(bits)
         else:
-            num = int(numBits / 32)
             num = divide_round_up(numBits, 32)
-            for i in range(num):
-                data.addTrueAt(reader.readByteToInt())
+            bits = b"".join(reader.readByte() for _ in range(num))
+            data = bitarray(bits)
         trimed = data.trim(0, numBits)
         return trimed
+
 
 def divide_round_up(dividend, divisor):
     return round((dividend + divisor - 1) / divisor)

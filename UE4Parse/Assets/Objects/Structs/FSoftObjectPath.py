@@ -1,5 +1,7 @@
+from typing import Optional
+
 from UE4Parse.BinaryReader import BinaryStream
-from UE4Parse.Assets.Objects import FName
+from UE4Parse.Assets.Objects.FName import FName
 
 
 class FSoftObjectPath:
@@ -7,10 +9,15 @@ class FSoftObjectPath:
     AssetPathName: FName = FName
     SubPathString: str = None
 
-    def __init__(self, reader: BinaryStream) -> None:
-        self.position = reader.base_stream.tell()
-        self.AssetPathName = reader.readFName()
-        self.SubPathString = reader.readFString()
+    def __init__(self, reader: Optional[BinaryStream] = None) -> None:
+        if reader:
+            self.position = reader.base_stream.tell()
+            self.AssetPathName = reader.readFName()
+            self.SubPathString = reader.readFString()
+        else:
+            self.position = -1
+            self.AssetPathName = FName("None")  # Zero read?
+            self.SubPathString = ""
 
     def GetValue(self):
         return {
