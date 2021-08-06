@@ -9,11 +9,11 @@ if TYPE_CHECKING:
     from UE4Parse.Assets.PackageReader import Package
 
 def ToJson(PackageReader: 'Package'):
-    NameMap: List[FNameEntrySerialized] = PackageReader.NameMap
-    ImportMap: List[FObjectImport] = PackageReader.ImportMap
+    # NameMap: List[FNameEntrySerialized] = PackageReader.NameMap
+    # ImportMap: List[FObjectImport] = PackageReader.ImportMap
     ExportMap: List[FObjectExport, FExportMapEntry] = PackageReader.ExportMap
-    Dict = {"Exports": []}
-    
+    # Dict = {"Exports": []}
+    Exports = []
     # "ImportMap": [], "ExportMap": []
     # for Import in ImportMap:
     #     # if isinstance(Import, FPackageObjectIndex):
@@ -21,12 +21,13 @@ def ToJson(PackageReader: 'Package'):
     #     Dict["ImportMap"].append(Import.GetValue())
 
     for Export in ExportMap:
-        Dict["Exports"].append({"ExportType": Export.type.string, "ExportName": Export.name.string, "ExportValue": Export.exportObject.GetValue()})
+        # Dict["Exports"].append({"Type": Export.type.string, "Name": Export.name.string, **Export.exportObject.GetValue()})
+        Exports.append({"Type": Export.type.string, "Name": Export.name.string, **Export.exportObject.GetValue()})
         # Dict["ExportMap"].append(Export.GetValue())
 
-    if NameMap is not None:
-        Dict["NameMap"] = []
-        for Name in NameMap:
-            Dict["NameMap"].append(Name.GetValue())
-
-    return Dict
+    # if NameMap is not None:
+    #     Dict["NameMap"] = []
+    #     for Name in NameMap:
+    #         Dict["NameMap"].append(Name.GetValue())
+    return Exports
+    # return Dict

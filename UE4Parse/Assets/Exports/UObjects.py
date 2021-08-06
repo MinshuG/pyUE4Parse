@@ -17,12 +17,13 @@ logger = Logger.get_logger(__name__)
 
 class UObject:
     position: int
-    Dict: dict = {}
+    Dict: dict
     type: str
     flag: int
 
     def __init__(self, reader: BinaryStream, structFallback: bool = False) -> None:
         # self.Tags = []
+        self.Dict: dict = {}
         self.reader: BinaryStream = reader
         self.structFallback = structFallback
         self.position = self.reader.base_stream.tell()
@@ -30,9 +31,9 @@ class UObject:
 
     def deserialize(self, validpos): # 7680
         if self.reader.has_unversioned_properties:
-            self.Dict = self.deserializeUnVersioned()
+            self.deserializeUnVersioned()
         else:
-            self.Dict = self.deserializeVersioned()
+            self.deserializeVersioned()
 
         pos = self.reader.tell()
         if pos + 4 <= validpos:
@@ -66,6 +67,7 @@ class UObject:
                 num += 1
             else:
                 pass
+            self.addProp(Tag, obj, num)
             properties[key] = obj
             pos2 = self.reader.base_stream.tell()
             expectedPos: int = Tag.Size + pos
@@ -97,9 +99,7 @@ class UObject:
 
                 propmappings = Schema.TryGetProp(iterator._schemaIt)
                 if propmappings is None:
-                    logger.error("Missing Mappings for index {} cannot proceed with serilization".format(iterator._schemaIt))
-                    return properties
-                    # raise ParserException("Missing Mappings for index {}".format(iterator._schemaIt))
+                    raise ParserException("Missing Mappings for index {} cannot proceed with serilization".format(iterator._schemaIt))
                 Tag = FPropertyTag(None, propmappings)
                 tags.append(Tag)
 
@@ -110,13 +110,11 @@ class UObject:
                         self.reader, Tag, Tag.Type, ReadType.NORMAL)
                         logger.debug(f"{pos} -> {reader.tell()} : {Tag.Name}")
                     except Exception as e:
-                        logger.debug(f"Failed to read values for {Tag.Name.string}, {e}")
-                        obj = None
+                        raise ParserException(f"Failed to read values for {Tag.Name.string}, {e}")
 
-                    self.addProp(Tag, obj, num, properties)
+                    self.addProp(Tag, obj, num)
                     if obj is None:
                         break
-
                 else: # Zero prop
                     try:
                         pos = reader.tell()
@@ -126,20 +124,18 @@ class UObject:
                     except Exception as e:
                         logger.debug(f"Failed to read values for {Tag.Name.string}, {e}")
                         obj = None
-
                     self.addProp(Tag, obj, num, properties)
 
                 if current.IsLast:
                     break
                 iterator.MoveNext()
-        return properties
 
-    def addProp(self, Tag, value, num, properties):
+    def addProp(self, Tag, value, num):
         key = Tag.Name.string
-        if key in properties:
+        if key in self.Dict:
             key = f"{key}_NK{num:00}"
             num += 1
-        properties[key] = value
+        self.Dict[key] = value
 
     def GetValue(self) -> dict:
         """:returns JSON Serializable dict"""

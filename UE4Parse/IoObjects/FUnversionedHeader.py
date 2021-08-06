@@ -11,17 +11,18 @@ class bitarray:
             self.__bools = [False] * size
     
     def addTrueAt(self, index: int):
-        if len(self.__bools) < index:
-            pass
-            # raise NotImplementedError()
+        if len(self.__bools) - 1 <= index:
+            extra = [False] * (index - len(self.__bools) + 1)
+            self.__bools = extra + self.__bools
+            self.__bools[index] = True
         else:
             self.__bools[index] = True
 
     def trim(self, where: int, to: int):
-        if len(self.__bools) < where:
+        if len(self.__bools) >= to+1:
+            return bitarray(self.__bools[where:])  # ?
             raise ValueError("trim value id more than length of object")
-        newlist = self.__bools[where:to]
-        return bitarray(newlist)
+        return bitarray(self.__bools[where:to])
 
     def contains(self, what: bool):
         return any(i == what for i in self.__bools)

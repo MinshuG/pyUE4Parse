@@ -24,4 +24,8 @@ oo2core_8_win64.dll
 /setup.onefile-build
 /.eggs
 mappings/++Fortnite+Release-17.00-CL-16593740-Windows_oo.usmap
-build.bat
+*.bat
+/.mypy_cache
+/mappings
+*.c
+*.pyd

@@ -242,7 +242,10 @@ class IoPackageReader(Package):
 
                 export_type = resolveObjectIndex(self, provider.GlobalData, index=Export.ClassIndex).getName()
                 ExportData = Registry().get_export_reader(export_type.string, Export, self.reader)
-                ExportData.deserialize(currentExportDataOffset + Export.CookedSerialSize)
+                try:
+                    ExportData.deserialize(currentExportDataOffset + Export.CookedSerialSize)
+                except Exception as e:
+                    pass
                 Export.type = export_type
                 Export.exportObject = ExportData
 

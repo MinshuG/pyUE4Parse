@@ -1,9 +1,7 @@
-try:
-    from Cython.Build import cythonize
-except:
-    cythonize = None
-
-from setuptools import Extension, setup, find_packages
+from Cython.Build import cythonize
+from setuptools import find_packages
+from distutils.core import setup
+from distutils.extension import Extension
 import pathlib
 
 HERE = pathlib.Path(__file__).parent
@@ -12,12 +10,11 @@ README = (HERE / "README.md").read_text()
 
 extensions = [
     Extension(
-        name="tex_utils",
+        name="UE4Parse.Assets.Exports.Textures.utils",
         sources=["UE4Parse/Assets/Exports/Textures/utils.pyx"])
 ]
 
-if cythonize:
-    extensions = cythonize(extensions)
+extensions = cythonize(extensions)
 
 setup(
     name="UE4Parse",
@@ -32,5 +29,5 @@ setup(
     ],
     install_requires=["pycryptodome", "lz4", "pyUsmap", "pillow", "quicktex", "astc_decomp"],
     packages=find_packages(),
-    ext_modules=extensions
+    ext_modules=extensions,
 )
