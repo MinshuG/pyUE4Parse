@@ -60,7 +60,7 @@ if texture := parsed_package.find_export_of_type("Texture2D"):
 
 ## Notes for Developers
 
-- Use pyximport for developement purposes 
+- Developers can use pyximport for development purposes 
 
     ```python 
     import pyximport
