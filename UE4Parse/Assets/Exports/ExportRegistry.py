@@ -1,29 +1,30 @@
-from .Level import ULevel
-from .MaterialInstanceConstant import UMaterialInstanceConstant
 from .UObjects import UObject
-from UE4Parse.Assets.Exports.StaticMesh.UStaticMesh import UStaticMesh
-from .UStringTable import UStringTable
-from UE4Parse.Assets.Exports.Textures.UTexture2D import UTexture2D
-from .World import UWorld
 
+exports = {}
+
+
+def register_export(cls=None, Type=None):
+    def wrapper(cls, _type=None):
+        if Type is not None:
+            _type = Type
+        if _type is None:
+            _type: str = cls.__name__
+            if _type.startswith(("U", "A")):
+                _type = _type[1:]
+        exports[_type] = cls
+        return cls
+
+    if cls is None:
+        return wrapper
+    return wrapper(cls, Type)
 
 
 class Registry:
-    exports = {
-        "Texture2D": UTexture2D,
-        "StaticMesh": UStaticMesh,
-        "StringTable": UStringTable,
-        "World": UWorld,
-        "Level": ULevel,
-        "MaterialInstanceConstant": UMaterialInstanceConstant
-    }
-
     def __init__(self) -> None:
         pass
 
     def get_export_reader(self, export_type: str, export, reader):
-        r = self.exports.get(export_type, UObject)(reader)
+        r = exports.get(export_type, UObject)(reader)
         r.type = export_type
         r.flag = export.ObjectFlags
-        # r.name = export.ObjectName.string
         return r

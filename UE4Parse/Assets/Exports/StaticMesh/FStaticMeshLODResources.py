@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from UE4Parse.BinaryReader import BinaryStream
-from UE4Parse.Assets.Objects.EUEVersion import GAME_UE4
+from UE4Parse.Versions.EUEVersion import GAME_UE4
 from UE4Parse.Assets.Objects.FByteBulkData import FByteBulkData
 from UE4Parse.Assets.Objects.FStripDataFlags import FStripDataFlags
 from UE4Parse.Assets.Objects.Meshes.FColorVertexBuffer import FColorVertexBuffer

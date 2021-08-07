@@ -1,6 +1,6 @@
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Objects.FName import FName
-from UE4Parse.Assets.Objects.EUnrealEngineObjectUE4Version import UE4Versions
+from UE4Parse.Versions.EUnrealEngineObjectUE4Version import UE4Versions
 from UE4Parse.Assets.Objects.FGuid import FGuid
 
 from Usmap import StructProps

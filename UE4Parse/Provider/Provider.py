@@ -13,20 +13,15 @@ from UE4Parse.IO import IoStoreReader
 from UE4Parse.IO.IoObjects.FIoStoreEntry import FIoStoreEntry
 from UE4Parse.IoObjects.FIoGlobalData import FIoGlobalData
 from UE4Parse.Logger import get_logger
-from UE4Parse.Assets.Objects.EUEVersion import EUEVersion
 from UE4Parse.Assets.PackageReader import IoPackageReader, LegacyPackageReader
 from UE4Parse.PakFile import PakReader
 from UE4Parse.PakFile.PakObjects.FPakEntry import FPakEntry
 from UE4Parse.Provider.utils import *
+from UE4Parse.Versions.Versions import VersionContainer
 
 logger = get_logger(__name__)
 
-
-class FGame:
-    UEVersion: EUEVersion = EUEVersion.LATEST
-    GameName: Optional[str] = None
-    # Version: EPakVersion = EPakVersion(11)
-    # SubVersion = 0
+FGame = VersionContainer
 
 
 class PackageProvider:

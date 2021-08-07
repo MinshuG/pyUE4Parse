@@ -3,6 +3,7 @@ from .FMappedName import FMappedName
 from ..BinaryReader import BinaryStream
 from contextlib import suppress
 
+
 class FPackageSummary:
     Name: FMappedName
     SourceName: FMappedName

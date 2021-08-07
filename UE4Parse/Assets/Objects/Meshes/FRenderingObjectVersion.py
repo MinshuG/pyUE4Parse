@@ -1,5 +1,5 @@
 from UE4Parse.BinaryReader import BinaryStream
-from UE4Parse.Assets.Objects.EUEVersion import EUEVersion, GAME_UE4
+from UE4Parse.Versions.EUEVersion import EUEVersion, GAME_UE4
 
 
 class FRenderingObjectVersion:
@@ -11,7 +11,7 @@ class FRenderingObjectVersion:
 
     def __init__(self):
         pass
-
+ 
     def get(self, reader: BinaryStream):
         version = reader.game
         if version < GAME_UE4(12):

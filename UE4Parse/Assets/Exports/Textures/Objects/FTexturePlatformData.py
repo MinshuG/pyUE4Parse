@@ -1,8 +1,8 @@
-from typing import List, Tuple
+from typing import Tuple
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Objects.EPixelFormat import EPixelFormat
-from UE4Parse.Assets.Objects.EUEVersion import GAME_UE4
+from UE4Parse.Versions.EUEVersion import GAME_UE4
 from UE4Parse.Assets.Exports.Textures.Objects.FTexture2DMipMap import FTexture2DMipMap
 
 

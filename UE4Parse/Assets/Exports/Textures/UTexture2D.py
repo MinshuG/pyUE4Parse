@@ -4,8 +4,9 @@ from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Exports.UObjects import UObject
 from UE4Parse.Logger import get_logger
 from UE4Parse.Assets.Objects.EPixelFormat import EPixelFormat
-from UE4Parse.Assets.Objects.EUEVersion import GAME_UE4, Versions
+from UE4Parse.Versions.EUEVersion import GAME_UE4, Versions
 from UE4Parse.Assets.Objects.FStripDataFlags import FStripDataFlags
+from UE4Parse.Assets.Exports.ExportRegistry import register_export
 from UE4Parse.Assets.Exports.Textures.Objects.FTexturePlatformData import FTexturePlatformData
 from .Decoder import TextureDecoder
 
@@ -15,6 +16,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
+@register_export
 class UTexture2D(UObject):
     data: List[FTexturePlatformData]
     isNormalMap: bool

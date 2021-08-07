@@ -4,9 +4,10 @@ from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Exports.UObjects import UObject
 from UE4Parse.Assets.Objects.FPackageIndex import FPackageIndex
 from UE4Parse.Assets.PropertyTagData.StructProperty import StructProperty
+from UE4Parse.Assets.Exports.ExportRegistry import register_export
 from UE4Parse.Provider import Provider
 
-
+@register_export
 class UMaterialInstanceConstant(UObject):
     parent: Optional[FPackageIndex]
     ScalarParameterValues: Optional[List[StructProperty]]

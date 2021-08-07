@@ -135,6 +135,8 @@ class UObject:
 
     def GetValue(self) -> dict:
         """:returns JSON Serializable dict"""
+        if len(self.Dict) == 0:
+            return {}
         properties = {}
         for key, value in self.Dict.items():
             if value is not None:

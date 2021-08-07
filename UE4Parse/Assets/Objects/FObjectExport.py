@@ -1,7 +1,7 @@
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Exports.UObjects import UObject
 from UE4Parse.Assets.Objects.EObjectFlags import EObjectFlags
-from UE4Parse.Assets.Objects.EUnrealEngineObjectUE4Version import EUnrealEngineObjectUE4Version
+from UE4Parse.Versions.EUnrealEngineObjectUE4Version import EUnrealEngineObjectUE4Version
 from UE4Parse.Assets.Objects.FGuid import FGuid
 from UE4Parse.Assets.Objects.FName import FName
 from UE4Parse.Assets.Objects.FPackageIndex import FPackageIndex
@@ -25,7 +25,7 @@ class FObjectExport:
     bIsAsset: bool = False
     exportObject: UObject
     name: FName = None
-    type: FName
+    type: FName = FName("Unknown")
 
     @property
     def name(self) -> FName:

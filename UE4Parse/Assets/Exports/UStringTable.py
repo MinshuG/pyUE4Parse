@@ -1,9 +1,11 @@
+from UE4Parse.Assets.Exports.ExportRegistry import register_export
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Exports.UObjects import UObject
 from UE4Parse.Assets.Objects.FName import FName
 from UE4Parse.Assets.Objects.FStringTable import FStringTable
 
 
+@register_export
 class UStringTable(UObject):
     StringTable: FStringTable
     StringTableId = FName

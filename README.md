@@ -8,7 +8,7 @@
 
 ```python
 from UE4Parse.Provider import FGame, Provider, MappingProvider
-from UE4Parse.Assets.Objects.EUEVersion import EUEVersion
+from UE4Parse.Versions.EUEVersion import EUEVersion
 from UE4Parse.Encryption import FAESKey
 
 import logging

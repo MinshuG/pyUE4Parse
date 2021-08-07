@@ -2,7 +2,7 @@ from typing import List
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Exceptions.Exceptions import ParserException
-from UE4Parse.Assets.Objects.EUEVersion import Versions, GAME_UE4
+from UE4Parse.Versions.EUEVersion import Versions, GAME_UE4
 from UE4Parse.Assets.Objects.FStripDataFlags import FStripDataFlags
 from UE4Parse.Assets.Exports.StaticMesh.FStaticMeshUVItem import FStaticMeshUVItem
 

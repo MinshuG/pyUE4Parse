@@ -1,5 +1,5 @@
 from UE4Parse.BinaryReader import BinaryStream
-from UE4Parse.Assets.Objects.EUEVersion import GAME_UE4
+from UE4Parse.Versions.EUEVersion import GAME_UE4
 
 
 class FEditorObjectVersion:

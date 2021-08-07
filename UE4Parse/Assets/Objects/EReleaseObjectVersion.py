@@ -1,4 +1,3 @@
-# FReleaseObjectVersion
 from enum import IntEnum, auto
 
 

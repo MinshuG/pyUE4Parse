@@ -30,7 +30,7 @@ class FExportMapEntry:
     ObjectFlags: EObjectFlags
     FilterFlags: EExportFilterFlags
     exportObject: 'UObject'
-    type: FName
+    type: FName = FName("Unknown")
 
     def __init__(self, reader: BinaryStream):
         self.CookedSerialOffset = reader.readUInt64()

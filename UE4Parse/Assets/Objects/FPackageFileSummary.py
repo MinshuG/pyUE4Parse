@@ -4,11 +4,11 @@ from typing import List
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Exceptions.Exceptions import InvalidMagic, ParserException
-from UE4Parse.Assets.Objects.EUEVersion import EUEVersion
-from UE4Parse.Assets.Objects.EUnrealEngineObjectLicenseeUE4Version import EUnrealEngineObjectLicenseeUE4Version
-from UE4Parse.Assets.Objects.EUnrealEngineObjectUE4Version import EUnrealEngineObjectUE4Version
+from UE4Parse.Versions.EUEVersion import EUEVersion
+from UE4Parse.Versions.EUnrealEngineObjectLicenseeUE4Version import EUnrealEngineObjectLicenseeUE4Version
+from UE4Parse.Versions.EUnrealEngineObjectUE4Version import EUnrealEngineObjectUE4Version
 from UE4Parse.Assets.Objects.FCompressedChunk import FCompressedChunk
-from UE4Parse.Assets.Objects.FCustomVersionContainer import FCustomVersionContainer
+from UE4Parse.Versions.FCustomVersionContainer import FCustomVersionContainer
 from UE4Parse.Assets.Objects.FEngineVersion import FEngineVersion
 from UE4Parse.Assets.Objects.FGenerationInfo import FGenerationInfo
 from UE4Parse.Assets.Objects.FGuid import FGuid

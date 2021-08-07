@@ -1,8 +1,7 @@
-from typing import List, Tuple
+from typing import Tuple
 
 from UE4Parse.BinaryReader import BinaryStream
-from UE4Parse.Assets.Exports.UClass import UClass
-from UE4Parse.Assets.Objects.EUEVersion import GAME_UE4, Versions
+from UE4Parse.Versions.EUEVersion import GAME_UE4, Versions
 from UE4Parse.Assets.Objects.Structs.Box import FBox
 from UE4Parse.Assets.Objects.Structs.Vector import FIntVector, FVector, FVector2D
 

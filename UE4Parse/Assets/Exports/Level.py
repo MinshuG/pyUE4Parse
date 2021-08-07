@@ -2,12 +2,14 @@ from typing import Tuple, Union, Optional
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Exports.UObjects import UObject
-from UE4Parse.Assets.Objects.EUEVersion import EUEVersion
+from UE4Parse.Versions.EUEVersion import EUEVersion
 from UE4Parse.Assets.Objects.FObjectExport import FObjectExport
 from UE4Parse.Assets.Objects.FObjectImport import FObjectImport
+from UE4Parse.Assets.Exports.ExportRegistry import register_export
 from UE4Parse.Assets.Objects.URL import FURL
 
 
+@register_export
 class ULevel(UObject):
     URL: FURL
     Actors: Tuple[Optional[Union[FObjectExport, FObjectImport]]]

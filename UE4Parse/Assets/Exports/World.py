@@ -1,12 +1,14 @@
 from typing import Tuple
 
-from UE4Parse.Assets.Objects.EUEVersion import EUEVersion
+from UE4Parse.Versions.EUEVersion import EUEVersion
 from UE4Parse.Assets.Objects.FPackageIndex import FPackageIndex
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Exports.UObjects import UObject
-from UE4Parse.Assets.Objects.EUnrealEngineObjectUE4Version import EUnrealEngineObjectUE4Version
+from UE4Parse.Versions.EUnrealEngineObjectUE4Version import EUnrealEngineObjectUE4Version
+from UE4Parse.Assets.Exports.ExportRegistry import register_export
 
 
+@register_export
 class UWorld(UObject):
     PersistentLevel: FPackageIndex  # UObject
     ExtraReferencedObjects: FPackageIndex

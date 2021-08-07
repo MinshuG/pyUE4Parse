@@ -2,11 +2,11 @@ from UE4Parse.Assets.Objects.EPackageFlags import EPackageFlags
 import os
 from io import BufferedReader, BytesIO
 from struct import *
-from typing import Set, Tuple, TypeVar, Union, TYPE_CHECKING
+from typing import Tuple, TypeVar, Union, TYPE_CHECKING
 
 from UE4Parse import Logger
 from UE4Parse.Exceptions.Exceptions import ParserException
-from UE4Parse.Assets.Objects.EUEVersion import EUEVersion
+from UE4Parse.Versions.EUEVersion import EUEVersion
 from UE4Parse.Assets.Objects.FName import FName, DummyFName
 from UE4Parse.Assets.Objects.FPackageIndex import FPackageIndex
 
@@ -63,7 +63,9 @@ class BinaryStream:
 
     def CustomVer(self, key: 'FGuid') -> int:
         Summary = self.PackageReader.get_summary()
-        CustomVersion = Summary.GetCustomVersions().GetVersion(key)
+        if not hasattr(Summary, "GetCustomVersions"):
+            return -1
+        CustomVersion = Summary.GetCustomVersions().get_version(key)
         return CustomVersion if CustomVersion is not None else -1
 
     @property

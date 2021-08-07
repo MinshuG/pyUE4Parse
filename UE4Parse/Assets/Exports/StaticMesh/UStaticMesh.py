@@ -1,10 +1,10 @@
-from typing import List, Any, Optional, Tuple
+from typing import List, Optional, Tuple
 
 from UE4Parse.Assets.Objects.FPackageIndex import FPackageIndex
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Exports.UObjects import UObject
 from UE4Parse.Exceptions.Exceptions import ParserException
-from UE4Parse.Assets.Objects.EUEVersion import Versions, GAME_UE4
+from UE4Parse.Versions.EUEVersion import Versions, GAME_UE4
 from UE4Parse.Assets.Objects.FGuid import FGuid
 from UE4Parse.Assets.Objects.FStripDataFlags import FStripDataFlags
 from UE4Parse.Assets.Objects.Meshes.FBoxSphereBounds import FBoxSphereBounds
@@ -15,14 +15,17 @@ from UE4Parse.Assets.Exports.StaticMesh.FStaticMaterial import FStaticMaterial
 from UE4Parse.Assets.Exports.StaticMesh.FStaticMeshLODResources import FStaticMeshLODResources
 from UE4Parse.Assets.Objects.Structs.FRotator import FRotator
 from UE4Parse.Assets.Objects.Structs.Vector import FVector
+from UE4Parse.Assets.Exports.ExportRegistry import register_export
+
 
 MAX_STATIC_UV_SETS_UE4 = 8
 MAX_STATIC_LODS_UE4 = 8
 
 
+@register_export(Type="YourMom")
 class UStaticMesh(UObject):
     LightingGuid: Optional[FGuid] = None
-    Sockets: Tuple[FPackageIndex] = []
+    Sockets: Tuple[FPackageIndex] = ()
     BodySetup: Optional[FPackageIndex] = None
     NavCollision: Optional[FPackageIndex] = None
     LODs: Tuple[FStaticMeshLODResources] = ()

@@ -1,6 +1,6 @@
 # from UE4Parse.BinaryReader import BinaryStream # circular
 
-from UE4Parse.Assets.Objects.EUnrealEngineObjectUE4Version import EUnrealEngineObjectUE4Version
+from UE4Parse.Versions.EUnrealEngineObjectUE4Version import EUnrealEngineObjectUE4Version
 
 
 class FSerializedNameHeader:
