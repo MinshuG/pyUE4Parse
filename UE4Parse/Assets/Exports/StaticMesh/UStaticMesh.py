@@ -22,7 +22,7 @@ MAX_STATIC_UV_SETS_UE4 = 8
 MAX_STATIC_LODS_UE4 = 8
 
 
-@register_export(Type="YourMom")
+@register_export
 class UStaticMesh(UObject):
     LightingGuid: Optional[FGuid] = None
     Sockets: Tuple[FPackageIndex] = ()
