@@ -6,6 +6,7 @@ from typing import Dict, Optional
 
 from UE4Parse import Logger
 from UE4Parse.BinaryReader import BinaryStream, Align
+from UE4Parse.Encryption import FAESKey
 from UE4Parse.Exceptions.Exceptions import InvalidEncryptionKey
 from UE4Parse.IO.IoObjects.EIoStoreTocReadOptions import EIoStoreTocReadOptions
 from UE4Parse.IO.IoObjects.FFileIoStoreContainerFile import FFileIoStoreContainerFile
@@ -27,7 +28,6 @@ except ImportError:
     CrytoAval = False
 
 logger = Logger.get_logger(__name__)
-# from numba import njit
 
 
 class FFileIoStoreReader:
@@ -39,7 +39,7 @@ class FFileIoStoreReader:
     ContainerId: FIoContainerId
 
     _directory_index: FIoDirectoryIndexResource
-    _aeskey = None
+    aeskey: FAESKey = None
     caseinSensitive: bool
 
     # @profile
@@ -96,8 +96,8 @@ class FFileIoStoreReader:
         return self.TocResource.Header.is_encrypted()
 
     # @profile
-    def ReadDirectoryIndex(self, key: Optional[str] = None):
-        self._aeskey = key
+    def ReadDirectoryIndex(self, key: Optional[FAESKey] = None):
+        self.aeskey = key
         starttime = time.time()
         if self.HasDirectoryIndex:
             if not self.IsEncrypted:
@@ -106,12 +106,10 @@ class FFileIoStoreReader:
                 if not CrytoAval:
                     raise ImportError(
                         "Failed to Import \"pycryptodome\", Index is Encrypted it is required for decryption.")
-                if self._aeskey is None:
+                if self.aeskey is None:
                     raise InvalidEncryptionKey("Index is Encrypted and Key was not provided.")
 
-                bytekey = bytearray.fromhex(self._aeskey)
-                decryptor = AES.new(bytekey, AES.MODE_ECB)
-                IndexReader = BinaryStream(io.BytesIO(decryptor.decrypt(self._directoryIndexBuffer)),
+                IndexReader = BinaryStream(io.BytesIO(self.aeskey.decrypt(self._directoryIndexBuffer)),
                                            len(self._directoryIndexBuffer))
 
                 stringLen = IndexReader.readInt32()
@@ -219,11 +217,9 @@ class FFileIoStoreReader:
         remaining_size = offsetAndLength.GetLength
         containerStream = self.ContainerFile.FileHandle
         dst: bytes = b""
-        counter = 0
         # i = firstBlockIndex # BlockIndex
         for i in range(firstBlockIndex,
                        lastBlockIndex + 1):  # if firstBlockIndex == lastBlockIndex: lastBlockIndex -= 1 ??
-            counter += 1
             compressionBlock = self.TocResource.CompressionBlocks[i]
             rawSize = Align(compressionBlock.CompressedSize, AES.block_size)
             uncompressedSize = compressionBlock.UncompressedSize
@@ -232,9 +228,7 @@ class FFileIoStoreReader:
             compressedBuffer: bytes = containerStream.readBytes(rawSize)
 
             if self.TocResource.Header.is_encrypted():
-                bytekey = bytearray.fromhex(self._aeskey)
-                decryptor = AES.new(bytekey, AES.MODE_ECB)
-                compressedBuffer = decryptor.decrypt(compressedBuffer)
+                compressedBuffer = self.aeskey.decrypt(compressedBuffer)
 
             src: bytes
             if compressionBlock.CompressionMethodIndex == 0:

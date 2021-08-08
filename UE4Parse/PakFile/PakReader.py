@@ -240,17 +240,18 @@ class PakReader:
         return entry
 
 
-# @profile
+def removeslash(string):
+    if string.startswith("/"):
+        return string[1:]
+    return string
+
+
 def UpdateIndex(FileName, Container, Index: Dict[str, Union[FPakEntry, FIoStoreEntry]]) -> Dict[
     str, Union[FPakEntry, FIoStoreEntry]]:
-    def removeslash(string):
-        if string.startswith("/"):
-            return string[1:]
-        return string
 
     index: Dict[str, Union[FPakEntry, FIoStoreEntry]] = {}
     for entry, IndexEntry in Index.items():
-        if entry.endswith(".uexp") or entry.endswith(".ubulk"):
+        if entry.endswith((".uexp", ".ubulk", ".uptnl")):
             continue
 
         PathNoext = os.path.splitext(entry)[0]
@@ -260,21 +261,12 @@ def UpdateIndex(FileName, Container, Index: Dict[str, Union[FPakEntry, FIoStoreE
 
         if uexp in Index:
             IndexEntry.uexp = Index[uexp]
-            IndexEntry.hasUexp = True
-        else:
-            IndexEntry.hasUexp = False
 
         if ubulk in Index:
             IndexEntry.ubulk = Index[ubulk]
-            IndexEntry.hasUbulk = True
-        else:
-            IndexEntry.hasUbulk = False
 
         if uptnl in Index:
             IndexEntry.uptnl = Index[uptnl]
-            IndexEntry.hasUptnl = True
-        else:
-            IndexEntry.hasUptnl = False
 
         index[removeslash(PathNoext)] = IndexEntry
 

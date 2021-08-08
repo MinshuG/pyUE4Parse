@@ -29,8 +29,6 @@ class FPakEntry(GameFile):
     CompressionMethodIndex: int
 
     StructSize: int
-    hasUbulk: bool = False
-    hasUexp: bool = False
 
     @property
     def Deleted(self):
@@ -50,11 +48,9 @@ class FPakEntry(GameFile):
 
     def __init__(self, reader: Optional[BinaryStream], Version: EPakVersion = 0, SubVersion: int = 0,
                  pakName: str = ""):
-        self.ubulk = None
-        self.uexp = None
         if reader is None:
             return
-        self.CompressionBlocks = []
+        self.CompressionBlocks = ()
         self.CompressionBlockSize = 0
         self.Flags = 0
 

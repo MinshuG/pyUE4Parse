@@ -7,7 +7,7 @@ from typing import Tuple, TypeVar, Union, TYPE_CHECKING
 from UE4Parse import Logger
 from UE4Parse.Exceptions.Exceptions import ParserException
 from UE4Parse.Versions.EUEVersion import EUEVersion
-from UE4Parse.Assets.Objects.FName import FName, DummyFName
+from UE4Parse.Assets.Objects.FName import FName
 from UE4Parse.Assets.Objects.FPackageIndex import FPackageIndex
 
 if TYPE_CHECKING:
@@ -36,13 +36,15 @@ class BinaryStream:
         if isinstance(fp, str):
             self.base_stream = open(fp, "rb")
             self.size = os.path.getsize(fp)
-        elif isinstance(fp, bytes) or isinstance(fp, bytearray):
+        elif isinstance(fp, (bytes, bytearray)):
             self.base_stream = BytesIO(fp)
             self.size = len(fp)
         else:
             self.base_stream = fp
             self.size = size
 
+        self.close = self.base_stream.close
+        self.tell = self.base_stream.tell
         self.readBytes = self.base_stream.read
 
     def change_stream(self, fp: Union[BufferedReader, str, bytes, bytearray]):
@@ -76,7 +78,7 @@ class BinaryStream:
         self.base_stream.seek(offset, SEEK_SET)
 
     def getmappings(self):
-        if hasattr(self, "mappings"):
+        if getattr(self, "mappings", None):
             return self.mappings
         raise ParserException("mappings are not attached")
 
@@ -87,24 +89,18 @@ class BinaryStream:
     def position(self):
         return self.base_stream.tell()
 
-    def close(self):
-        return self.base_stream.close()
-
-    def tell(self):
-        return self.base_stream.tell()
-
-    def tellfake(self):
+    def tellfake(self) -> int:
         return (self.fake_size - self.size) + self.base_stream.tell()
 
-    def read(self, length=-1):
+    def read(self, length=-1) -> bytes:
         if length > 0:
             return self.readBytes(length)
         return self.base_stream.read()
 
-    def readByte(self):
+    def readByte(self) -> bytes:
         return self.base_stream.read(1)
 
-    def readByteToInt(self, length=1):
+    def readByteToInt(self, length=1) -> int:
         return int.from_bytes(self.base_stream.read(length), "little")
 
     # def readBytes(self, length): # more performance issues
@@ -112,7 +108,7 @@ class BinaryStream:
     #     #     raise ParserException("Cannot read beyond end of stream")
     #     return self.base_stream.read(length)
 
-    def readChar(self):
+    def readChar(self) -> int:
         return self.unpack('b')
 
     def readUChar(self):
@@ -126,44 +122,44 @@ class BinaryStream:
         return val != 0
         # return self.unpack('?')
 
-    def readSByte(self):
+    def readSByte(self) -> int:
         return self.unpack("b", 1)
 
-    def readInt8(self):
+    def readInt8(self) -> int:
         return self.readByteToInt(1)
 
-    def readUInt8(self):
+    def readUInt8(self) -> int:
         return self.readByteToInt(1)  # ?
 
-    def readInt16(self):
+    def readInt16(self) -> int:
         return self.unpack('h', 2)
 
-    def readUInt16(self):
+    def readUInt16(self) -> int:
         return self.unpack('H', 2)
 
     def readInt32(self) -> int:
         return self.unpack('i', 4)
 
-    def readUInt32(self):
+    def readUInt32(self) -> int:
         return self.unpack('I', 4)
 
-    def readInt64(self):
+    def readInt64(self) -> int:
         return self.unpack('q', 8)
 
-    def readUInt64(self):
+    def readUInt64(self) -> int:
         return self.unpack('Q', 8)
 
-    def readFloat(self):
+    def readFloat(self) -> float:
         return self.unpack('f', 4)
 
-    def readDouble(self):
+    def readDouble(self) -> float:
         return self.unpack('d', 8)
 
-    def readString(self):
+    def readString(self) -> str:
         length = self.readByteToInt()
         return self.unpack(str(length) + 's', length).decode("utf-8")
 
-    def readFString(self):
+    def readFString(self) -> str:
         length = self.readInt32()
         LoadUCS2Char: bool = length < 0
 
@@ -198,7 +194,7 @@ class BinaryStream:
         """use readTArray"""
         return self.readTArray(func, *args)
 
-    def readBulkTArray(self, func, *args) -> list:
+    def readBulkTArray(self, func, *args) -> tuple:
         elementSize = self.readInt32()
         savePos = self.tell()
         array = self.readTArray(func, *args)
@@ -207,14 +203,14 @@ class BinaryStream:
                 f"RawArray item size mismatch: expected {elementSize}, serialized {(self.tell() - savePos) / len(array)}")
         return array
 
-    def readFName(self):
+    def readFName(self) -> FName:
         NameMap = self.get_name_map()
         NameIndex = self.readInt32()
         Number = self.readInt32()
 
         if not 0 <= NameIndex < len(NameMap):
             logging.debug(f"Bad Name Index: {NameIndex}/{len(NameMap)} - Reader Position: {self.base_stream.tell()}")
-            return DummyFName()
+            return FName("None")
 
         return FName(NameMap[NameIndex], NameIndex, Number)
 
@@ -278,13 +274,3 @@ class BinaryStream:
 
 def Align(val: int, alignment: int):
     return val + alignment - 1 & ~(alignment - 1)
-
-
-def convert_each_byte_to_int(bytes_: bytearray):  # slow
-    return int("".join([str(x) for x in bytes_]))
-
-
-if __name__ == "__main__":
-    a = bytearray(b'\x05\x04\x03\x04\x04\x04\x04\x04\x04')
-    print(convert_each_byte_to_int(a))
-    print(int(a))

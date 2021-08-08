@@ -28,9 +28,10 @@ mappings = MappingProvider()
 game = FGame()
 game.UEVersion = EUEVersion.LATEST
 
+# import gc; gc.disable() # temporarily disabling garbage collector gives a huge performance boost
 provider = Provider(path, mappings=mappings, GameInfo=game)
-provider = Provider(path)
 provider.read_paks(aeskeys)
+# gc.enable() # enable garbage collector again
 
 package_path = 'FortniteGame/Content/Animation/Game/MainPlayer/Skydive/ParaGlide/MechanicalEngineer/BS_MechanicalEngineer_Into_NoPack_GLIDER'
 

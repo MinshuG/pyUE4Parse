@@ -1,12 +1,13 @@
 from UE4Parse.BinaryReader import BinaryStream
 
+OffsetBits = 40
+OffsetMask = (1 << OffsetBits) - 1
+SizeBits = 24
+SizeMask = (1 << SizeBits) - 1
+SizeShift = 8
+
 
 class FIoStoreTocCompressedBlockEntry:
-    OffsetBits = 40
-    OffsetMask = (1 << OffsetBits) - 1
-    SizeBits = 24
-    SizeMask = (1 << SizeBits) - 1
-    SizeShift = 8
     # Data: int
 
     # 5 bytes offset, 3 bytes for size / uncompressed size and 1 byte for compression method.
@@ -15,7 +16,6 @@ class FIoStoreTocCompressedBlockEntry:
         self.size = reader.readBytes(3)
         self.uncompressed_size = reader.readBytes(3)
         self.compression_method = reader.readBytes(1)
-        # data = concat(offset, size, uncompressed_size, compression_method)
 
     @property
     def CompressedSize(self):

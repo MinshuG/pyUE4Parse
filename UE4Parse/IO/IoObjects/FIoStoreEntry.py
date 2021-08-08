@@ -10,15 +10,12 @@ class FIoStoreEntry(GameFile):
     ioStore = None  # FFileIoStoreReader
     UserData: int
     Name: str
-    Size: int = 0
+    Size: int = -1
     CompressionMethodIndex: int
 
     Encrypted: bool = False
     ChunkId: 'FIoChunkId'
     OffsetLength: 'FIoOffsetAndLength'
-
-    hasUbulk: bool = False
-    hasUexp: bool = False
 
     def CompressionMethodString(self) -> str:
         return "COMPRESS_" + self.ioStore.TocResource.CompressionMethods[
@@ -49,6 +46,7 @@ class FIoStoreEntry(GameFile):
         return self.ioStore.TocResource.ChunkIds[self._userdata]
 
     def __init__(self, io_store, userdata: int, name: str):
+        super().__init__()
         self.ioStore = io_store
         self._userdata = userdata
 

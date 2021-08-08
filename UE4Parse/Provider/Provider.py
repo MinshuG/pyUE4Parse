@@ -221,10 +221,9 @@ class Provider:
         pak_name = con_file
 
         if pak_name.endswith(".pak"):
-            # self.Paks[os.path.basename(pak_name)] =
             reader = PakReader.PakReader(path, self.caseinsensitive)
-            return reader, os.path.basename(pak_name)
             logger.debug(f"Registering PakFile: {path}")
+            return reader, os.path.basename(pak_name)
         if pak_name.endswith(".utoc"):
             ucas_path = path[:-5] + ".ucas"
             logger.debug(f"Registering IoStore: {path[:-5]}")
@@ -384,15 +383,15 @@ class Provider:
             logger.info(f"Loading {name}")
             package: Union[FPakEntry, FIoStoreEntry] = self.files[name]
 
-            uexp = None
-            ubulk = None
-            uptnl = None
+            uexp = getattr(package, "uexp", None)
+            ubulk = getattr(package, "ubulk", None)
+            uptnl = getattr(package, "uptnl", None)
             if isinstance(package, FIoStoreEntry):  # IoStorePackage
                 uasset = package.GetData()
-                if package.hasUbulk:
-                    ubulk = BinaryStream(package.ubulk.GetData())
-                if package.hasUptnl:
-                    uptnl = BinaryStream(package.uptnl.GetData())
+                if ubulk:
+                    ubulk = ubulk.GetData()
+                if uptnl:
+                    uptnl = uptnl.GetData()
             else:  # PakPackage
                 container = self.Paks[package.ContainerName]
                 reader = container.reader
@@ -400,11 +399,11 @@ class Provider:
                 key = self._AES_Keys.get(container.get_encryption_key_guid(), None)
 
                 uasset = package.get_data(reader, key=key, compression_method=container.Info.CompressionMethods)
-                if package.hasUexp:
-                    uexp = package.uexp.get_data(reader, key=key, compression_method=container.Info.CompressionMethods)
+                if uexp:
+                    uexp = uexp.get_data(reader, key=key, compression_method=container.Info.CompressionMethods)
                 if package.hasUbulk:
-                    ubulk = package.ubulk.get_data(reader, key=key,
-                                                   compression_method=container.Info.CompressionMethods)
+                    ubulk = ubulk.get_data(reader, key=key,
+                                           compression_method=container.Info.CompressionMethods)
 
             return PackageProvider(uasset, uexp, ubulk, uptnl, package, self)
 
