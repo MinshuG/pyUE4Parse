@@ -22,7 +22,6 @@ class ArrayProperty:
         InnerType = tag.InnerType
 
         length = reader.readInt32()
-        Value = []
         if reader.has_unversioned_properties:
             InnerTag = tag.InnerData
             InnerType = tag.InnerType
@@ -37,4 +36,5 @@ class ArrayProperty:
                                                                 PropertyTagData.BaseProperty.ReadType.ARRAY)
                 self.Value.append(val)
             except Exception as e:
-                logger.warn(f"Failed to read array property of type {InnerType} at ${reader.position} index {i}, {e}")
+                raise e
+                # logger.warn(f"Failed to read ArrayProperty of type {InnerType} at ${reader.position} index {i}, {e}")

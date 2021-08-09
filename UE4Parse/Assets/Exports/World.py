@@ -20,11 +20,8 @@ class UWorld(UObject):
     def deserialize(self, validpos):
         super().deserialize(validpos)
         reader = self.reader
-        if reader.game == EUEVersion.GAME_VALORANT: return  # prevent crash
 
-        self.PersistentLevel = FPackageIndex(reader)  # reader.readObject()
-        if reader.version < EUnrealEngineObjectUE4Version.VER_UE4_REMOVE_SAVEGAMESUMMARY:
-            dummy_object = FPackageIndex(reader)
+        self.PersistentLevel = FPackageIndex(reader)
         self.ExtraReferencedObjects = FPackageIndex(reader)
         self.StreamingLevels = reader.readTArray(FPackageIndex, reader)
 

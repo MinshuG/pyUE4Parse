@@ -1,4 +1,4 @@
-**unfinished pak and ue4 asset parser**
+**pak and ue4 asset parser**
 
 
 ## Usages

@@ -16,7 +16,7 @@ class FAESKey:
             assert len(key) == 32
             self.__key = key
         elif isinstance(key, str):
-            key = key.lstrip("0x")
+            key = key[2:] if key.lower().startswith("0x") else key
             assert len(key) == 64  # 66 - 2 no 0x
             self.__key = bytearray.fromhex(key)
         elif isinstance(key, bytes):

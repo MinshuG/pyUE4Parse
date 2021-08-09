@@ -71,6 +71,8 @@ class UTexture2D(UObject):
 
         Mip = PlatformData.Mips[mip_index]
         data = Mip.BulkData.Data
+        if data is None:
+            raise ValueError(f"mip {mip_index} doesn't have any data")
 
         sizeX = Mip.SizeX
         sizeY = Mip.SizeY

@@ -1,19 +1,27 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
+
+from UE4Parse.Assets.Objects.FName import FName
 
 if TYPE_CHECKING:
     from UE4Parse.BinaryReader import BinaryStream
 
 
-def doformating(list_):
-    if len(list_) == 0: return None
-    ObjectName = None
-    ObjectPath = None
-    if len(list_) >= 1:
-        ObjectName = list_[0]
-    if len(list_) >= 2:
-        ObjectName = ObjectName + ":" + list_[1]
-    if len(list_) >= 3:
-        ObjectPath = list_[2]
+def do_formatting(obj, index):
+    outers = []
+    current = obj.getOuter()
+    while current:
+        outers.append(current.getName().string)
+        current = current.getOuter()
+
+    ObjectName = f"{outers[0]}:" if len(outers) > 1 else ""
+    ObjectName += f"{obj.getName().string}"
+    if class_ := obj.getClass():
+        ObjectName += f":{class_.getName().string}"
+
+    if len(outers) <= 0:
+        ObjectPath = index
+    else:
+        ObjectPath = f"{outers[-1]}.{abs(index)-1}"
 
     return {
         "ObjectName": ObjectName,
@@ -23,7 +31,7 @@ def doformating(list_):
 
 class FPackageIndex:
     Index: int
-    # Reader: BinaryStream
+    reader: 'BinaryStream'
     IsNull: bool
     IsImport: bool
     IsExport: bool
@@ -38,6 +46,13 @@ class FPackageIndex:
         self.IsExport = self.Index > 0
         self.AsImport = -self.Index - 1
         self.AsExport = self.Index - 1
+
+    @property
+    def Name(self) -> FName:
+        if self.Resource:
+            return self.Resource.ObjectName
+        else:
+            return FName("None")
 
     @property
     def Resource(self):
@@ -60,25 +75,28 @@ class FPackageIndex:
             resolved = resolveObjectIndex(self.Reader.PackageReader, self.Reader.PackageReader.Provider.GlobalData,
                                           Resource)
             if resolved is None: return None
-            list_ = resolved.ListResolve()
-            return doformating(list_)
+            # list_ = resolved.ListResolve()
+            return do_formatting(resolved, self.Index)
         elif isinstance(Resource, FExportMapEntry):
             from UE4Parse.IoObjects.IoUtils import ResolveExportObject
             resolved = ResolveExportObject(self.Reader.PackageReader, Resource)
-            list_ = resolved.ListResolve()
-            return doformating(list_)
+            # list_ = resolved.ListResolve()
+            return do_formatting(resolved, self.Index)
 
         if Resource is not None:
-            # return Resource.GetValue() # too much
+            ObjectName = f"{Resource.ObjectName.string}:{Resource.ClassIndex.Name.string}"
             return {
-                "ObjectName": Resource.ObjectName.string,
+                "ObjectName": ObjectName,
                 "OuterIndex": Resource.OuterIndex.GetValue()
             }
         return self.Index
 
+    def load(self):
+        return self.reader.PackageReader.fi
+
     def __str__(self):
         if self.IsExport:
-            return f"Export: {self.AsExport}"
+            return f"Export: {self.AsExport} | {self.Name().string}"
         elif self.IsImport:
             return f"Import: {self.AsImport}"
         else:

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from UE4Parse.BinaryReader import BinaryStream
 
@@ -29,14 +29,14 @@ class FGuid:
         self.D = D
         return self
 
-    def __eq__(self, o: 'FGuid') -> bool:
+    def __eq__(self, o: Union['FGuid', str]) -> bool:
+        if isinstance(o, str):
+            return str(self).lower() == o.lower()
         return ((self.A ^ o.A) | (self.B ^ o.B) | (self.C ^ o.C) | (self.D ^ o.D)) == 0
-        # return self.GetValue() == o.GetValue()
 
     def GetValue(self):
         def formatter(a):
             return format(a, '08x')
-
         return f"{formatter(self.A)}{formatter(self.B)}{formatter(self.C)}{formatter(self.D)}".upper()
 
     def __str__(self):

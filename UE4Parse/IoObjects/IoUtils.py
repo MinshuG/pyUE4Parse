@@ -29,25 +29,25 @@ class ResolveExportObject:
     def __init__(self, pkg: 'IoPackageReader', exportEntry: FExportMapEntry,
                  importedPkg: 'IoPackageReader' = None) -> None:
         self.pkg = pkg
-        self.entry = exportEntry
+        self.export_map = exportEntry
         if importedPkg is None:
             importedPkg = pkg
         self.importedPkg = importedPkg
 
     def getName(self):
-        return FName(str(self.entry.ObjectName))
+        return FName(str(self.export_map.ObjectName))
 
     def getOuter(self):
-        return resolveObjectIndex(self.pkg, self.pkg.Provider.GlobalData, self.entry.OuterIndex)
+        return resolveObjectIndex(self.pkg, self.pkg.Provider.GlobalData, self.export_map.OuterIndex)
 
     def getSuper(self):
-        return resolveObjectIndex(self.pkg, self.pkg.Provider.GlobalData, self.entry.SuperIndex)
+        return resolveObjectIndex(self.pkg, self.pkg.Provider.GlobalData, self.export_map.SuperIndex)
 
     def getClass(self):
-        return resolveObjectIndex(self.pkg, self.pkg.Provider.GlobalData, self.entry.ClassIndex)
+        return resolveObjectIndex(self.pkg, self.pkg.Provider.GlobalData, self.export_map.ClassIndex)
 
     def getObject(self) -> 'UObject':
-        return self.entry.exportObject
+        return self.export_map.exportObject
 
     def ListResolve(self):
         resolved = []
@@ -79,20 +79,23 @@ class ResolveExportObject:
 class ResolveScriptObject:
     def __init__(self, scriptObject: FScriptObjectDesc, pkg, globaldata):
         self.scriptobject = scriptObject
-        self.PackageReader = pkg
+        self.pkg = pkg
         self.globaldata = globaldata
 
-    def getName(self):
+    def getName(self) -> FName:
         return self.scriptobject.Name
 
+    def getClass(self) -> None:  # ??
+        return None
+
     def getOuter(self):
-        return resolveObjectIndex(self.PackageReader, self.globaldata, self.scriptobject.OuterIndex)
+        return resolveObjectIndex(self.pkg, self.globaldata, self.scriptobject.OuterIndex)
 
     def GetValue(self):
         outer = self.getOuter()
         return {
             "Name": self.getName().GetValue(),
-            "OuterIndex": outer.GetValue() if outer is not None else None
+            "OuterIndex": outer.GetValue() if outer is not None else 0
         }
 
     def ListResolve(self):
