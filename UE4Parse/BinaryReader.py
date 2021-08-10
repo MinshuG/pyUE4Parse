@@ -2,7 +2,7 @@ from UE4Parse.Assets.Objects.EPackageFlags import EPackageFlags
 import os
 from io import BufferedReader, BytesIO
 from struct import *
-from typing import Tuple, TypeVar, Union, TYPE_CHECKING
+from typing import BinaryIO, Tuple, TypeVar, Union, TYPE_CHECKING, AnyStr, Optional, Iterable
 
 from UE4Parse import Logger
 from UE4Parse.Exceptions.Exceptions import ParserException
@@ -21,7 +21,7 @@ logging = Logger.get_logger(__name__)
 T = TypeVar("T")
 
 
-class BinaryStream:
+class BinaryStream(BinaryIO):
     NameMap: list
     PackageReader: Union['Package']
     version: int
@@ -32,7 +32,7 @@ class BinaryStream:
     size = 0
     mappings: 'MappingProvider'
 
-    def __init__(self, fp: Union[BufferedReader, BytesIO, str, bytes], size: int = -1):
+    def __init__(self, fp: Union[BinaryIO, str, bytes], size: int = -1):
         if isinstance(fp, str):
             self.base_stream = open(fp, "rb")
             self.size = os.path.getsize(fp)
@@ -77,6 +77,9 @@ class BinaryStream:
     def seek(self, offset, SEEK_SET=1):
         self.base_stream.seek(offset, SEEK_SET)
 
+    def seekable(self) -> bool:
+        return self.base_stream.seekable()
+
     def getmappings(self):
         if getattr(self, "mappings", None):
             return self.mappings
@@ -91,6 +94,12 @@ class BinaryStream:
 
     def tellfake(self) -> int:
         return (self.fake_size - self.size) + self.base_stream.tell()
+
+    def __enter__(self):
+        raise NotImplementedError()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        raise NotImplementedError()
 
     def read(self, length=-1) -> bytes:
         if length > 0:
@@ -222,6 +231,18 @@ class BinaryStream:
         if index is None or object is None:
             logging.warn(f"{index.Index} is not found.")
         return object
+
+    def writable(self):
+        return self.base_stream.writable()
+
+    def truncate(self, size: Optional[int] = ...) -> int:
+        return self.base_stream.truncate(size)
+
+    def writelines(self, lines: Iterable[AnyStr]) -> None:
+        return self.base_stream.writelines(lines)
+
+    def write(self, s: AnyStr) -> int:
+        return self.base_stream.write(s)
 
     def writeBytes(self, value):
         self.size += len(value)

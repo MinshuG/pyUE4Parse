@@ -17,7 +17,6 @@ from UE4Parse.IO.IoObjects.FIoOffsetAndLength import FIoOffsetAndLength
 from UE4Parse.IO.IoObjects.FIoStoreEntry import FIoStoreEntry
 from UE4Parse.IO.IoObjects.FIoStoreTocHeader import FIoContainerId
 from UE4Parse.IO.IoObjects.FIoStoreTocResource import FIoStoreTocResource
-from UE4Parse.PakFile.PakReader import UpdateIndex
 from UE4Parse.Assets.Objects.Decompress import Decompress
 
 
@@ -135,14 +134,12 @@ class FFileIoStoreReader:
             Chunks: Dict[str, str]
             tempFiles, Chunks = self.ReadIndex("", firstEntry)  # TODO use Chunks IDs
 
-            files = UpdateIndex(self.FileName, self.ContainerFile, tempFiles)
-
             time_taken = round(time.time() - starttime, 2)
             logger.info("{} contains {} files, mount point: {}, version: {}, in: {}s".format
                         (self.FileName, len(tempFiles), self._directory_index.MountPoint, self.TocResource.Header.Version, time_taken))
 
             del self._directory_index
-            return files, Chunks
+            return tempFiles, Chunks
 
     def GetChildDirectory(self, directory: FIoDirectoryIndexHandle):
         return FIoDirectoryIndexHandle(

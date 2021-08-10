@@ -40,6 +40,7 @@ class PakReader:
         self.reader.seek(self.Info.IndexOffset, 0)
         self.MountArray = self.reader.readBytes(128)
         self.Case_insensitive: bool = Case_insensitive
+        self.AesKey = None
 
     def get_encryption_key_guid(self):
         return self.Info.EncryptionKeyGuid
@@ -47,7 +48,7 @@ class PakReader:
     # @profile
     def ReadIndex(self, key: Optional[FAESKey] = None):
         self.AesKey = key
-        starttime = time.time()
+        start_time = time.time()
         self.reader.seek(self.Info.IndexOffset, 0)
 
         if not self.Info.bEncryptedIndex:
@@ -75,7 +76,7 @@ class PakReader:
             index_reader.seek(0, 0)
 
         if self.Info.Version.value >= EPakVersion.PATH_HASH_INDEX.value:
-            index = self.ReadUpdatedIndex(index_reader, key, self.Case_insensitive)
+            tempfiles = self.ReadUpdatedIndex(index_reader, key, self.Case_insensitive)
         else:
             self.MountPoint = index_reader.readFString() or ""
 
@@ -95,14 +96,11 @@ class PakReader:
                 else:
                     tempfiles[self.MountPoint + entry.Name] = entry
 
-            index = UpdateIndex(self.FileName, self, tempfiles)
-            del tempfiles
-
-        time_taken = round(time.time() - starttime, 2)
+        time_taken = round(time.time() - start_time, 2)
         logger.info(
             f"{self.FileName} contains {self.NumEntries} files, mount point: {self.MountPoint}, version: {self.Info.Version.value}, in: {time_taken}s")
 
-        return index
+        return tempfiles
 
     def ReadUpdatedIndex(self, IndexReader: BinaryStream, key, Case_insensitive: bool) -> dict:
         self.MountPoint = IndexReader.readFString() or ""
@@ -158,11 +156,8 @@ class PakReader:
                 entry = self.BitEntry(path, encodedEntryReader)
                 tempentries[self.MountPoint + path] = entry
 
-        index = UpdateIndex(self.FileName, self, tempentries)
-
-        del tempentries
         encodedEntryReader.base_stream.close()
-        return index
+        return tempentries
 
     def BitEntry(self, name: str, reader: BinaryStream):
         # Grab the big bitfield value:
@@ -238,36 +233,3 @@ class PakReader:
         entry.StructSize = FPakEntry.GetSize(EPakVersion.LATEST, compressionMethodIndex,
                                              len(CompressionBlocks))
         return entry
-
-
-def removeslash(string):
-    if string.startswith("/"):
-        return string[1:]
-    return string
-
-
-def UpdateIndex(FileName, Container, Index: Dict[str, Union[FPakEntry, FIoStoreEntry]]) -> Dict[
-    str, Union[FPakEntry, FIoStoreEntry]]:
-
-    index: Dict[str, Union[FPakEntry, FIoStoreEntry]] = {}
-    for entry, IndexEntry in Index.items():
-        if entry.endswith((".uexp", ".ubulk", ".uptnl")):
-            continue
-
-        PathNoext = os.path.splitext(entry)[0]
-        uexp = PathNoext + ".uexp"
-        ubulk = PathNoext + ".ubulk"
-        uptnl = PathNoext + ".uptnl"
-
-        if uexp in Index:
-            IndexEntry.uexp = Index[uexp]
-
-        if ubulk in Index:
-            IndexEntry.ubulk = Index[ubulk]
-
-        if uptnl in Index:
-            IndexEntry.uptnl = Index[uptnl]
-
-        index[removeslash(PathNoext)] = IndexEntry
-
-    return index
