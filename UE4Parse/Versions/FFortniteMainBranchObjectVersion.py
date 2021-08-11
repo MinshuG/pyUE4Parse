@@ -173,7 +173,7 @@ class FFortniteMainBranchObjectVersion:
         VersionPlusOne = auto()
         LatestVersion = VersionPlusOne - 1
 
-    GUID: FGuid = FGuid().construct(0x601D1886, 0xAC644F84, 0xAA16D3DE, 0x0DEAC7D6)
+    GUID: FGuid = FGuid(0x601D1886, 0xAC644F84, 0xAA16D3DE, 0x0DEAC7D6)
 
     def __init__(self):
         pass

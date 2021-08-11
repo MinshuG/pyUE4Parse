@@ -1,4 +1,6 @@
 from typing import TYPE_CHECKING
+
+from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Provider.Common import GameFile
 
 if TYPE_CHECKING:
@@ -67,5 +69,5 @@ class FIoStoreEntry(GameFile):
         #     if ioStore.TocResource.Header.is_encrypted():
         #         self.Encrypted = True
 
-    def GetData(self):
+    def get_data(self) -> BinaryStream:
         return self.ioStore.Read(self.ChunkId)

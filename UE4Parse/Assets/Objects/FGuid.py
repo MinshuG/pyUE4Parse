@@ -1,4 +1,5 @@
-from typing import Optional, Union
+from functools import singledispatchmethod
+from typing import Union
 
 from UE4Parse.BinaryReader import BinaryStream
 
@@ -11,23 +12,26 @@ class FGuid:
     C: int
     D: int
 
-    def __init__(self, reader: Optional[BinaryStream] = None):
-        if reader is None:
-            return
+    @singledispatchmethod
+    def __init__(self, reader: BinaryStream):
         self.A = reader.readUInt32()
         self.B = reader.readUInt32()
         self.C = reader.readUInt32()
         self.D = reader.readUInt32()
 
-    def read(self):  # both works nvm. nope they don't stupid. now they do
-        return self
+    @__init__.register
+    def _from_str(self, string: str):
+        self.A = int(string[0:8], 16)
+        self.B = int(string[8:16], 16)
+        self.C = int(string[16:24], 16)
+        self.D = int(string[24:32], 16)
 
-    def construct(self, A: int, B: int, C: int, D: int):
+    @__init__.register
+    def from_int_(self, A: int, B: int, C: int, D: int):
         self.A = A
         self.B = B
         self.C = C
         self.D = D
-        return self
 
     def __eq__(self, o: Union['FGuid', str]) -> bool:
         if isinstance(o, str):

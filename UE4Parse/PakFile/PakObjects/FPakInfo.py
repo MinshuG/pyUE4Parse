@@ -4,6 +4,7 @@ from UE4Parse.PakFile.PakObjects.EPakVersion import EPakVersion
 from UE4Parse.PakFile.PakObjects.FSHAHash import FSHAHash
 from ...Exceptions.Exceptions import ParserException
 
+
 class PakInfo:
     PAK_FILE_MAGIC = 0x5A6F12E1
     COMPRESSION_METHOD_NAME_LEN = 32
@@ -35,7 +36,7 @@ class PakInfo:
         raise ParserException(f"Unknown Pak Format")
 
     def Info(self, reader: BinaryStream, offset):
-        self.EncryptionKeyGuid = FGuid(reader).read()
+        self.EncryptionKeyGuid = FGuid(reader)
         self.bEncryptedIndex = reader.readByte() != b'\x00'
 
         magic = reader.readUInt32()
@@ -80,6 +81,6 @@ class PakInfo:
         if self.Version.value < EPakVersion.INDEX_ENCRYPTION.value:
             self.bEncryptedIndex = False
         if self.Version.value < EPakVersion.ENCRYPTION_KEY_GUID.value:
-            self.EncryptionKeyGuid = FGuid().construct(0,0,0,0)
+            self.EncryptionKeyGuid = FGuid(0, 0, 0, 0)
 
         return self

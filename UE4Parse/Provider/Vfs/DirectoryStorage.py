@@ -1,8 +1,11 @@
 import os
-import typing
-from typing import Dict, Union
+from functools import singledispatchmethod
+from typing import Dict, Union, TYPE_CHECKING, Optional
 
-if typing.TYPE_CHECKING:
+from UE4Parse.IO.IoObjects import FIoStoreEntry
+from UE4Parse.IoObjects.FImportedPackage import FPackageId
+
+if TYPE_CHECKING:
     from UE4Parse.IO import FFileIoStoreReader
     from UE4Parse.PakFile.PakReader import PakReader
     from UE4Parse.Provider.Common import GameFile
@@ -19,12 +22,17 @@ class DirectoryStorage:
     IsCaseInsensitive: bool
     _files: Dict[str, 'GameFile']
     _raw_names: Dict[str, str]
-    _container: typing.Union['FFileIoStoreReader', 'PakReader']
+    _container: Union['FFileIoStoreReader', 'PakReader']
 
-    def __init__(self, index: Dict[str, 'GameFile'], container: Union['FFileIoStoreReader', 'PakReader'] ,is_case_insensitive=False):
+    def __init__(self, index: Dict[str, 'GameFile'], container: Union['FFileIoStoreReader', 'PakReader'],
+                 is_case_insensitive=False):
         self.IsCaseInsensitive = is_case_insensitive
         self._container = container
         self.process_index(index)
+
+    @property
+    def files(self):
+        return self._files
 
     def process_index(self, Index: Dict[str, 'GameFile']):
         self._files: Dict[str, 'GameFile'] = {}
@@ -51,12 +59,24 @@ class DirectoryStorage:
             self._files[path] = IndexEntry
             self._raw_names[IndexEntry.Name] = path
 
-    def try_get(self, path: str, default=None):
+    def get_full_path(self, path: str) -> Optional[str]:
+        return self._raw_names.get(path)
+
+    @singledispatchmethod
+    def try_get(self, path: str, default=None) -> Optional[str]:
         if out := self._files.get(path.lower() if self.IsCaseInsensitive else path, None):
             return out
         elif out := self._raw_names.get(path):
             return self.try_get(out, default)
         return default
 
+    @try_get.register
+    def _(self, id: FPackageId, default=None):
+        for name, package in self._files.items():
+            if isinstance(package, FIoStoreEntry):
+                if id.Id == package.ChunkId.ChunkId:
+                    return package
+        return default
+
     def __str__(self):
-        return f"<{len(self._files)} files | {self._container.FileName}>"
+        return f"{len(self._files)} files | {self._container.FileName} | Mounted to: {self._container.MountPoint}"

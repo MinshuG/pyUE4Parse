@@ -14,4 +14,4 @@ class FLevelSequenceObjectReferenceMap:
         length = reader.readInt32()
 
         for _ in range(length):
-            self.Map[FGuid(reader).read()] = FLevelSequenceLegacyObjectReference(reader)
+            self.Map[FGuid(reader)] = FLevelSequenceLegacyObjectReference(reader)

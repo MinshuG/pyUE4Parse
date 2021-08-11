@@ -15,12 +15,6 @@ from UE4Parse.PakFile.PakObjects.FPakEntry import FPakEntry
 from UE4Parse.PakFile.PakObjects.FPakInfo import PakInfo
 from UE4Parse.PakFile.PakObjects.FSHAHash import FSHAHash
 
-CrytoAval = True
-try:
-    from Crypto.Cipher import AES
-except ImportError:
-    CrytoAval = False
-
 logger = Logger.get_logger(__name__)
 
 
@@ -54,9 +48,6 @@ class PakReader:
         if not self.Info.bEncryptedIndex:
             index_reader = self.reader
         else:
-            if not CrytoAval:
-                raise ImportError(
-                    "Failed to Import \"pycryptodome\", Index is Encrypted it is required for decryption.")
             if key is None:
                 raise InvalidEncryptionKey("Index is Encrypted and Key was not provided.")
 
@@ -90,7 +81,7 @@ class PakReader:
 
             tempfiles: Dict[str, FPakEntry] = {}
             for _ in range(self.NumEntries):
-                entry = FPakEntry(index_reader, self.Info.Version, self.Info.SubVersion, self.FileName)
+                entry = FPakEntry(index_reader, self.Info.Version, self.Info.SubVersion, self)
                 if self.Case_insensitive:
                     tempfiles[self.MountPoint.lower() + entry.Name.lower()] = entry
                 else:
@@ -144,7 +135,7 @@ class PakReader:
         PathHashIndex = PathHash_Reader.readTArray_W_Arg(FPakDirectoryEntry, PathHash_Reader)
         PathHash_Reader.base_stream.close()
 
-        encodedEntryReader = BinaryStream(io.BytesIO(EncodedPakEntries))
+        encodedEntryReader = BinaryStream(EncodedPakEntries)
         tempentries = {}
         for directoryEntry in PathHashIndex:
             for hasIndexEntry in directoryEntry.Entries:
@@ -222,7 +213,7 @@ class PakReader:
 
         entry = FPakEntry(None)
         entry.Name = name
-        entry.ContainerName = self.FileName
+        entry.Container = self
         entry.CompressionBlocks = CompressionBlocks
         entry.Size = size
         entry.Encrypted = encrypted

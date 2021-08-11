@@ -1,3 +1,5 @@
+import warnings
+
 from UE4Parse.Encryption import FAESKey
 from UE4Parse.Provider.MappingProvider import MappingProvider
 from UE4Parse.IoObjects.FImportedPackage import FPackageId
@@ -154,12 +156,14 @@ class Provider:
     files: Dict[str, Union[FPakEntry, FIoStoreEntry]]
     mappingProvider: MappingProvider = None
 
-    def __init__(self, pak_folder: Union[str, List[str]], caseinsensitive=False, GameInfo: FGame = FGame(),
+    def __init__(self, pak_folder: Union[str, List[str]], caseinsensitive=False, GameInfo: FGame = FGame.default(),
                  mappings: MappingProvider = None):
         """
         pak_folder is pak folder path containing path files. \n
         :param pak_folder:
         """
+        warnings.warn("Use DefaultFileProvider instead", category=DeprecationWarning, stacklevel=2)
+
         self._mounted_files = []
         self.Triggers = {}
         self.pak_folder = pak_folder
@@ -263,14 +267,11 @@ class Provider:
 
         pog = self.getGUID_PAKNAME_DICT(self.Paks, self.IoStores)
 
-        def getaeskey(GUID, pak_name_) -> Optional[str]:
+        def getaeskey(guid, pak_name_) -> Optional[str]:
             pak_name = os.path.splitext(os.path.split(pak_name_)[1])[0]
-            if GUID == '00000000000000000000000000000000':
-                if '00000000000000000000000000000000' in self.AES_KEYs:
-                    mainkey = self.AES_KEYs['00000000000000000000000000000000']
-                    return mainkey
-                else:
-                    return None
+
+            if guid in self.AES_KEYs:
+                return self.AES_KEYs[guid]
             if pak_name in self.AES_KEYs:
                 return self.AES_KEYs[pak_name]
             return None
@@ -288,14 +289,10 @@ class Provider:
         # read index
         for key, pak_names in pog.items():
             for pak_name in pak_names:
-                if self.AES_KEYs is not None:
-                    aeskey = getaeskey(key, pak_name)
-                else:
-                    aeskey = None
-
                 try:  # IoStore
                     if pak_name.endswith(".ucas") or pak_name.endswith(".utoc"):
                         container = self.IoStores[pak_name]
+                        aeskey = getaeskey(container.get_encryption_key_guid(), pak_name)
                         tocIndex, chunks = container.ReadDirectoryIndex(key=aeskey)
                         self.files.update(tocIndex)
                         if pak_name not in self._mounted_files:
@@ -308,6 +305,7 @@ class Provider:
                 try:  # pak
                     if pak_name.endswith(".pak"):
                         container = self.Paks[pak_name]
+                        aeskey = getaeskey(container.get_encryption_key_guid(), pak_name)
                         self.files.update(container.ReadIndex(key=aeskey))
                         if pak_name not in self._mounted_files:
                             self._mounted_files.append(pak_name)

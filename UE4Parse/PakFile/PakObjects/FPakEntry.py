@@ -1,13 +1,16 @@
 from UE4Parse.Encryption.FAESKey import FAESKey
 from UE4Parse.Exceptions.Exceptions import InvalidEncryptionKey
 from UE4Parse.Assets.Objects import Decompress
-from typing import List, Optional, Tuple
+from typing import Tuple, TYPE_CHECKING
 
 from UE4Parse.BinaryReader import Align, BinaryStream
 from UE4Parse.PakFile import ECompressionFlags
 from UE4Parse.PakFile import EPakVersion
 from UE4Parse.PakFile import FPakCompressedBlock
 from UE4Parse.Provider.Common import GameFile
+
+if TYPE_CHECKING:
+    from UE4Parse.PakFile.PakReader import PakReader
 
 
 class FPakEntry(GameFile):
@@ -16,9 +19,9 @@ class FPakEntry(GameFile):
     Flag_Deleted = 0x02
     _Encrypted: bool = None
     _Deleted = (Flags & Flag_Deleted) != 0
-    # above 5 lines are useless
+    # above 5 lines are useless ?
 
-    ContainerName: str = ""
+    Container: 'PakReader'
     Name: str = ""
     Offset: int = 0
     Size: int = 0
@@ -46,15 +49,15 @@ class FPakEntry(GameFile):
     def Encrypted(self, value):
         self._Encrypted = value
 
-    def __init__(self, reader: Optional[BinaryStream], Version: EPakVersion = 0, SubVersion: int = 0,
-                 pakName: str = ""):
+    def __init__(self, reader: BinaryStream, Version: EPakVersion = 0, SubVersion: int = 0,
+                 pak: 'PakReader' = None):
         if reader is None:
             return
         self.CompressionBlocks = ()
         self.CompressionBlockSize = 0
         self.Flags = 0
 
-        self.ContainerName = pakName
+        self.Container = pak
 
         name = reader.readFString()
         self.Name = name[1::] if name.startswith("/") else name
@@ -89,7 +92,10 @@ class FPakEntry(GameFile):
 
         self.StructSize = reader.base_stream.tell() - StartOffset
 
-    def get_data(self, stream: BinaryStream, key: FAESKey, compression_method) -> BinaryStream:
+    def get_data(self) -> BinaryStream:
+        stream: BinaryStream = self.Container.reader
+        key: FAESKey = self.Container.AesKey
+        compression_method = self.Container.Info.CompressionMethods
         if self.CompressionMethodIndex == 0:
             stream.seek(self.Offset + self.StructSize, 0)
             if self.Encrypted:

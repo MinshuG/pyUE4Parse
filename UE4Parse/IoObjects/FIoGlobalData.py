@@ -10,6 +10,9 @@ from UE4Parse.IoObjects.FPackageObjectIndex import FPackageObjectIndex
 from UE4Parse.IoObjects.FScriptObjectDesc import FScriptObjectDesc
 from UE4Parse.IoObjects.FScriptObjectEntry import FScriptObjectEntry
 from UE4Parse.Assets.Objects.FNameEntrySerialized import FNameEntrySerialized
+from UE4Parse.Logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class FIoGlobalData:
@@ -17,7 +20,8 @@ class FIoGlobalData:
     GlobalNameHashes: list = []
     ScriptObjectByGlobalId: Dict[FPackageObjectIndex, FScriptObjectDesc]
 
-    def __init__(self, globalreader: FFileIoStoreReader, allreaders: List[FFileIoStoreReader]):
+    def __init__(self, globalreader: FFileIoStoreReader):
+        logger.info("Reading Global Data...")
         globalNamesReader = globalreader.Read(FIoChunkId().construct(0, 0, EIoChunkType.LoaderGlobalNames))
         globalNameHashReader = globalreader.Read(FIoChunkId().construct(0, 0, EIoChunkType.LoaderGlobalNameHashes))
         FNameEntrySerialized().LoadNameBatch(self.GlobalNameMap, self.GlobalNameHashes, globalNamesReader,

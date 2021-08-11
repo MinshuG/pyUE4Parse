@@ -1,3 +1,5 @@
+from enum import IntEnum
+
 from UE4Parse.Assets.Exports.UObjects import UObject
 from UE4Parse.IoObjects.IoUtils import resolveObjectIndex
 from typing import List, TYPE_CHECKING, Optional, Tuple, Union
@@ -20,9 +22,15 @@ from UE4Parse.Assets.Objects.FPackageIndex import FPackageIndex
 from UE4Parse.Assets.Exports.ExportRegistry import Registry
 
 if TYPE_CHECKING:
-    from UE4Parse.Provider import Provider
+    from UE4Parse.Provider import DefaultFileProvider
 
 logger = Logger.get_logger(__name__)
+
+
+class EPackageLoadMode(IntEnum):
+    """read package till..."""
+    Full = 0
+    NameMap = 1
 
 
 class Package:
@@ -30,7 +38,7 @@ class Package:
     ImportMap: Tuple[Union[FObjectImport, FPackageObjectIndex]] = []
     ExportMap: Tuple[FObjectExport, FExportMapEntry] = []
     Summary: Union[FPackageFileSummary, FPackageSummary]
-    Provider: 'Provider'
+    Provider: 'DefaultFileProvider'
 
     def get_summary(self) -> FPackageFileSummary:
         return self.Summary
@@ -53,7 +61,7 @@ class LegacyPackageReader(Package):
 
     # @profile
     def __init__(self, uasset: BinaryStream, uexp: BinaryStream = None, ubulk: BinaryStream = None,
-                 provider: "Provider" = None) -> None:
+                 provider: "DefaultFileProvider" = None, read_mode: EPackageLoadMode = EPackageLoadMode.Full) -> None:
         self.reader = uasset
         self.reader.set_ar_version(provider.GameInfo.UEVersion)
         self.reader.provider = provider
@@ -64,6 +72,7 @@ class LegacyPackageReader(Package):
         pos = self.reader.tell()
         self.NameMap = self.SerializeNameMap()
         self.reader.NameMap = self.NameMap
+        if read_mode == EPackageLoadMode.NameMap: return
 
         self.ImportMap = self.SerializeImportMap()
         self.ExportMap = self.SerializeExportMap()
@@ -102,7 +111,6 @@ class LegacyPackageReader(Package):
             try:
                 ExportData.deserialize(pos + Export.SerialSize)
             except Exception as e:
-                # raise e
                 logger.error(f"Could not read {ExportType.string} correctly, {e}")
             Export.exportObject = ExportData
 
@@ -176,10 +184,10 @@ class IoPackageReader(Package):
     ExportMap: Tuple[FExportMapEntry]
     ExportBundle: FExportBundle
     GraphData: Tuple[FImportedPackage]
-    ImportedPackages: Tuple['IoPackageReader']
+    ImportedPackages: Tuple[Optional['IoPackageReader']]
 
-    def __init__(self, uasset: BinaryStream, ubulk: BinaryStream, uptnl: BinaryStream, provider: "Provider",
-                 onlyInfo: bool = False):
+    def __init__(self, uasset: BinaryStream, ubulk: BinaryStream, uptnl: BinaryStream, provider: "DefaultFileProvider",
+                 onlyInfo: bool = True, read_mode: EPackageLoadMode = EPackageLoadMode.Full):  # TODO remove onlyInfo
         reader = uasset
         reader.ubulk_stream = ubulk or uptnl
         reader.set_ar_version(provider.GameInfo.UEVersion)
@@ -204,6 +212,7 @@ class IoPackageReader(Package):
             self.NameMap = tuple(name_map)
             del nameHashReader
             del nameMapReader
+        if read_mode == EPackageLoadMode.NameMap: return
 
         self.ImportMap = ()
         reader.seek(self.Summary.ImportMapOffset, 0)
@@ -228,7 +237,7 @@ class IoPackageReader(Package):
         reader.seek(self.Summary.GraphDataOffset, 0)
         self.GraphData = reader.readTArray(FImportedPackage, reader)
         self.ImportedPackages = tuple(
-            provider.get_package(iD.index).parse_package(onlyInfo=True) for iD in self.GraphData)
+            provider.try_load_package(iD.index) for iD in self.GraphData)
 
         allExportDataOffset = self.Summary.GraphDataOffset + self.Summary.GraphDataSize
         currentExportDataOffset = allExportDataOffset

@@ -5,7 +5,6 @@ from UE4Parse.Assets.Exports.UObjects import UObject
 from UE4Parse.Assets.Objects.FPackageIndex import FPackageIndex
 from UE4Parse.Assets.PropertyTagData.StructProperty import StructProperty
 from UE4Parse.Assets.Exports.ExportRegistry import register_export
-from UE4Parse.Provider import Provider
 
 @register_export
 class UMaterialInstanceConstant(UObject):
@@ -31,8 +30,8 @@ class UMaterialInstanceConstant(UObject):
             setattr(self, key, value)
 
     def get_parent(self):
-        provider: Provider = self.reader.provider
-        pkg = provider.get_package(self.parent)
+        provider = self.reader.provider
+        pkg = provider.try_load_package(self.parent)
         if pkg is not None:
             parent_mat = pkg.parse_package()
             return parent_mat

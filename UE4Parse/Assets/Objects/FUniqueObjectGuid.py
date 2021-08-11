@@ -6,5 +6,5 @@ class FUniqueObjectGuid:
     Guid: FGuid = FGuid
 
     def __init__(self, reader: BinaryStream) -> None:
-        self.Guid = FGuid(reader).read()
+        self.Guid = FGuid(reader)
         
