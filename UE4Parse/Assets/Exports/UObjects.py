@@ -35,8 +35,13 @@ class UObject:
             self.deserializeVersioned()
 
         pos = self.reader.tell()
-        if pos + 4 >= validpos and self.reader.readBool():
-            if not self.flag & EObjectFlags.RF_ClassDefaultObject:
+        if pos + 4 <= validpos:
+            val = self.reader.readInt32()
+            if val not in [0, 1]:
+                self.reader.seek(-4)
+                return
+            boolval = val != 0
+            if not self.flag & EObjectFlags.RF_ClassDefaultObject and boolval:
                 self.ObjectGuid = FGuid(self.reader)
 
     def deserializeVersioned(self):
