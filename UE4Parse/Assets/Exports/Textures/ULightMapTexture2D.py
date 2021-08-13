@@ -1,9 +1,9 @@
 from enum import IntEnum
 from typing import Union
+from contextlib import suppress
 
 from UE4Parse.Assets.Exports.Textures import UTexture2D
 from UE4Parse.Assets.Exports.ExportRegistry import register_export
-from contextlib import suppress
 
 
 class ELightMapFlags(IntEnum):
@@ -11,7 +11,8 @@ class ELightMapFlags(IntEnum):
     Bit-field flags that affects storage (e.g. packing, streaming) and other info about a lightmap.
     """
     LMF_None = 0  # No flags
-    LMF_Streamed = 0x00000001  # Lightmap should be placed in a streaming texture
+    LMF_Streamed = 0x00000001  # Lightmap should be placed in a streaming
+    LMF_LQLightmap = 0x00000002  # Whether this is a low quality lightmap or not # removed not there anymore
 
 
 @register_export
@@ -32,5 +33,6 @@ class ULightMapTexture2D(UTexture2D):
 
     def GetValue(self):
         props = super().GetValue()
-        props["LightmapFlags"] = self.LightmapFlags.value if isinstance(self.LightmapFlags, IntEnum) else self.LightmapFlags
+        props["LightmapFlags"] = self.LightmapFlags.value if isinstance(self.LightmapFlags,
+                                                                     IntEnum) else self.LightmapFlags
         return props
