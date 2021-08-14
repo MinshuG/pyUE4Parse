@@ -20,6 +20,9 @@ class FPackageId:
     def __init__(self, reader: BinaryStream):
         self.Id = reader.readUInt64()
 
+    def __str__(self) -> str:
+        return str(self.Id)
+
 
 class FImportedPackage:
     index: FPackageId

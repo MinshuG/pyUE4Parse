@@ -86,9 +86,9 @@ class PakReader:
             for _ in range(self.NumEntries):
                 entry = FPakEntry(index_reader, self.Info.Version, self.Info.SubVersion, self)
                 if self.Case_insensitive:
-                    tempfiles[self.MountPoint.lower() + entry.Name.lower()] = entry
+                    tempfiles[entry.Name.lower()] = entry
                 else:
-                    tempfiles[self.MountPoint + entry.Name] = entry
+                    tempfiles[entry.Name] = entry
 
         time_taken = round(time.time() - start_time, 2)
         logger.info(
@@ -148,7 +148,7 @@ class PakReader:
 
                 encodedEntryReader.seek(hasIndexEntry.Location, 0)
                 entry = self.BitEntry(path, encodedEntryReader)
-                tempentries[self.MountPoint + path] = entry
+                tempentries[path] = entry
 
         encodedEntryReader.base_stream.close()
         return tempentries

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from UE4Parse.Assets.Objects.FName import FName
 
@@ -48,9 +48,9 @@ class FPackageIndex:
         self.AsExport = self.Index - 1
 
     @property
-    def Name(self) -> FName:
+    def Name(self) -> FName:  # TODO: Fix this
         if self.Resource:
-            return self.Resource.ObjectName
+            return FName(self.GetValue().get("ObjectName"))
         else:
             return FName("None")
 
@@ -84,15 +84,18 @@ class FPackageIndex:
             return do_formatting(resolved, self.Index)
 
         if Resource is not None:
-            ObjectName = f"{Resource.ObjectName.string}:{Resource.ClassIndex.Name.string}"
+            if not hasattr(Resource, "ClassIndex"):  # FObjectImport
+                ObjectName = f"{Resource.ObjectName.string}"
+            else:
+                ObjectName = f"{Resource.ObjectName.string}:{Resource.ClassIndex.Name.string}"
             return {
                 "ObjectName": ObjectName,
                 "OuterIndex": Resource.OuterIndex.GetValue()
             }
         return self.Index
 
-    def load(self):
-        return self.reader.PackageReader.fi
+    # def load(self):
+    #     return self.reader.PackageReader.fi
 
     def __str__(self):
         if self.IsExport:

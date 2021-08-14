@@ -75,7 +75,7 @@ class DirectoryStorage:
             if uptnl in Index:
                 IndexEntry.uptnl = Index[uptnl]
 
-            path = remove_slash(self._container.get_mount_point() + path_no_ext)
+            path = remove_slash(os.path.join(self._container.get_mount_point() , path_no_ext))
             self._files[path] = IndexEntry
             # if not os.path.splitext(IndexEntry.Name)[0] == path:  # hmm
             #     path_ = path
