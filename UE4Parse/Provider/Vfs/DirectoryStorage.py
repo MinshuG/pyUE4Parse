@@ -1,4 +1,5 @@
 import os
+import re
 from functools import singledispatchmethod
 from typing import Dict, Union, TYPE_CHECKING, Optional
 
@@ -16,6 +17,25 @@ def remove_slash(string):
     if string.startswith("/"):
         return string[1:]
     return string
+
+
+def convert_path(path):
+    path = path.split("/")
+    content_index = -1
+    for i, x in enumerate(path[::-1]):
+        if x == "Content":
+            content_index = i - (len(path) - 1)
+            break
+    path = path[abs(content_index) - 1:]
+    b_rcontent = True
+    fixed_path = [""]
+    for x in path:
+        if x == "Content" and b_rcontent:
+            b_content = False
+            continue
+        fixed_path.append(x)
+
+    return "/".join(fixed_path).rstrip(".umap").rstrip(".uasset")
 
 
 class DirectoryStorage:
@@ -55,9 +75,17 @@ class DirectoryStorage:
             if uptnl in Index:
                 IndexEntry.uptnl = Index[uptnl]
 
-            path = remove_slash(path_no_ext)
+            path = remove_slash(self._container.get_mount_point() + path_no_ext)
             self._files[path] = IndexEntry
-            self._raw_names[IndexEntry.Name] = path
+            # if not os.path.splitext(IndexEntry.Name)[0] == path:  # hmm
+            #     path_ = path
+            if re.search(r"/Plugins/GameFeatures/.*/Content/", path):
+                path_ = convert_path(path)
+                self._raw_names[path_] = path
+            # else:
+            #     path_ = IndexEntry.Name
+            #
+            # self._raw_names[path_] = path
 
     def get_full_path(self, path: str) -> Optional[str]:
         return self._raw_names.get(path)
@@ -79,4 +107,7 @@ class DirectoryStorage:
         return default
 
     def __str__(self):
-        return f"{len(self._files)} files | {self._container.FileName} | Mounted to: {self._container.MountPoint}"
+        return f"{len(self._files)} files | {self._container.FileName} | Mounted to: {self._container.get_mount_point()}"
+
+    def __repr__(self):
+        return f"<{self.__str__()}>"

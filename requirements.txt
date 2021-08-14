@@ -1,3 +1,3 @@
 Cython~=3.0a5
 setuptools~=56.0.0
-Pillow~=8.1.2
+Pillow

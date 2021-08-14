@@ -41,21 +41,15 @@ class UTexture2D(UObject):
         bIsCooked = reader.version >= Versions.VER_UE4_ADD_COOKED_TO_TEXTURE2D and reader.readBool()  # 203
         if bIsCooked:
             PixelFormatName = reader.readFName()
-            pos = reader.base_stream.tell()
             while not PixelFormatName.isNone:
-                SkipOffset = reader.readInt32()
                 if reader.game >= GAME_UE4(20):
-                    SkipOffsetH = reader.readInt32()
-                    assert SkipOffsetH == 0
+                    SkipOffset = reader.readInt64()
+                else:
+                    SkipOffset = reader.readInt32()
 
                 data = FTexturePlatformData(reader, ubulk=bulk, ubulkOffset=bulkOffset)
                 self.data.append(data)
                 PixelFormatName = reader.readFName()
-
-                try:
-                    EPixelFormat[PixelFormatName.GetValue()]
-                except:
-                    break
 
     def GetValue(self):
         props = super().GetValue()

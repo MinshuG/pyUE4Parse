@@ -1,4 +1,3 @@
-from UE4Parse.Exceptions.Exceptions import ParserException
 from io import BytesIO
 from typing import Optional
 
@@ -6,7 +5,8 @@ from PIL import Image
 
 from UE4Parse.Exceptions import UnknownPixelFormatException
 from UE4Parse.Assets.Objects.EPixelFormat import EPixelFormat
-from .utils import build_blue_channel
+from .utils import build_blue_channel, swap_b_and_r
+
 
 class TextureDecoder:
     pixel_format: EPixelFormat
@@ -61,7 +61,9 @@ class TextureDecoder:
                 build_blue_channel(image_bytes, self.sizeX, self.sizeY)
             self.decoded_image = Image.frombytes("RGBA", (self.sizeX, self.sizeY), bytes(image_bytes))
         elif self.pixel_format == EPixelFormat.PF_B8G8R8A8:
-            self.decoded_image = Image.frombytes('BGRA', (self.sizeX, self.sizeY), self.data.read())
+            image_bytes = bytearray(self.data.read())
+            swap_b_and_r(image_bytes, self.sizeX, self.sizeY)
+            self.decoded_image = Image.frombytes('RGBA', (self.sizeX, self.sizeY), bytes(image_bytes))
         elif self.pixel_format == EPixelFormat.PF_G8:
             self.decoded_image = Image.frombytes('L', (self.sizeX, self.sizeY), self.data.read())  # L??
         elif self.pixel_format == EPixelFormat.PF_FloatRGBA:

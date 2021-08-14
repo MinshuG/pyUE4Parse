@@ -1,5 +1,5 @@
 from functools import singledispatchmethod
-from typing import Union, Optional
+from typing import Union, Optional, List
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Versions import VersionContainer
@@ -23,17 +23,32 @@ class DefaultFileProvider(AbstractVfsFileProvider):
     __path: str
     mappings: MappingProvider
 
-    def __init__(self, path: str, versions: VersionContainer = VersionContainer.default(),
+    @singledispatchmethod
+    def __init__(self, path: List[str], versions: VersionContainer = VersionContainer.default(),
                  isCaseInsensitive: bool = False) -> None:
-        assert os.path.exists(path)
         self.__path = path
         super().__init__(versions, isCaseInsensitive=isCaseInsensitive)
         self.GameInfo = versions  # old provider
         self.Triggers = {}
         self.mappings = None
 
-    def initialize(self):
-        for f in glob(self.__path + "/*"):
+    @__init__.register
+    def _(self, path: str, versions: VersionContainer = VersionContainer.default(),
+                 isCaseInsensitive: bool = False) -> None:
+        assert os.path.exists(path), "provided path must exists"
+        self.__path = path
+        super().__init__(versions, isCaseInsensitive=isCaseInsensitive)
+        self.GameInfo = versions  # old provider
+        self.Triggers = {}
+        self.mappings = None
+
+    def initialize(self, *args, **kwargs):
+        if isinstance(self.__path, list):
+            files = self.__path
+        else:
+            files = glob(self.__path + "/*")
+
+        for f in files:
             if os.path.isfile(f):
                 name = os.path.basename(f)
                 if f.endswith(".utoc"):
@@ -44,6 +59,8 @@ class DefaultFileProvider(AbstractVfsFileProvider):
                     self.register_container(name, (BinaryStream(f),))
                 else:
                     continue
+            else:
+                logger.warn(f"{f} is not a file")
 
     def get_reader(self, path: str):
         name = os.path.splitext(path)[0]
@@ -78,9 +95,7 @@ class DefaultFileProvider(AbstractVfsFileProvider):
         if not package.Name.endswith((".umap", ".uasset")):
             return None
 
-        real_path = package.Name
-        if full_path := self.files.resolve_relative_path(real_path):
-            real_path = full_path
+        real_path = package.Container.get_mount_point() + package.Name
 
         logger.info(f"Loading {real_path}")
 
@@ -89,6 +104,7 @@ class DefaultFileProvider(AbstractVfsFileProvider):
         uptnl = getattr(package, "uptnl", None)
         if isinstance(package, FIoStoreEntry):  # IoStorePackage
             uasset = package.get_data()
+            uasset.mappings = self.mappings
             if ubulk:
                 ubulk = ubulk.get_data()
             if uptnl:
@@ -96,6 +112,7 @@ class DefaultFileProvider(AbstractVfsFileProvider):
             return IoPackageReader(uasset, ubulk, uptnl, self, False, load_mode)
         else:  # PakPackage
             uasset = package.get_data()
+            uasset.mappings = self.mappings
             if uexp:
                 uexp = uexp.get_data()
             if ubulk:

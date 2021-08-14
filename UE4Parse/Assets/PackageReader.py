@@ -1,8 +1,10 @@
+from abc import ABC, abstractmethod
 from enum import IntEnum
+from functools import singledispatchmethod
 
 from UE4Parse.Assets.Exports.UObjects import UObject
 from UE4Parse.IoObjects.IoUtils import resolveObjectIndex
-from typing import List, TYPE_CHECKING, Optional, Tuple, Union
+from typing import List, TYPE_CHECKING, Optional, Tuple, Type, TypeVar, Union
 
 from UE4Parse import Logger
 from UE4Parse.Assets import ToJson
@@ -27,13 +29,16 @@ if TYPE_CHECKING:
 logger = Logger.get_logger(__name__)
 
 
+T = TypeVar('T')
+
+
 class EPackageLoadMode(IntEnum):
     """read package till..."""
     Full = 0
     NameMap = 1
 
 
-class Package:
+class Package(ABC):
     NameMap: List[FNameEntrySerialized] = []
     ImportMap: Tuple[Union[FObjectImport, FPackageObjectIndex]] = []
     ExportMap: Tuple[FObjectExport, FExportMapEntry] = []
@@ -46,10 +51,17 @@ class Package:
     def get_dict(self):
         return ToJson.ToJson(self)
 
+    @abstractmethod
     def find_export(self, export_name: str) -> Optional[UObject]:
         pass
 
+    @singledispatchmethod
+    @abstractmethod
     def find_export_of_type(self, export_type: str) -> Optional[UObject]:
+        pass
+
+    @find_export_of_type.register
+    def _(self, arg: UObject) -> Optional[T]:
         pass
 
 
@@ -63,7 +75,7 @@ class LegacyPackageReader(Package):
     def __init__(self, uasset: BinaryStream, uexp: BinaryStream = None, ubulk: BinaryStream = None,
                  provider: "DefaultFileProvider" = None, read_mode: EPackageLoadMode = EPackageLoadMode.Full) -> None:
         self.reader = uasset
-        self.reader.set_ar_version(provider.GameInfo.UEVersion)
+        self.reader.set_ar_version(provider.Versions.UEVersion)
         self.reader.provider = provider
         self.reader.PackageReader = self
 
@@ -159,10 +171,18 @@ class LegacyPackageReader(Package):
             if export_name == export.name.string:
                 return export.exportObject
         return None
-
+    
+    @singledispatchmethod
     def find_export_of_type(self, export_type: str) -> Optional[UObject]:
         for export in self.ExportMap:
             if export_type == export.type.string:
+                return export.exportObject
+        return None
+
+    @find_export_of_type.register
+    def _(self, _cls: type) -> Optional[T]:
+        for export in self.ExportMap:
+            if isinstance(export.exportObject, _cls):
                 return export.exportObject
         return None
 
@@ -190,7 +210,7 @@ class IoPackageReader(Package):
                  onlyInfo: bool = True, read_mode: EPackageLoadMode = EPackageLoadMode.Full):  # TODO remove onlyInfo
         reader = uasset
         reader.ubulk_stream = ubulk or uptnl
-        reader.set_ar_version(provider.GameInfo.UEVersion)
+        reader.set_ar_version(provider.Versions.UEVersion)
         reader.PackageReader = self
         self.reader = reader
         self.Provider = provider
@@ -251,21 +271,38 @@ class IoPackageReader(Package):
 
                 export_type = resolveObjectIndex(self, provider.GlobalData, index=Export.ClassIndex).getName()
                 ExportData = Registry().get_export_reader(export_type.string, Export, self.reader)
+                error = None
                 try:
                     ExportData.deserialize(currentExportDataOffset + Export.CookedSerialSize)
                 except Exception as e:
-                    pass
+                    error = e
+
                 Export.type = export_type
                 Export.exportObject = ExportData
 
                 position = self.reader.base_stream.tell()
                 if position != currentExportDataOffset + Export.CookedSerialSize:
-                    logger.debug(
-                        f"Didn't read ExportType {export_type.string} properly, at {position}, should be: {currentExportDataOffset + Export.CookedSerialSize} behind: {currentExportDataOffset + Export.CookedSerialSize - position}")
+                    msg = f"Didn't read ExportType {export_type.string} properly, at {position}, should be: {currentExportDataOffset + Export.CookedSerialSize} behind: {currentExportDataOffset + Export.CookedSerialSize - position}"
+                    if error is not None:
+                        msg += f"\nError: {error}"
+                    logger.debug(msg)
+
                 currentExportDataOffset += Export.CookedSerialSize
 
+    @singledispatchmethod
     def find_export_of_type(self, export_type: str) -> Optional[UObject]:
         for export in self.ExportMap:
             if export_type == export.type.string:
                 return export.exportObject
         return None
+
+    @find_export_of_type.register
+    @find_export_of_type.register
+    def _(self, _cls: type) -> Optional[T]:
+        for export in self.ExportMap:
+            if isinstance(export.exportObject, _cls):
+                return export.exportObject
+        return None
+
+    def find_export(self, export_name: str) -> Optional[UObject]:
+        return NotImplemented

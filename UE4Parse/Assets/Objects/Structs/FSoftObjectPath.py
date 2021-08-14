@@ -19,6 +19,9 @@ class FSoftObjectPath:
             self.AssetPathName = FName("None")  # Zero read?
             self.SubPathString = ""
 
+    def __str__(self):
+        return self.AssetPathName.string
+
     def GetValue(self):
         return {
             "AssetPathName": self.AssetPathName.string,

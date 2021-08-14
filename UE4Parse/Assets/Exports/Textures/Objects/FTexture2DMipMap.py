@@ -11,19 +11,18 @@ class FTexture2DMipMap:
     BulkData: FByteBulkData
 
     def __init__(self, reader: BinaryStream, ubulk: BinaryStream, bulkOffset: int) -> None:
-        self.bCooked = reader.readBool()
+        self.bCooked = reader.version >= Versions.VER_UE4_TEXTURE_SOURCE_ART_REFACTOR and reader.readBool()
+
         self.BulkData = FByteBulkData(reader, ubulk, bulkOffset)
         self.SizeX = reader.readInt32()
         self.SizeY = reader.readInt32()
         if reader.game >= EUEVersion.GAME_UE4_20:
             self.SizeZ = reader.readInt32()
         else:
-            self.SizeZ = 0
+            self.SizeZ = 1
 
-        # basically Ar.Ver >= UE4Version.VER_UE4_TEXTURE_DERIVED_DATA2 && !cooked
         if reader.version >= Versions.VER_UE4_TEXTURE_DERIVED_DATA2 and not self.bCooked:
             derivedDataKey = reader.readFString()
-
 
     def GetValue(self):
         return {

@@ -82,6 +82,9 @@ class FFileIoStoreReader:
     def get_encryption_key_guid(self) -> FGuid:
         return self.TocResource.Header.EncryptionKeyGuid
 
+    def get_mount_point(self):
+        return self.ContainerFile.MountPoint
+
     @property
     def IsValidIndex(self):
         return len(self._directory_index.DirectoryEntries) > 0
@@ -189,7 +192,7 @@ class FFileIoStoreReader:
             file = self.GetFile(dir)
             while file.isValid():
                 name = self.GetFileName(file)
-                path = self._directory_index.MountPoint + sub_dir_name + name
+                path = sub_dir_name + name  # self._directory_index.MountPoint +
                 data = self.GetFileData(file)  # UseData
                 entry = FIoStoreEntry(self, data, path)
                 outchunk[entry.ChunkId] = path

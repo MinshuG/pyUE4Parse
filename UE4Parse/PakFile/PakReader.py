@@ -39,6 +39,9 @@ class PakReader:
     def get_encryption_key_guid(self):
         return self.Info.EncryptionKeyGuid
 
+    def get_mount_point(self):
+        return self.MountPoint
+
     # @profile
     def ReadIndex(self, key: Optional[FAESKey] = None):
         self.AesKey = key

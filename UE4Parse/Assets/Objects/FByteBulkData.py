@@ -2,6 +2,9 @@ from UE4Parse.BinaryReader import BinaryStream
 from .EBulkDataFlags import EBulkDataFlags
 from contextlib import suppress
 
+from ...Versions.EUEVersion import Versions
+
+
 class FByteBulkDataHeader:
     BulkDataFlags: int
     ElementCount: int
@@ -9,20 +12,26 @@ class FByteBulkDataHeader:
     OffsetInFile: int
 
     def __init__(self, reader: BinaryStream, bulkOffset: int) -> None:
-        self.BulkDataFlags = reader.readInt32()
-        if (self.BulkDataFlags & EBulkDataFlags.BULKDATA_Size64Bit) != 0:
+        self.BulkDataFlags = reader.readUInt32()
+        with suppress(ValueError):
+            self.BulkDataFlags = self.BulkDataFlags
+
+        if (self.BulkDataFlags & EBulkDataFlags.BULKDATA_Size64Bit) != 0:  # todo is this correct?
             self.ElementCount = reader.readInt64()
             self.SizeOnDisk = reader.readInt64()
         else:
             self.ElementCount = reader.readInt32()
-            self.SizeOnDisk = reader.readInt32()
+            self.SizeOnDisk = reader.readUInt32()
 
-        self.OffsetInFile = reader.readInt64()
+        self.OffsetInFile = reader.readInt64() if reader.version >= Versions.VER_UE4_BULKDATA_AT_LARGE_OFFSETS \
+                                               else reader.readInt32()
+
         if not (self.BulkDataFlags & EBulkDataFlags.BULKDATA_NoOffsetFixUp):  # UE4.26 flag
             self.OffsetInFile += bulkOffset
 
         if (self.BulkDataFlags & EBulkDataFlags.BULKDATA_BadDataVersion) != 0:
             reader.seek(2)
+            self.BulkDataFlags &= EBulkDataFlags.BULKDATA_BadDataVersion
 
 
 class FByteBulkData:
@@ -30,7 +39,7 @@ class FByteBulkData:
     Data: bytes
 
     def __init__(
-        self, reader: BinaryStream, ubulk: BinaryStream, bulkOffset: int
+            self, reader: BinaryStream, ubulk: BinaryStream, bulkOffset: int
     ) -> None:
         self.Header = FByteBulkDataHeader(reader, bulkOffset)
         bulkDataFlags = self.Header.BulkDataFlags

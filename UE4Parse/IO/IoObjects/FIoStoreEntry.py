@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 class FIoStoreEntry(GameFile):
-    ioStore = None  # FFileIoStoreReader
+    Container = None  # FFileIoStoreReader
     UserData: int
     Name: str
     Size: int = -1
@@ -20,7 +20,7 @@ class FIoStoreEntry(GameFile):
     OffsetLength: 'FIoOffsetAndLength'
 
     def CompressionMethodString(self) -> str:
-        return "COMPRESS_" + self.ioStore.TocResource.CompressionMethods[
+        return "COMPRESS_" + self.Container.TocResource.CompressionMethods[
             self.CompressionMethodIndex - 1] if self.CompressionMethodIndex > 0 else "COMPRESS_None"
 
     @property
@@ -33,23 +33,23 @@ class FIoStoreEntry(GameFile):
 
     @property
     def ContainerName(self) -> str:
-        return self.ioStore.FileName[:-5] + ".utoc"
+        return self.Container.FileName[:-5] + ".utoc"
 
     @property
     def Encrypted(self) -> bool:
-        return self.ioStore.TocResource.Header.is_encrypted()
+        return self.Container.TocResource.Header.is_encrypted()
 
     @property
     def OffsetLength(self) -> 'FIoOffsetAndLength':
-        return self.ioStore.Toc[self.ChunkId]
+        return self.Container.Toc[self.ChunkId]
 
     @property
     def ChunkId(self) -> 'FIoChunkId':
-        return self.ioStore.TocResource.ChunkIds[self._userdata]
+        return self.Container.TocResource.ChunkIds[self._userdata]
 
     def __init__(self, io_store, userdata: int, name: str):
         super().__init__()
-        self.ioStore = io_store
+        self.Container = io_store
         self._userdata = userdata
 
         self.Name = name.lower() if io_store.caseinSensitive else name
@@ -70,4 +70,4 @@ class FIoStoreEntry(GameFile):
         #         self.Encrypted = True
 
     def get_data(self) -> BinaryStream:
-        return self.ioStore.Read(self.ChunkId)
+        return self.Container.Read(self.ChunkId)
