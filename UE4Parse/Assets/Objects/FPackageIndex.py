@@ -19,7 +19,8 @@ def do_formatting(obj, index):
         ObjectName += f":{class_.getName().string}"
 
     if len(outers) <= 0:
-        ObjectPath = index
+        ObjectPath = obj.importedPkg.Summary.SourceName.resolve(obj.importedPkg.NameMap)  # ??
+        # ObjectPath = abs(index)
     else:
         ObjectPath = f"{outers[-1]}.{abs(index)-1}"
 

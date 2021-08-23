@@ -51,9 +51,6 @@ class PakInfo:
 
         self.Version = EPakVersion(reader.readInt32())
 
-        # FGame.Version = self.Version
-        # FGame.SubVersion = self.SubVersion
-
         self.SubVersion = 1 if offset == self._SIZE8A and self.Version == EPakVersion.FNAME_BASED_COMPRESSION_METHOD else 0
         self.IndexOffset = reader.readInt64()
         self.IndexSize = reader.readInt64()

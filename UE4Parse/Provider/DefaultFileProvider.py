@@ -62,7 +62,7 @@ class DefaultFileProvider(AbstractVfsFileProvider):
             else:
                 logger.warn(f"{f} is not a file")
 
-    def get_reader(self, path: str):
+    def get_reader(self, path: str):  # TODO Game file overload
         name = os.path.splitext(path)[0]
         name = fixpath(name, self.GameName)
         name = name.lower() if self.IsCaseInsensitive else name
@@ -109,7 +109,7 @@ class DefaultFileProvider(AbstractVfsFileProvider):
                 ubulk = ubulk.get_data()
             if uptnl:
                 uptnl = uptnl.get_data()
-            return IoPackageReader(uasset, ubulk, uptnl, self, False, load_mode)
+            return IoPackageReader(uasset, ubulk, uptnl, self, load_mode)
         else:  # PakPackage
             uasset = package.get_data()
             uasset.mappings = self.mappings

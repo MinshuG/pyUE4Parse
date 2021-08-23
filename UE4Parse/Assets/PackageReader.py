@@ -36,6 +36,8 @@ class EPackageLoadMode(IntEnum):
     """read package till..."""
     Full = 0
     NameMap = 1
+    Info = 2
+
 
 
 class Package(ABC):
@@ -73,7 +75,7 @@ class LegacyPackageReader(Package):
 
     # @profile
     def __init__(self, uasset: BinaryStream, uexp: BinaryStream = None, ubulk: BinaryStream = None,
-                 provider: "DefaultFileProvider" = None, read_mode: EPackageLoadMode = EPackageLoadMode.Full) -> None:
+                 provider: "DefaultFileProvider" = None, load_mode: EPackageLoadMode = EPackageLoadMode.Full) -> None:
         self.reader = uasset
         self.reader.set_ar_version(provider.Versions.UEVersion)
         self.reader.provider = provider
@@ -84,10 +86,12 @@ class LegacyPackageReader(Package):
         pos = self.reader.tell()
         self.NameMap = self.SerializeNameMap()
         self.reader.NameMap = self.NameMap
-        if read_mode == EPackageLoadMode.NameMap: return
+        if load_mode == EPackageLoadMode.NameMap: return
 
         self.ImportMap = self.SerializeImportMap()
         self.ExportMap = self.SerializeExportMap()
+
+        if load_mode == EPackageLoadMode.Info: return
 
         filever = self.PackageFileSummary.FileVersionUE4
         if filever > 0:
@@ -207,7 +211,7 @@ class IoPackageReader(Package):
     ImportedPackages: Tuple[Optional['IoPackageReader']]
 
     def __init__(self, uasset: BinaryStream, ubulk: BinaryStream, uptnl: BinaryStream, provider: "DefaultFileProvider",
-                 onlyInfo: bool = True, read_mode: EPackageLoadMode = EPackageLoadMode.Full):  # TODO remove onlyInfo
+                load_mode: EPackageLoadMode = EPackageLoadMode.Full):  # TODO remove onlyInfo
         reader = uasset
         reader.ubulk_stream = ubulk or uptnl
         reader.set_ar_version(provider.Versions.UEVersion)
@@ -232,7 +236,7 @@ class IoPackageReader(Package):
             self.NameMap = tuple(name_map)
             del nameHashReader
             del nameMapReader
-        if read_mode == EPackageLoadMode.NameMap: return
+        if load_mode == EPackageLoadMode.NameMap: return
 
         self.ImportMap = ()
         reader.seek(self.Summary.ImportMapOffset, 0)
@@ -248,16 +252,16 @@ class IoPackageReader(Package):
         reader.seek(self.Summary.ExportBundlesOffset, 0)
         self.ExportBundle = FExportBundle(reader)
 
+        if load_mode == EPackageLoadMode.Info: return
+
         if provider.GlobalData is None:
             logger.error("Missing global data can't serialize")
             return
 
-        if onlyInfo:
-            return
         reader.seek(self.Summary.GraphDataOffset, 0)
         self.GraphData = reader.readTArray(FImportedPackage, reader)
         self.ImportedPackages = tuple(
-            provider.try_load_package(iD.index) for iD in self.GraphData)
+            provider.try_load_package(iD.index, EPackageLoadMode.Info) for iD in self.GraphData)
 
         allExportDataOffset = self.Summary.GraphDataOffset + self.Summary.GraphDataSize
         currentExportDataOffset = allExportDataOffset
