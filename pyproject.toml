@@ -1,0 +1,23 @@
+[project]
+name = "UE4Parse"
+version = "0.0.1"
+description = "ue4 asset parser"
+authors = [
+    "MinshuG"
+]
+license = "MIT"
+readme = "README.md"
+python = "^3.8"
+homepage = "https://github.com/MinshuG/pyUE4Parse"
+repository = "https://github.com/MinshuG/pyUE4Parse"
+
+keywords = ["UE4"]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    'License :: OSI Approved :: MIT License'
+]
+
+[build-system]
+requires = ["setuptools~=56.0.0", "Cython~=3.0a5"]
+build-backend = "setuptools.build_meta"

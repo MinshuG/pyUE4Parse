@@ -1,5 +1,10 @@
 **pak and ue4 asset parser**
 
+[![pypi](https://img.shields.io/pypi/v/ue4parse.svg)](https://pypi.python.org/pypi/valorant-api/)
+
+## Installation
+`python -m pip install ue4parse`
+
 
 ## Usages
 
