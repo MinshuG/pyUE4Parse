@@ -76,7 +76,11 @@ class DirectoryStorage:
                 IndexEntry.uptnl = Index[uptnl]
 
             path = remove_slash(os.path.join(self._container.get_mount_point() , path_no_ext))
-            self._files[path] = IndexEntry
+            if self.IsCaseInsensitive:
+                self._files[path.lower()] = IndexEntry
+            else:
+                self._files[path] = IndexEntry
+
             # if not os.path.splitext(IndexEntry.Name)[0] == path:  # hmm
             #     path_ = path
             if re.search(r"/Plugins/GameFeatures/.*/Content/", path):
