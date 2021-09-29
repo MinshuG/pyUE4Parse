@@ -1,9 +1,8 @@
+from UE4Parse.Assets.Exports.Textures.UTexture import UTexture
 from typing import List, Optional, TYPE_CHECKING
 
 from UE4Parse.BinaryReader import BinaryStream
-from UE4Parse.Assets.Exports.UObjects import UObject
 from UE4Parse.Logger import get_logger
-from UE4Parse.Assets.Objects.EPixelFormat import EPixelFormat
 from UE4Parse.Versions.EUEVersion import GAME_UE4, Versions
 from UE4Parse.Assets.Objects.FStripDataFlags import FStripDataFlags
 from UE4Parse.Assets.Exports.ExportRegistry import register_export
@@ -17,7 +16,7 @@ logger = get_logger(__name__)
 
 
 @register_export
-class UTexture2D(UObject):
+class UTexture2D(UTexture):
     data: List[FTexturePlatformData]
     isNormalMap: bool
 
@@ -34,8 +33,6 @@ class UTexture2D(UObject):
 
         if compression_settings := self.try_get("CompressionSettings"):
             self.isNormalMap = str(compression_settings).lower().endswith("TC_Normalmap".lower())
-
-        FStripDataFlags(reader)
         FStripDataFlags(reader)
 
         bIsCooked = reader.version >= Versions.VER_UE4_ADD_COOKED_TO_TEXTURE2D and reader.readBool()  # 203
