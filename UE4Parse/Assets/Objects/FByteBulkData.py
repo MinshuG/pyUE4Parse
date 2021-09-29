@@ -1,9 +1,11 @@
+from UE4Parse.Logger import get_logger
 from UE4Parse.BinaryReader import BinaryStream
 from .EBulkDataFlags import EBulkDataFlags
 from contextlib import suppress
 
 from ...Versions.EUEVersion import Versions
 
+logger = get_logger(__name__)
 
 class FByteBulkDataHeader:
     BulkDataFlags: int
@@ -49,15 +51,24 @@ class FByteBulkData:
         if self.Header.ElementCount == 0:
             self.Data = None
         elif (bulkDataFlags & EBulkDataFlags.BULKDATA_Unused) != 0:
+            self.Header.BulkDataFlags = EBulkDataFlags.BULKDATA_Unused
             self.Data = None
         elif (bulkDataFlags & EBulkDataFlags.BULKDATA_OptionalPayload) != 0:
+            self.Header.BulkDataFlags = EBulkDataFlags.BULKDATA_OptionalPayload
             self.Data = None
-        elif (bulkDataFlags & EBulkDataFlags.BULKDATA_ForceInlinePayload) != 0:
+        elif (bulkDataFlags & EBulkDataFlags.BULKDATA_ForceInlinePayload) != 0:  # broken?
+            self.Header.BulkDataFlags = EBulkDataFlags.BULKDATA_ForceInlinePayload
+            pos = reader.tell()
             self.Data = reader.readBytes(self.Header.ElementCount)
+            if reader.position != pos + self.Header.ElementCount:
+                logger.warn("Incorrect number of bytes read")
+                reader.seek(pos + self.Header.ElementCount, 0)
         elif (bulkDataFlags & EBulkDataFlags.BULKDATA_PayloadInSeperateFile) != 0:  # ubulk
+            self.Header.BulkDataFlags = EBulkDataFlags.BULKDATA_PayloadInSeperateFile
             ubulk.seek(self.Header.OffsetInFile, 0)
             self.Data = ubulk.readBytes(self.Header.ElementCount)
         elif (bulkDataFlags & EBulkDataFlags.BULKDATA_PayloadAtEndOfFile) != 0:
+            self.Header.BulkDataFlags = EBulkDataFlags.BULKDATA_PayloadAtEndOfFile
             pos = reader.base_stream.tell()
             if self.Header.OffsetInFile + self.Header.ElementCount <= reader.size:
                 reader.seek(self.Header.OffsetInFile, 0)

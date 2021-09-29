@@ -22,8 +22,6 @@ T = TypeVar("T")
 
 
 class BinaryStream(BinaryIO):
-    NameMap: list
-    PackageReader: Union['Package']
     version: int
     game: EUEVersion = None
     fake_size: int
@@ -46,6 +44,13 @@ class BinaryStream(BinaryIO):
         self.close = self.base_stream.close
         self.tell = self.base_stream.tell
         self.readBytes = self.base_stream.read
+    
+    def copy_info_from(self, other: 'BinaryStream'):
+        self.PackageReader = other.PackageReader
+        self.mappings = other.mappings
+        self.game = other.game
+        self.version = other.version
+        return self
 
     def change_stream(self, fp: Union[BufferedReader, str, bytes, bytearray]):
         if isinstance(fp, str):
@@ -59,34 +64,11 @@ class BinaryStream(BinaryIO):
             self.fake_size = self.size + fp.size
             self.size = fp.size
 
-    def set_ar_version(self, ueversion):
-        self.game = ueversion
-        self.version = self.game.get_ar_ver()
-
-    def CustomVer(self, key: 'FGuid') -> int:
-        Summary = self.PackageReader.get_summary()
-        if not hasattr(Summary, "GetCustomVersions"):
-            return -1
-        CustomVersion = Summary.GetCustomVersions().get_version(key)
-        return CustomVersion if CustomVersion is not None else -1
-
-    @property
-    def has_unversioned_properties(self):
-        return bool(self.PackageReader.get_summary().PackageFlags & EPackageFlags.PKG_UnversionedProperties)
-
-    def seek(self, offset, SEEK_SET=1):
-        self.base_stream.seek(offset, SEEK_SET)
+    def seek(self, offset, whence=1):
+        return self.base_stream.seek(offset, whence)
 
     def seekable(self) -> bool:
         return self.base_stream.seekable()
-
-    def getmappings(self):
-        if getattr(self, "mappings", None):
-            return self.mappings
-        raise ParserException("mappings are not attached")
-
-    def get_name_map(self):
-        return self.PackageReader.NameMap
 
     @property
     def position(self):

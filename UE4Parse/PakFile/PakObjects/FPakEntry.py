@@ -68,7 +68,7 @@ class FPakEntry(GameFile):
         self.Size = reader.readInt64()
         self.UncompressedSize = reader.readInt64()
 
-        if Version.value > EPakVersion.FNAME_BASED_COMPRESSION_METHOD.value:
+        if Version < EPakVersion.FNAME_BASED_COMPRESSION_METHOD:
             LegacyCompressionMethod = reader.readInt32()
             if LegacyCompressionMethod == ECompressionFlags.COMPRESS_None.value:
                 self.CompressionMethodIndex = 0
@@ -99,7 +99,8 @@ class FPakEntry(GameFile):
         if self.CompressionMethodIndex == 0:
             stream.seek(self.Offset + self.StructSize, 0)
             if self.Encrypted:
-                return BinaryStream(key.decrypt(stream.read()))
+                buffer = stream.read(Align(self.UncompressedSize, key.block_size))
+                return BinaryStream(key.decrypt(buffer))
             else:
                 data: bytes = stream.readBytes(self.UncompressedSize)
                 return BinaryStream(data)
@@ -116,7 +117,7 @@ class FPakEntry(GameFile):
 
         block: FPakCompressedBlock
         for block in self.CompressionBlocks:
-            stream.seek(self.Offset + block.CompressedStart)
+            stream.seek(self.Offset + block.CompressedStart, 0)
             uncompressed_size = min(self.CompressionBlockSize, self.UncompressedSize - len(result))
 
             if self.Encrypted:

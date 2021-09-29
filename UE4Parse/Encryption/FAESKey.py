@@ -30,5 +30,4 @@ class FAESKey:
         return AES.new(self.__key, AES.MODE_ECB)
 
     def decrypt(self, data: Union[bytearray, bytes]) -> bytes:
-        assert len(data) % 16 == 0
         return self.decryptor.decrypt(data)

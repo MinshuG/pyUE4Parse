@@ -4,7 +4,7 @@ from functools import singledispatchmethod
 
 from UE4Parse.Assets.Exports.UObjects import UObject
 from UE4Parse.IoObjects.IoUtils import resolveObjectIndex
-from typing import List, TYPE_CHECKING, Optional, Tuple, Type, TypeVar, Union
+from typing import List, TYPE_CHECKING, Optional, Tuple, TypeVar, Union
 
 from UE4Parse import Logger
 from UE4Parse.Assets import ToJson
@@ -22,6 +22,7 @@ from UE4Parse.Assets.Objects.FObjectImport import FObjectImport
 from UE4Parse.Assets.Objects.FPackageFileSummary import FPackageFileSummary
 from UE4Parse.Assets.Objects.FPackageIndex import FPackageIndex
 from UE4Parse.Assets.Exports.ExportRegistry import Registry
+from UE4Parse.Readers.FAssetReader import FAssetReader
 
 if TYPE_CHECKING:
     from UE4Parse.Provider import DefaultFileProvider
@@ -37,7 +38,6 @@ class EPackageLoadMode(IntEnum):
     Full = 0
     NameMap = 1
     Info = 2
-
 
 
 class Package(ABC):
@@ -76,7 +76,7 @@ class LegacyPackageReader(Package):
     # @profile
     def __init__(self, uasset: BinaryStream, uexp: BinaryStream = None, ubulk: BinaryStream = None,
                  provider: "DefaultFileProvider" = None, load_mode: EPackageLoadMode = EPackageLoadMode.Full) -> None:
-        self.reader = uasset
+        self.reader = FAssetReader(uasset.base_stream, self, size=uasset.size) 
         self.reader.set_ar_version(provider.Versions.UEVersion)
         self.reader.provider = provider
         self.reader.PackageReader = self
@@ -85,7 +85,6 @@ class LegacyPackageReader(Package):
         self.Summary = self.PackageFileSummary
         pos = self.reader.tell()
         self.NameMap = self.SerializeNameMap()
-        self.reader.NameMap = self.NameMap
         if load_mode == EPackageLoadMode.NameMap: return
 
         self.ImportMap = self.SerializeImportMap()
@@ -100,12 +99,14 @@ class LegacyPackageReader(Package):
         self.reader.ubulk_stream = ubulk
 
         if uexp is not None:
-            self.reader.change_stream(uexp)
-        elif self.PackageFileSummary.FileVersionUE4.value == 0:  # Cooked
-            return
-        else:  # not cooked
-            self.reader.seek(pos, 0)
-            self.reader.change_stream(self.reader.read())
+            self.reader = FAssetReader(uexp, uexp.size, uasset.size)
+
+        # what was this for?
+        # elif self.PackageFileSummary.FileVersionUE4.value == 0:  # Cooked
+        #     return
+        # else:  # not cooked
+            # self.reader.seek(pos, 0)
+            # self.reader.change_stream(self.reader.read())
 
         for Export in self.ExportMap:
             if Export.ClassIndex.IsNull:
@@ -118,7 +119,7 @@ class LegacyPackageReader(Package):
                 raise ParserException("failed to get export type")
             Export.type = ExportType
 
-            self.reader.seek(Export.SerialOffset - self.PackageFileSummary.TotalHeaderSize, 0)
+            self.reader.seek_absolute(Export.SerialOffset, 0)
 
             self.reader.bulk_offset = Export.SerialSize + self.PackageFileSummary.TotalHeaderSize  # ?
 
@@ -211,8 +212,8 @@ class IoPackageReader(Package):
     ImportedPackages: Tuple[Optional['IoPackageReader']]
 
     def __init__(self, uasset: BinaryStream, ubulk: BinaryStream, uptnl: BinaryStream, provider: "DefaultFileProvider",
-                load_mode: EPackageLoadMode = EPackageLoadMode.Full):  # TODO remove onlyInfo
-        reader = uasset
+                load_mode: EPackageLoadMode = EPackageLoadMode.Full):
+        reader = FAssetReader(uasset.base_stream, self, size=uasset.size)
         reader.ubulk_stream = ubulk or uptnl
         reader.set_ar_version(provider.Versions.UEVersion)
         reader.PackageReader = self
@@ -222,7 +223,6 @@ class IoPackageReader(Package):
         self.Summary = FPackageSummary(reader=reader)
 
         self.NameMap = ()
-
         nameHashes = []
         if self.Summary.NameMapNamesSize > 0:
             reader.seek(self.Summary.NameMapNamesOffset, 0)

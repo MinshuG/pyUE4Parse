@@ -62,16 +62,13 @@ class PakInfo:
             self.CompressionMethods = ["Zlib", "Gzip", "Oodle", "LZ4"]
         else:
             BufferSize: int = self.COMPRESSION_METHOD_NAME_LEN * 4
-            Methods: bytes = reader.readBytes(BufferSize)
+            buffer: bytes = reader.readBytes(BufferSize)
             MethodList = []
             for i in range(4):
-                if int(Methods[i * self.COMPRESSION_METHOD_NAME_LEN]) != 0:
-                    methods = Methods
+                if int(buffer[i * self.COMPRESSION_METHOD_NAME_LEN]) != 0:
                     byteIndex = i * self.COMPRESSION_METHOD_NAME_LEN
                     byteCount = self.COMPRESSION_METHOD_NAME_LEN
-
-                    decoded = methods[byteIndex:byteCount].decode("utf-8")
-
+                    decoded = buffer[byteIndex:byteCount].decode("utf-8").rstrip('\x00')
                     MethodList.append(decoded)
             self.CompressionMethods = MethodList
 

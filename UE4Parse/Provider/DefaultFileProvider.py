@@ -60,7 +60,7 @@ class DefaultFileProvider(AbstractVfsFileProvider):
                 else:
                     continue
             else:
-                logger.warn(f"{f} is not a file")
+                pass
 
     def get_reader(self, path: str):  # TODO Game file overload
         name = os.path.splitext(path)[0]
