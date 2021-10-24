@@ -4,20 +4,14 @@ from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Provider.Common import GameFile
 
 if TYPE_CHECKING:
+    from UE4Parse.IO import FFileIoStoreReader
     from UE4Parse.IO.IoObjects.FIoChunkId import FIoChunkId
     from UE4Parse.IO.IoObjects.FIoOffsetAndLength import FIoOffsetAndLength
 
 
 class FIoStoreEntry(GameFile):
-    Container = None  # FFileIoStoreReader
+    __slots__ = ("UserData",)
     UserData: int
-    Name: str
-    Size: int = -1
-    CompressionMethodIndex: int
-
-    Encrypted: bool = False
-    ChunkId: 'FIoChunkId'
-    OffsetLength: 'FIoOffsetAndLength'
 
     def CompressionMethodString(self) -> str:
         return "COMPRESS_" + self.Container.TocResource.CompressionMethods[
@@ -45,12 +39,12 @@ class FIoStoreEntry(GameFile):
 
     @property
     def ChunkId(self) -> 'FIoChunkId':
-        return self.Container.TocResource.ChunkIds[self._userdata]
+        return self.Container.TocResource.ChunkIds[self.UserData]
 
     def __init__(self, io_store, userdata: int, name: str):
         super().__init__()
         self.Container = io_store
-        self._userdata = userdata
+        self.UserData = userdata
 
         self.Name = name.lower() if io_store.caseinSensitive else name
 

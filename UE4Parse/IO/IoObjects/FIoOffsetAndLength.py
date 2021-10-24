@@ -2,6 +2,7 @@ from UE4Parse.BinaryReader import BinaryStream
 
 
 class FIoOffsetAndLength(object):
+    __slots__ = ('OffsetAndLength',)
     OffsetAndLength: bytes
 
     # We use 5 bytes for offset and size, this is enough to represent

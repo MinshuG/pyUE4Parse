@@ -76,7 +76,8 @@ class LegacyPackageReader(Package):
     # @profile
     def __init__(self, uasset: BinaryStream, uexp: BinaryStream = None, ubulk: BinaryStream = None,
                  provider: "DefaultFileProvider" = None, load_mode: EPackageLoadMode = EPackageLoadMode.Full) -> None:
-        self.reader = FAssetReader(uasset.base_stream, self, size=uasset.size) 
+        self.reader = FAssetReader(uasset.base_stream, self, size=uasset.size)
+        self.reader.mappings = uasset.mappings
         self.reader.set_ar_version(provider.Versions.UEVersion)
         self.reader.provider = provider
         self.reader.PackageReader = self
@@ -214,6 +215,7 @@ class IoPackageReader(Package):
     def __init__(self, uasset: BinaryStream, ubulk: BinaryStream, uptnl: BinaryStream, provider: "DefaultFileProvider",
                 load_mode: EPackageLoadMode = EPackageLoadMode.Full):
         reader = FAssetReader(uasset.base_stream, self, size=uasset.size)
+        reader.mappings = uasset.mappings
         reader.ubulk_stream = ubulk or uptnl
         reader.set_ar_version(provider.Versions.UEVersion)
         reader.PackageReader = self

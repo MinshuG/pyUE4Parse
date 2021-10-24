@@ -1,5 +1,5 @@
 from functools import singledispatchmethod
-from typing import Union, Optional, List
+from typing import Union, Optional, List, overload
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Versions import VersionContainer
@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 
 class DefaultFileProvider(AbstractVfsFileProvider):
     __path: str
-    mappings: MappingProvider
+    mappings: Optional[MappingProvider]
 
     @singledispatchmethod
     def __init__(self, path: List[str], versions: VersionContainer = VersionContainer.default(),
@@ -71,7 +71,7 @@ class DefaultFileProvider(AbstractVfsFileProvider):
             logger.error(f"Requested Package \"{path}\" not found.")
             return None
         return package.get_data()
-
+    
     @singledispatchmethod
     def try_load_package(self, name: Union[str, FPackageId], load_mode: EPackageLoadMode = EPackageLoadMode.Full) -> Optional[Package]:
         """Load a Package"""
@@ -89,7 +89,7 @@ class DefaultFileProvider(AbstractVfsFileProvider):
         else:
             logger.error(f"Requested Package \"{name}\" not found.")
             return None
-
+    
     @try_load_package.register
     def _(self, package: GameFile, load_mode: EPackageLoadMode = EPackageLoadMode.Full):
         if not package.Name.endswith((".umap", ".uasset")):

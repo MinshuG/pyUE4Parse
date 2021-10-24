@@ -37,6 +37,21 @@ class AbstractVfsFileProvider(ABC):
     def files(self):
         return self._files
 
+    def close(self):
+        for container in self.LoadedContainers:
+            container.close()
+        for container in self.UnloadedContainers:
+            container.close()
+
+    def unload_container(self, container: Union[FFileIoStoreReader, PakReader]):
+        if container in self.LoadedContainers:
+            self.LoadedContainers.remove(container)
+            for d in self.files.Storage:
+                if container.FileName == d.get_container().FileName:
+                    self.files.Storage.remove(d)
+                    break
+            self.UnloadedContainers.append(container)
+
     def register_container(self, name, streams: Tuple[BinaryStream, BinaryStream]):
         """
         Initializes container reader and adds it to `UnloadedContainers`

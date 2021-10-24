@@ -51,13 +51,16 @@ class DirectoryStorage:
         self.process_index(index)
 
     @property
-    def files(self):
+    def files(self) -> Dict[str, 'GameFile']:
         return self._files
 
-    def process_index(self, Index: Dict[str, 'GameFile']):
+    def get_container(self) -> Union['FFileIoStoreReader', 'PakReader']:
+        return self._container
+
+    def process_index(self, index: Dict[str, 'GameFile']):
         self._files: Dict[str, 'GameFile'] = {}
         self._raw_names = {}
-        for entry, IndexEntry in Index.items():
+        for entry, IndexEntry in index.items():
             if entry.endswith((".uexp", ".ubulk", ".uptnl")):
                 continue
 
@@ -66,14 +69,14 @@ class DirectoryStorage:
             ubulk = path_no_ext + ".ubulk"
             uptnl = path_no_ext + ".uptnl"
 
-            if uexp in Index:
-                IndexEntry.uexp = Index[uexp]
+            if uexp in index:
+                IndexEntry.uexp = index[uexp]
 
-            if ubulk in Index:
-                IndexEntry.ubulk = Index[ubulk]
+            if ubulk in index:
+                IndexEntry.ubulk = index[ubulk]
 
-            if uptnl in Index:
-                IndexEntry.uptnl = Index[uptnl]
+            if uptnl in index:
+                IndexEntry.uptnl = index[uptnl]
 
             path = remove_slash(os.path.join(self._container.get_mount_point() , path_no_ext))
             if self.IsCaseInsensitive:
@@ -81,15 +84,10 @@ class DirectoryStorage:
             else:
                 self._files[path] = IndexEntry
 
-            # if not os.path.splitext(IndexEntry.Name)[0] == path:  # hmm
-            #     path_ = path
             if re.search(r"/Plugins/GameFeatures/.*/Content/", path):
                 path_ = convert_path(path)
                 self._raw_names[path_] = path
-            # else:
-            #     path_ = IndexEntry.Name
-            #
-            # self._raw_names[path_] = path
+
 
     def get_full_path(self, path: str) -> Optional[str]:
         return self._raw_names.get(path)

@@ -42,6 +42,9 @@ class PakReader:
     def get_mount_point(self):
         return self.MountPoint
 
+    def close(self):
+        self.reader.close()
+
     # @profile
     def ReadIndex(self, key: Optional[FAESKey] = None):
         self.AesKey = key
@@ -223,7 +226,6 @@ class PakReader:
         entry.UncompressedSize = uncompressedSize
         entry.Offset = offset
         entry.CompressionMethodIndex = compressionMethodIndex
-        entry.Deleted = Deleted
         entry.StructSize = FPakEntry.GetSize(EPakVersion.LATEST, compressionMethodIndex,
                                              len(CompressionBlocks))
         return entry

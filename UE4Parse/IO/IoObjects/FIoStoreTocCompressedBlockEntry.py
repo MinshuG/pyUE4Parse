@@ -8,7 +8,7 @@ SizeShift = 8
 
 
 class FIoStoreTocCompressedBlockEntry:
-    # Data: int
+    __slots__ = ("offset", "size", "uncompressed_size", "compression_method")
 
     # 5 bytes offset, 3 bytes for size / uncompressed size and 1 byte for compression method.
     def __init__(self, reader: BinaryStream):

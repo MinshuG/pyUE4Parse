@@ -33,7 +33,7 @@ class FFileIoStoreReader:
     FileName: str
     Directory: str
     TocResource: FIoStoreTocResource
-    Toc: Dict[str, FIoOffsetAndLength]
+    Toc: Dict[FIoChunkId, FIoOffsetAndLength]
     ContainerFile: FFileIoStoreContainerFile
     ContainerId: FIoContainerId
 
@@ -41,7 +41,6 @@ class FFileIoStoreReader:
     aeskey: FAESKey = None
     caseinSensitive: bool
 
-    # @profile
     def __init__(self, dir_: str, tocStream: BinaryStream, containerStream: BinaryStream, caseinSensitive: bool = True,
                  tocReadOptions: EIoStoreTocReadOptions = EIoStoreTocReadOptions.ReadDirectoryIndex):
         """
@@ -57,6 +56,7 @@ class FFileIoStoreReader:
         self.ContainerFile = FFileIoStoreContainerFile()
         self.ContainerFile.FileHandle = containerStream
         self.TocResource = FIoStoreTocResource(tocStream, tocReadOptions)
+        tocStream.close()
         conUncompressedSize = self.TocResource.Header.TocCompressedBlockEntryCount * self.TocResource.Header.CompressionBlockSize \
             if self.TocResource.Header.TocCompressedBlockEntryCount > 0 else containerStream.size
 
@@ -84,6 +84,9 @@ class FFileIoStoreReader:
 
     def get_mount_point(self):
         return self.ContainerFile.MountPoint
+
+    def close(self):
+        self.ContainerFile.FileHandle.close()
 
     @property
     def IsValidIndex(self):
@@ -193,7 +196,7 @@ class FFileIoStoreReader:
             while file.isValid():
                 name = self.GetFileName(file)
                 path = sub_dir_name + name  # self._directory_index.MountPoint +
-                data = self.GetFileData(file)  # UseData
+                data = self.GetFileData(file)  # UserData
                 entry = FIoStoreEntry(self, data, path)
                 outchunk[entry.ChunkId] = path
                 outfile[path] = entry

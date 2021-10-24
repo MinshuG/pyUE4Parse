@@ -4,6 +4,7 @@ from functools import cached_property
 
 
 class FIoChunkId:
+    __slots__ = ("_Id", "raw", "__dict__")
     _Id: int
     raw: bytearray
 

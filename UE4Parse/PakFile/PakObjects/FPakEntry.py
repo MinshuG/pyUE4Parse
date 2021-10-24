@@ -16,34 +16,22 @@ if TYPE_CHECKING:
 class FPakEntry(GameFile):
     Flags: int = 0
     Flag_Encrypted = 0x01
-    Flag_Deleted = 0x02
-    _Encrypted: bool = None
-    _Deleted = (Flags & Flag_Deleted) != 0
     # above 5 lines are useless ?
 
-    Container: 'PakReader'
-    Name: str = ""
-    Offset: int = 0
-    Size: int = 0
-    UncompressedSize: int = 0
-
+    __slots__ = ("Offset", "Size", "UncompressedSize", "CompressionBlocks",
+                 "CompressionBlockSize", "CompressionMethodIndex", "StructSize", "_Encrypted")
+    _Encrypted: bool
+    Offset: int
+    Size: int
+    UncompressedSize: int
     CompressionBlocks: Tuple[FPakCompressedBlock]
-    CompressionBlockSize: int = 0
+    CompressionBlockSize: int
     CompressionMethodIndex: int
-
     StructSize: int
 
     @property
-    def Deleted(self):
-        return self._Deleted
-
-    @Deleted.setter
-    def Deleted(self, value):
-        self._Deleted = value
-
-    @property
     def Encrypted(self):
-        return (self.Flags & self.Flag_Encrypted) != 0 if self._Encrypted is None else self._Encrypted
+        return (self.Flags & self.Flag_Encrypted) != 0 if not self._Encrypted else self._Encrypted
 
     @Encrypted.setter
     def Encrypted(self, value):
@@ -53,6 +41,7 @@ class FPakEntry(GameFile):
                  pak: 'PakReader' = None):
         if reader is None:
             return
+        self._Encrypted = False
         self.CompressionBlocks = ()
         self.CompressionBlockSize = 0
         self.Flags = 0

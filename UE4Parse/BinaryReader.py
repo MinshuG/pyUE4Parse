@@ -2,7 +2,7 @@ from UE4Parse.Assets.Objects.EPackageFlags import EPackageFlags
 import os
 from io import BufferedReader, BytesIO
 from struct import *
-from typing import BinaryIO, Tuple, TypeVar, Union, TYPE_CHECKING, AnyStr, Optional, Iterable
+from typing import BinaryIO, Tuple, TypeVar, Union, TYPE_CHECKING, AnyStr, Optional, Iterable, Type
 
 from UE4Parse import Logger
 from UE4Parse.Exceptions.Exceptions import ParserException
@@ -44,13 +44,6 @@ class BinaryStream(BinaryIO):
         self.close = self.base_stream.close
         self.tell = self.base_stream.tell
         self.readBytes = self.base_stream.read
-    
-    def copy_info_from(self, other: 'BinaryStream'):
-        self.PackageReader = other.PackageReader
-        self.mappings = other.mappings
-        self.game = other.game
-        self.version = other.version
-        return self
 
     def change_stream(self, fp: Union[BufferedReader, str, bytes, bytearray]):
         if isinstance(fp, str):
@@ -176,22 +169,21 @@ class BinaryStream(BinaryIO):
             byte = self.base_stream.read(length)[:-1]
             return byte.decode("utf-8")
 
-    def readTArray(self, func: T, *args) -> Tuple[T]:
+    def readTArray(self, func: T, *args) -> Tuple[Type[T]]:
         SerializeNum = self.readInt32()
-        A = tuple(func(*args) for _ in range(SerializeNum))
-        return A
+        return tuple(func(*args) for _ in range(SerializeNum))
 
-    def readTArray_W_Arg(self, func: T, *args) -> Tuple[T]:  # argument
+    def readTArray_W_Arg(self, func: T, *args) -> Tuple[Type[T]]:  # argument
         """use readTArray"""
         return self.readTArray(func, *args)
 
     def readBulkTArray(self, func, *args) -> tuple:
-        elementSize = self.readInt32()
-        savePos = self.tell()
+        element_size = self.readInt32()
+        save_pos = self.tell()
         array = self.readTArray(func, *args)
-        if self.tell() != savePos + 4 + len(array) * elementSize:
+        if self.tell() != save_pos + 4 + len(array) * element_size:
             raise ParserException(
-                f"RawArray item size mismatch: expected {elementSize}, serialized {(self.tell() - savePos) / len(array)}")
+                f"RawArray item size mismatch: expected {element_size}, serialized {(self.tell() - save_pos) / len(array)}")
         return array
 
     def readFName(self) -> FName:

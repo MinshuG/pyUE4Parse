@@ -1,7 +1,9 @@
 class FIoDirectoryIndexHandle:
-    _handle: int
     InvalidHandle: int = 4294967295
     Root = 0
+
+    __slots__ = ('_handle',)
+    _handle: int
 
     def __init__(self, handle: int = None):
         if handle is not None:

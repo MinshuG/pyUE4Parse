@@ -2,6 +2,7 @@ from UE4Parse.BinaryReader import BinaryStream
 
 
 class FIoFileIndexEntry:
+    __slots__ = ("Name", "NextFileEntry", "UserData")
     Name: int
     NextFileEntry: int
     UserData: int
