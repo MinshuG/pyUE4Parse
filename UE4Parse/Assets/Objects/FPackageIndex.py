@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING
-
+from functools import singledispatchmethod
 from UE4Parse.Assets.Objects.FName import FName
 
 if TYPE_CHECKING:
-    from UE4Parse.BinaryReader import BinaryStream
+    from UE4Parse.Readers.FAssetReader import FAssetReader
 
 
 def do_formatting(obj, index):
@@ -32,21 +32,26 @@ def do_formatting(obj, index):
 
 class FPackageIndex:
     Index: int
-    reader: 'BinaryStream'
+    reader: 'FAssetReader'
     IsNull: bool
     IsImport: bool
     IsExport: bool
     AsImport: int
     AsExport: int
 
-    def __init__(self, reader: "BinaryStream") -> None:
+    @singledispatchmethod
+    def __init__(self, reader: "FAssetReader") -> None:
         self.Index = reader.readInt32()
-        self.Reader = reader
+        self.reader = reader
         self.IsNull = self.Index == 0
         self.IsImport = self.Index < 0
         self.IsExport = self.Index > 0
         self.AsImport = -self.Index - 1
         self.AsExport = self.Index - 1
+
+    @__init__.register
+    def _(self, v: int):
+        self.Index = v
 
     @property
     def Name(self) -> FName:  # TODO: Fix this
@@ -57,7 +62,7 @@ class FPackageIndex:
 
     @property
     def Resource(self):
-        PackageReader = self.Reader.PackageReader
+        PackageReader = self.reader.PackageReader
         if not self.IsNull:  # hmm
             if self.IsImport and self.AsImport < len(PackageReader.ImportMap):
                 return PackageReader.ImportMap[self.AsImport]
@@ -73,14 +78,14 @@ class FPackageIndex:
 
         if isinstance(Resource, FPackageObjectIndex):
             from UE4Parse.IoObjects.IoUtils import resolveObjectIndex
-            resolved = resolveObjectIndex(self.Reader.PackageReader, self.Reader.PackageReader.Provider.GlobalData,
+            resolved = resolveObjectIndex(self.reader.PackageReader, self.reader.PackageReader.Provider.GlobalData,
                                           Resource)
             if resolved is None: return None
             # list_ = resolved.ListResolve()
             return do_formatting(resolved, self.Index)
         elif isinstance(Resource, FExportMapEntry):
             from UE4Parse.IoObjects.IoUtils import ResolveExportObject
-            resolved = ResolveExportObject(self.Reader.PackageReader, Resource)
+            resolved = ResolveExportObject(self.reader.PackageReader, Resource)
             # list_ = resolved.ListResolve()
             return do_formatting(resolved, self.Index)
 

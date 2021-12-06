@@ -5,11 +5,11 @@ from UE4Parse.IoObjects.FUnversionedHeader import FUnversionedHeader
 from typing import Optional
 
 from UE4Parse import Logger
-from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Objects.FGuid import FGuid
 from UE4Parse.Assets.Objects.FPropertyTag import FPropertyTag
 from UE4Parse.Assets.PropertyTagData import BaseProperty
 from UE4Parse.Assets.PropertyTagData.BaseProperty import ReadType, ZERORead
+from UE4Parse.Readers.FAssetReader import FAssetReader
 
 logger = Logger.get_logger(__name__)
 
@@ -20,10 +20,10 @@ class UObject:
     type: str
     flag: int
 
-    def __init__(self, reader: BinaryStream, structFallback: bool = False) -> None:
+    def __init__(self, reader: FAssetReader, structFallback: bool = False) -> None:
         # self.Tags = []
         self.Dict: dict = {}
-        self.reader: BinaryStream = reader
+        self.reader: FAssetReader = reader
         self.structFallback = structFallback
         self.position = self.reader.base_stream.tell()
         self.ObjectGuid = None

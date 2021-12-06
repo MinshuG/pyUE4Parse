@@ -106,6 +106,12 @@ class BinaryStream(BinaryIO):
         return val != 0
         # return self.unpack('?')
 
+    def readFlag(self) -> bool:
+        val = self.readUInt8()
+        if val not in [0, 1]:
+            raise ParserException("Invalid boolean value")
+        return val != 0
+
     def readSByte(self) -> int:
         return self.unpack("b", 1)
 
@@ -172,6 +178,9 @@ class BinaryStream(BinaryIO):
     def readTArray(self, func: T, *args) -> Tuple[Type[T]]:
         SerializeNum = self.readInt32()
         return tuple(func(*args) for _ in range(SerializeNum))
+
+    def readTArray2(self, func: T, size: int, *args) -> Tuple[Type[T]]:
+        return tuple(func(*args) for _ in range(size))
 
     def readTArray_W_Arg(self, func: T, *args) -> Tuple[Type[T]]:  # argument
         """use readTArray"""
