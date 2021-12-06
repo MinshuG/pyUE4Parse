@@ -1,4 +1,4 @@
-from enum import IntEnum
+from enum import IntEnum, auto
 
 
 class Versions(IntEnum):
@@ -94,6 +94,8 @@ class Versions(IntEnum):
 def GAME_UE4(x: int):
     return 0x1000000 + (x << 4)
 
+def GAME_UE5(x: int):  # can be better?
+    return 0x2000000 + (x << 4)
 
 class EUEVersion(IntEnum):
     GAME_UE4_0 = GAME_UE4(0)
@@ -125,9 +127,12 @@ class EUEVersion(IntEnum):
     GAME_UE4_26 = GAME_UE4(26)
     GAME_UE4_27 = GAME_UE4(27)
 
-    LATEST = GAME_UE4_26
+    GAME_UE5_0 = GAME_UE5(0)
+
+    LATEST = GAME_UE5_0
 
     GAME_UE4_BASE = 0x1000000
+    GAME_UE5_BASE = 0x2000000
 
     GAME_VALORANT = GAME_UE4_24 + 1
 
@@ -135,7 +140,10 @@ class EUEVersion(IntEnum):
         minor = ((self.value - self.GAME_UE4_BASE.value) >> 4)
         return minor
 
-    def get_ar_ver(self):
+    def get_ar_ver(self):  #TODO: deal with this
+        if self.value >= self.GAME_UE5_0:
+            return 1002
+
         ue_version = [Versions.VER_UE4_0, Versions.VER_UE4_1, Versions.VER_UE4_2, Versions.VER_UE4_3,
                       Versions.VER_UE4_4,
                       Versions.VER_UE4_5, Versions.VER_UE4_6, Versions.VER_UE4_7, Versions.VER_UE4_8,

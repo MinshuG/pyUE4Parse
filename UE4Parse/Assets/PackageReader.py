@@ -177,7 +177,7 @@ class LegacyPackageReader(Package):
             if export_name == export.name.string:
                 return export.exportObject
         return None
-    
+
     @singledispatchmethod
     def find_export_of_type(self, export_type: str) -> Optional[UObject]:
         for export in self.ExportMap:
@@ -232,9 +232,10 @@ class IoPackageReader(Package):
 
             reader.seek(self.Summary.NameMapHashesOffset, 0)
             nameHashReader = BinaryStream(reader.readBytes(self.Summary.NameMapHashesSize))
+            hashCount = int(nameHashReader.size / 8 - 1)
 
             name_map = []
-            FNameEntrySerialized.LoadNameBatch(name_map, nameHashes, nameMapReader, nameHashReader)
+            FNameEntrySerialized.LoadNameBatch(name_map, nameMapReader, hashCount)
             self.NameMap = tuple(name_map)
             del nameHashReader
             del nameMapReader

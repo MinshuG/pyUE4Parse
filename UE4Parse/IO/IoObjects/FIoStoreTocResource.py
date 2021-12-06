@@ -28,27 +28,46 @@ class FIoStoreTocResource:
     ChunkBlockSignatures: Tuple[FSHAHash]
     DirectoryIndexBuffer: bytes = b""
     ChunkMetas: Tuple[FIoStoreTocEntryMeta]
+    ChunkPerfectHashSeeds: Tuple[int]
+    ChunkIndicesWithoutPerfectHash: Tuple[int]
 
     def __init__(self, tocStream: BinaryStream, readOptions: EIoStoreTocReadOptions = EIoStoreTocReadOptions.Default):
         reader = tocStream
         self.Header = FIoStoreTocHeader(reader)
         reader.seek(self.Header.TocHeaderSize, 0)
-
+        if self.Header.Version < EIoStoreTocVersion.PartitionSize:
+            self.Header.PartitionCount = 1
+            self.Header.PartitionSize = 878787
         # total_toc_size = reader.size - self.Header.TocHeaderSize
-        # toc_meta_size = self.Header.TocEntryCount * FIoStoreTocEntryMeta.SIZE
+        # toc_meta_size = self.Header.ToryCount * FIoStoreTocEntryMeta.SIZE
         # default_toc_size = total_toc_size - self.Header.DirectoryIndexSize - toc_meta_size
-        # toc_size = default_toc_size
+        # toc_size = default_toc_sizecEnt
         # if readOptions.value == EIoStoreTocReadOptions.ReadTocMeta.value:
         #     toc_size = total_toc_size
         # elif readOptions.value == EIoStoreTocReadOptions.ReadDirectoryIndex.value:
         #     toc_size = default_toc_size + self.Header.DirectoryIndexSize
 
         self.ChunkIds = tuple(FIoChunkId(reader) for x in range(self.Header.TocEntryCount))
-        
+
         self.ChunkOffsetLengths = tuple([FIoOffsetAndLength(reader) for x in range(self.Header.TocEntryCount)])
 
-        self.CompressionBlocks = tuple(FIoStoreTocCompressedBlockEntry(reader) for x in range(self.Header.TocCompressedBlockEntryCount))  # can this be optimized more?
+        # Chunk perfect hash map
+        perfect_hash_seeds_count = 0
+        chunks_without_perfect_hash_count = 0
+        if self.Header.Version >= EIoStoreTocVersion.PerfectHashWithOverflow:
+            perfect_hash_seeds_count = self.Header.TocChunkPerfectHashSeedsCount
+            chunks_without_perfect_hash_count = self.Header.TocChunksWithoutPerfectHashCount
+        elif self.Header.Version >= EIoStoreTocVersion.PerfectHash:
+            perfect_hash_seeds_count = self.Header.TocChunkPerfectHashSeedsCount
 
+        if perfect_hash_seeds_count > 0:
+            self.ChunkPerfectHashSeeds = tuple(reader.readInt32() for x in range(
+                perfect_hash_seeds_count))
+        if chunks_without_perfect_hash_count > 0:
+            self.ChunkIndicesWithoutPerfectHash = tuple(reader.readInt32() for x in range(
+                chunks_without_perfect_hash_count))
+
+        self.CompressionBlocks = reader.readTArray2(FIoStoreTocCompressedBlockEntry, self.Header.TocCompressedBlockEntryCount, reader)
         self.CompressionMethods = tuple(reader.readBytes(self.Header.CompressionMethodNameLength).rstrip(b'\x00').decode("utf-8") for x in range(self.Header.CompressionMethodNameCount))
 
         self.ChunkBlockSignatures = ()

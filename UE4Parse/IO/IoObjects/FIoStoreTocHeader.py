@@ -1,6 +1,6 @@
-from enum import IntEnum, auto
+from enum import auto, IntEnum
 
-from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.BinaryReader import BinaryStream, Align
 from UE4Parse.Exceptions import Exceptions
 from UE4Parse.IO.IoObjects.FFileIoStoreContainerFile import EIoContainerFlags
 from UE4Parse.Assets.Objects.FGuid import FGuid
@@ -11,6 +11,9 @@ class EIoStoreTocVersion(IntEnum):
     Initial = auto()
     DirectoryIndex = auto()
     PartitionSize = auto()
+    PerfectHash = auto()
+    PerfectHashWithOverflow = auto()
+
     LatestPlusOne = auto()
     Latest = LatestPlusOne - 1
 
@@ -69,8 +72,13 @@ class FIoStoreTocHeader:
         except: pass
         self.Reserved3 = reader.readByteToInt()
         self.Reserved4 = reader.readUInt16()
-        self.Reserved5 = reader.readUInt32()
+        self.TocChunkPerfectHashSeedsCount = reader.readUInt32()
         self.PartitionSize = reader.readUInt64()
+        self.TocChunksWithoutPerfectHashCount = reader.readUInt32()
+        _reserved7 = reader.readUInt32()
+        _reserved8 = [reader.readUInt64(), reader.readUInt64(), reader.readUInt64(),
+                      reader.readUInt64(), reader.readUInt64()]
+        # reader.seek(Align(reader.position, 4))
 
     def is_encrypted(self) -> bool:
         return self.ContainerFlags & (1 << 1) != 0
