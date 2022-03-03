@@ -68,10 +68,9 @@ class AbstractVfsFileProvider(ABC):
             logger.debug(f"Registering IoStore: {name[:-5]}")
             try:
                 reader = FFileIoStoreReader(name, streams[0],
-                                            streams[1], self.IsCaseInsensitive)
+                                            streams[1], self.Versions.UEVersion, self.IsCaseInsensitive)
                 if name == "global.utoc":
-                    self.GlobalData = FIoGlobalData(reader)
-
+                    self.GlobalData = FIoGlobalData(reader, self.Versions.UEVersion)
                 self.UnloadedContainers.append(reader)
             except Exception as e:
                 logger.error(f"Error reading {name}: {e}")

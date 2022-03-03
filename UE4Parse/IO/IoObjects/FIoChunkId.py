@@ -1,3 +1,5 @@
+from enum import IntEnum
+
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.IoObjects.EIoChunkType import EIoChunkType
 from functools import cached_property
@@ -17,7 +19,7 @@ class FIoChunkId:
     def ChunkId(self) -> int:
         return int.from_bytes(bytearray(self.raw)[:8], "little", signed=False)
 
-    def construct(self, chunkId: int, chunkIndex: int, ioChunkType: EIoChunkType):  # ??
+    def construct(self, chunkId: int, chunkIndex: int, ioChunkType: IntEnum):
         buffer = bytearray()
         for x in chunkId.to_bytes(8, "little", signed=False):
             buffer.append(x)

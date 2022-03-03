@@ -11,6 +11,7 @@ from UE4Parse.Exceptions.Exceptions import InvalidEncryptionKey
 from UE4Parse.IO.IoObjects.EIoStoreTocReadOptions import EIoStoreTocReadOptions
 from UE4Parse.IO.IoObjects.FFileIoStoreContainerFile import FFileIoStoreContainerFile
 from UE4Parse.IO.IoObjects.FIoChunkId import FIoChunkId
+from UE4Parse.IO.IoObjects.FIoContainerHeader import FIoContainerHeader
 from UE4Parse.IO.IoObjects.FIoDirectoryIndexHandle import FIoDirectoryIndexHandle
 from UE4Parse.IO.IoObjects.FIoDirectoryIndexResource import FIoDirectoryIndexResource
 from UE4Parse.IO.IoObjects.FIoOffsetAndLength import FIoOffsetAndLength
@@ -18,7 +19,8 @@ from UE4Parse.IO.IoObjects.FIoStoreEntry import FIoStoreEntry
 from UE4Parse.IO.IoObjects.FIoStoreTocHeader import FIoContainerId
 from UE4Parse.IO.IoObjects.FIoStoreTocResource import FIoStoreTocResource
 from UE4Parse.Assets.Objects.Decompress import Decompress
-
+from UE4Parse.IoObjects.EIoChunkType import EIoChunkType5
+from UE4Parse.Versions import EUEVersion
 
 CrytoAval = True
 try:
@@ -36,12 +38,14 @@ class FFileIoStoreReader:
     Toc: Dict[FIoChunkId, FIoOffsetAndLength]
     ContainerFile: FFileIoStoreContainerFile
     ContainerId: FIoContainerId
+    ContainerHeader: Optional[FIoContainerHeader]
 
     _directory_index: FIoDirectoryIndexResource
     aeskey: FAESKey = None
     caseinSensitive: bool
+    _ue_version: EUEVersion
 
-    def __init__(self, dir_: str, tocStream: BinaryStream, containerStream: BinaryStream, caseinSensitive: bool = True,
+    def __init__(self, dir_: str, tocStream: BinaryStream, containerStream: BinaryStream, ue_version: EUEVersion, caseinSensitive: bool = True,
                  tocReadOptions: EIoStoreTocReadOptions = EIoStoreTocReadOptions.ReadDirectoryIndex):
         """
         :param dir_:
@@ -57,15 +61,15 @@ class FFileIoStoreReader:
         self.ContainerFile.FileHandle = containerStream
         self.TocResource = FIoStoreTocResource(tocStream, tocReadOptions)
         tocStream.close()
+        self._ue_version = ue_version
         conUncompressedSize = self.TocResource.Header.TocCompressedBlockEntryCount * self.TocResource.Header.CompressionBlockSize \
             if self.TocResource.Header.TocCompressedBlockEntryCount > 0 else containerStream.size
 
         self.Toc = {}
         for i in range(self.TocResource.Header.TocEntryCount):
             chunkOffsetLength = self.TocResource.ChunkOffsetLengths[i]
-            a = chunkOffsetLength.GetOffset + chunkOffsetLength.GetLength > conUncompressedSize
-            if a:
-                raise Exception("TocEntry out of container bounds")
+            if chunkOffsetLength.GetOffset + chunkOffsetLength.GetLength > conUncompressedSize:
+                raise IndexError("TocEntry out of container bounds")
             self.Toc[self.TocResource.ChunkIds[i]] = chunkOffsetLength
 
         self.ContainerFile.CompressionMethods = self.TocResource.CompressionMethods
@@ -78,6 +82,10 @@ class FFileIoStoreReader:
 
         self._directoryIndexBuffer = self.TocResource.DirectoryIndexBuffer  # TODO no
         # del self.TocResource.ChunkIds
+        if self.HasDirectoryIndex:
+            self.ContainerHeader = self.ReadContainerHeader()
+        else:
+            self.ContainerHeader = None
 
     def get_encryption_key_guid(self) -> FGuid:
         return self.TocResource.Header.EncryptionKeyGuid
@@ -100,7 +108,13 @@ class FFileIoStoreReader:
     def IsEncrypted(self):
         return self.TocResource.Header.is_encrypted()
 
-    # @profile
+    def ReadContainerHeader(self):
+        if self._ue_version >= EUEVersion.GAME_UE5_0:
+            headerChunkId = FIoChunkId().construct(self.TocResource.Header.ContainerId.Id, 0,
+                                                   EIoChunkType5.ContainerHeader)
+            reader = self.Read(headerChunkId)
+            return FIoContainerHeader(reader, self._ue_version)
+
     def ReadDirectoryIndex(self, key: Optional[FAESKey] = None):
         self.aeskey = key
         starttime = time.time()
@@ -117,17 +131,17 @@ class FFileIoStoreReader:
                 IndexReader = BinaryStream(io.BytesIO(self.aeskey.decrypt(self._directoryIndexBuffer)),
                                            len(self._directoryIndexBuffer))
 
-                stringLen = IndexReader.readInt32()
-                if stringLen > 512 or stringLen < -512:
-                    raise ValueError(f"Provided key didn't work with {self.FileName}")
-                if stringLen < 0:
-                    IndexReader.base_stream.seek((stringLen - 1) * 2, 1)
+                string_len = IndexReader.readInt32()
+                if string_len > 512 or string_len < -512:
+                    raise InvalidEncryptionKey(f"Provided key didn't work with {self.FileName}")
+                if string_len < 0:
+                    IndexReader.base_stream.seek((string_len - 1) * 2, 1)
                     if IndexReader.readUInt16() != 0:
-                        raise ValueError(f"Provided key didn't work with {self.FileName}")
+                        raise InvalidEncryptionKey(f"Provided key didn't work with {self.FileName}")
                 else:
-                    IndexReader.base_stream.seek(stringLen - 1, 1)
+                    IndexReader.base_stream.seek(string_len - 1, 1)
                     if int.from_bytes(IndexReader.readByte(), "little") != 0:
-                        raise ValueError(f"Provided key didn't work with {self.FileName}")
+                        raise InvalidEncryptionKey(f"Provided key didn't work with {self.FileName}")
                 IndexReader.seek(0, 0)
             del self.TocResource.DirectoryIndexBuffer
             del self._directoryIndexBuffer
@@ -208,7 +222,7 @@ class FFileIoStoreReader:
             dir = self.GetNextDirectory(dir)
 
         return outfile, outchunk
- 
+
     def Read(self, chunkid: FIoChunkId) -> BinaryStream:
         offsetAndLength: FIoOffsetAndLength = self.Toc[chunkid]
         compressionBlockSize = self.TocResource.Header.CompressionBlockSize
@@ -231,6 +245,8 @@ class FFileIoStoreReader:
             compressedBuffer: bytes = containerStream.readBytes(rawSize)
 
             if self.TocResource.Header.is_encrypted():
+                if self.aeskey is None:
+                    raise InvalidEncryptionKey(f"AES key was not provided for {self.FileName}({self.get_encryption_key_guid()})")
                 compressedBuffer = self.aeskey.decrypt(compressedBuffer)
 
             src: bytes

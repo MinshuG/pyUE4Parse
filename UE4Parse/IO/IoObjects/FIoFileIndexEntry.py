@@ -8,6 +8,7 @@ class FIoFileIndexEntry:
     UserData: int
 
     def __init__(self, reader: BinaryStream):
-        self.Name = reader.readUInt32()
-        self.NextFileEntry = reader.readUInt32()
-        self.UserData = reader.readUInt32()
+        self.Name,self.NextFileEntry, self.UserData = reader.unpack2('3I', 4 * 3)
+        # self.Name = reader.readUInt32()
+        # self.NextFileEntry = reader.readUInt32()
+        # self.UserData = reader.readUInt32()

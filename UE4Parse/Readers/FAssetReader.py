@@ -2,6 +2,7 @@ from UE4Parse.Exceptions.Exceptions import ParserException
 from UE4Parse.Assets.Objects.EPackageFlags import EPackageFlags
 from typing import TYPE_CHECKING, BinaryIO, List, Union
 from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.Versions import EUEVersion
 
 if TYPE_CHECKING:
     from UE4Parse.Assets.Objects.FNameEntrySerialized import FNameEntrySerialized
@@ -13,7 +14,7 @@ if TYPE_CHECKING:
 class FAssetReader(BinaryStream):
     provider: 'DefaultFileProvider'
     NameMap: List['FNameEntrySerialized']
-    PackageReader: Union['Package']
+    PackageReader: 'Package'
     absolute_offset: int
 
     def __init__(self, fp: Union[BinaryIO, str, bytes], owner: 'Package', size: int = -1, absolute_offset: int = 0, ):
@@ -24,7 +25,7 @@ class FAssetReader(BinaryStream):
     @property
     def absolute_position(self) -> int:
         return self.position + self.absolute_offset
-    
+
     @property
     def NameMap(self):
         return self.PackageReader.NameMap
@@ -39,7 +40,7 @@ class FAssetReader(BinaryStream):
     def seek_absolute(self, offset: int, whence: int = 0):
         return self.seek(offset - self.absolute_offset, whence)
 
-    def set_ar_version(self, ueversion):
+    def set_ar_version(self, ueversion: EUEVersion):
         self.game = ueversion
         self.version = self.game.get_ar_ver()
 

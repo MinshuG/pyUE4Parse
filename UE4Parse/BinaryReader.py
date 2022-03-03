@@ -21,6 +21,7 @@ logging = Logger.get_logger(__name__)
 T = TypeVar("T")
 
 
+# noinspection PyTypeChecker
 class BinaryStream(BinaryIO):
     version: int
     game: EUEVersion = None
@@ -275,6 +276,13 @@ class BinaryStream(BinaryIO):
     def unpack(self, fmt, length=1):
         return unpack(fmt, self.base_stream.read(length))[0]
 
+    def unpack2(self, fmt, length=1):
+        return unpack(fmt, self.base_stream.read(length))
+
+    def dump_bytes(self, length):
+        pos = self.tell()
+        print(self.base_stream.read(length))
+        self.seek(pos, 0)
 
 def Align(val: int, alignment: int):
     return val + alignment - 1 & ~(alignment - 1)

@@ -1,0 +1,15 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+Cython = "~=3.0a5"
+Pillow = "*"
+pyusmap = "*"
+pycryptodome = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"

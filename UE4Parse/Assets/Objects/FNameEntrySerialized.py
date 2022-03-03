@@ -35,6 +35,7 @@ class FNameEntrySerialized:
     @staticmethod
     def LoadNameBatch2(outNames: list, namereader: 'BinaryStream'):
         num = namereader.readInt32()
+        if num == 0: return
 
         namereader.readUInt32()  # numStringBytes
         namereader.readUInt64()  # hashVersion

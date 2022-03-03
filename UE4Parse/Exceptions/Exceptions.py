@@ -4,7 +4,6 @@ class UnknownPixelFormatException(Exception):
 class InvalidMagic(Exception):
     pass
 
-
 class InvalidEncryptionKey(Exception):
     pass
 

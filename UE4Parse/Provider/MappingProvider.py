@@ -27,7 +27,7 @@ class MappingProvider:
     __mappings: Usmap
 
     def __init__(self, fp=None) -> None:
-        if fp == None:
+        if fp is None:
             if self._check_mappings():
                 filepath = self._find_latest_Mappings()
                 with open(filepath, "rb") as f:

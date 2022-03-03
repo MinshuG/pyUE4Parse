@@ -1,7 +1,7 @@
-from enum import IntEnum
+from enum import IntFlag
 
 
-class EPackageFlags(IntEnum):
+class EPackageFlags(IntFlag):
     PKG_None						= 0x00000000  # No flags
     PKG_NewlyCreated				= 0x00000001  # Newly created package, not saved yet. In editor only.
     PKG_ClientOptional				= 0x00000002  # Purely optional for clients.

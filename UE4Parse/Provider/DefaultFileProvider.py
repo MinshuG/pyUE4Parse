@@ -24,7 +24,7 @@ class DefaultFileProvider(AbstractVfsFileProvider):
     mappings: Optional[MappingProvider]
 
     @singledispatchmethod
-    def __init__(self, path: List[str], versions: VersionContainer = VersionContainer.default(),
+    def __init__(self, path: Union[List[str], str], versions: VersionContainer = VersionContainer.default(),
                  isCaseInsensitive: bool = False) -> None:
         self.__path = path
         super().__init__(versions, isCaseInsensitive=isCaseInsensitive)
@@ -71,7 +71,7 @@ class DefaultFileProvider(AbstractVfsFileProvider):
             logger.error(f"Requested Package \"{path}\" not found.")
             return None
         return package.get_data()
-    
+
     @singledispatchmethod
     def try_load_package(self, name: Union[str, FPackageId], load_mode: EPackageLoadMode = EPackageLoadMode.Full) -> Optional[Package]:
         """Load a Package"""
@@ -89,7 +89,7 @@ class DefaultFileProvider(AbstractVfsFileProvider):
         else:
             logger.error(f"Requested Package \"{name}\" not found.")
             return None
-    
+
     @try_load_package.register
     def _(self, package: GameFile, load_mode: EPackageLoadMode = EPackageLoadMode.Full):
         if not package.Name.endswith((".umap", ".uasset")):
@@ -109,7 +109,7 @@ class DefaultFileProvider(AbstractVfsFileProvider):
                 ubulk = ubulk.get_data()
             if uptnl:
                 uptnl = uptnl.get_data()
-            return IoPackageReader(uasset, ubulk, uptnl, self, load_mode)
+            return IoPackageReader(uasset, ubulk, uptnl, self, load_mode, package.Container.ContainerHeader, package)
         else:  # PakPackage
             uasset = package.get_data()
             uasset.mappings = self.mappings
