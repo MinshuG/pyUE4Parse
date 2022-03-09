@@ -1,3 +1,4 @@
+from UE4Parse.Readers.FAssetReader import FAssetReader
 from UE4Parse.Versions.EUEVersion import EUEVersion, Versions
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Objects.FByteBulkData import FByteBulkData
@@ -10,8 +11,8 @@ class FTexture2DMipMap:
     SizeZ: int
     BulkData: FByteBulkData
 
-    def __init__(self, reader: BinaryStream, ubulk: BinaryStream, bulkOffset: int) -> None:
-        self.bCooked = reader.version >= Versions.VER_UE4_TEXTURE_SOURCE_ART_REFACTOR and reader.readBool()
+    def __init__(self, reader: FAssetReader, ubulk: BinaryStream, bulkOffset: int) -> None:
+        self.bCooked = reader.readBool() if reader.version >= Versions.VER_UE4_TEXTURE_SOURCE_ART_REFACTOR and reader.game < EUEVersion.GAME_UE5_0 else reader.is_filter_editor_only
 
         self.BulkData = FByteBulkData(reader, ubulk, bulkOffset)
         self.SizeX = reader.readInt32()

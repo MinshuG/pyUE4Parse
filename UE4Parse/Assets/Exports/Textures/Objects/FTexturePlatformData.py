@@ -2,7 +2,8 @@ from typing import Tuple
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Objects.EPixelFormat import EPixelFormat
-from UE4Parse.Versions.EUEVersion import GAME_UE4
+from UE4Parse.Readers.FAssetReader import FAssetReader
+from UE4Parse.Versions.EUEVersion import GAME_UE4, EUEVersion
 from UE4Parse.Assets.Exports.Textures.Objects.FTexture2DMipMap import FTexture2DMipMap
 
 
@@ -16,10 +17,13 @@ class FTexturePlatformData:
     bIsVirtual = False
     FirstMipToSerialize: int
 
-    def __init__(self, reader: BinaryStream, ubulk: BinaryStream, ubulkOffset: int):
+    def __init__(self, reader: FAssetReader, ubulk: BinaryStream, ubulkOffset: int):
         self.deserialize(reader, ubulk, ubulkOffset)
 
-    def deserialize(self, reader: BinaryStream, ubulk: BinaryStream, ubulkOffset: int):
+    def deserialize(self, reader: FAssetReader, ubulk: BinaryStream, ubulkOffset: int):
+        if reader.game >= EUEVersion.GAME_UE5_0 and reader.is_filter_editor_only:
+            reader.seek(16) # PlaceholderDerivedDataSize
+
         self.SizeX = reader.readInt32()
         self.SizeY = reader.readInt32()
         self.NumSlices = reader.readInt32()  # 1 for normal textures

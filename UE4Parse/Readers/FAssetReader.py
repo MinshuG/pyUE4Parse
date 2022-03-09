@@ -37,6 +37,10 @@ class FAssetReader(BinaryStream):
     def has_unversioned_properties(self):
         return bool(self.PackageReader.get_summary().PackageFlags & EPackageFlags.PKG_UnversionedProperties)
 
+    @property
+    def is_filter_editor_only(self):
+        return bool(self.PackageReader.get_summary().PackageFlags & EPackageFlags.PKG_FilterEditorOnly)
+
     def seek_absolute(self, offset: int, whence: int = 0):
         return self.seek(offset - self.absolute_offset, whence)
 

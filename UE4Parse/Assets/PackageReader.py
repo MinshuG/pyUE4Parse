@@ -270,6 +270,8 @@ class IoPackageReader(Package):
 
             self.ExportBundle = FExportBundle.from_data(export_bundle_headers, export_bundle_entries)
 
+            if load_mode == EPackageLoadMode.Info: return
+
             self.ImportedPackages = tuple(
                 provider.try_load_package(iD, EPackageLoadMode.Info) for iD in store_entry.ImportedPackages)
 

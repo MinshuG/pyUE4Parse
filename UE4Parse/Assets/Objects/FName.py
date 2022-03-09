@@ -26,6 +26,8 @@ class FName:
     def __str__(self):
         return self.string
 
+    def __repr__(self) -> str:
+        return f"FName({self._String}, {self.Index}, {self.Number})"
 
 class DummyFName:
     Index: int

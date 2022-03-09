@@ -202,7 +202,7 @@ class BinaryStream(BinaryIO):
         Number = self.readInt32()
 
         if not 0 <= NameIndex < len(NameMap):
-            logging.debug(f"Bad Name Index: {NameIndex}/{len(NameMap)} - Reader Position: {self.base_stream.tell()}")
+            raise IndexError(f"Bad Name Index: {NameIndex}/{len(NameMap)} - Reader Position: {self.base_stream.tell()}")
             return FName("None")
 
         return FName(NameMap[NameIndex], NameIndex, Number)
