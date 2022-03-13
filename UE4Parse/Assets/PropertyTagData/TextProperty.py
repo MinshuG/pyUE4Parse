@@ -6,9 +6,12 @@ class TextProperty:
     position: int
     Value = None
 
-    def __init__(self, reader: BinaryStream) -> None:
+    def __init__(self, reader: BinaryStream, readType) -> None:
         self.position = reader.base_stream.tell()
-        self.Value = FText(reader)
+        if readType.value == 3:
+            self.Value = FText.default()
+        else:
+            self.Value = FText(reader)
 
     def GetValue(self):
         return self.Value.GetValue()

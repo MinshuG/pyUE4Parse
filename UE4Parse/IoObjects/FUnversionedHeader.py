@@ -8,7 +8,7 @@ class bitarray:
     def __init__(self, size) -> None:
         if isinstance(size, list):
             self.__bools = size
-        elif isinstance(size, bytes):
+        elif isinstance(size, str):
             self.__bools = []
             for x in size:
                 self.__bools.append(bool(x))
@@ -109,15 +109,16 @@ class FUnversionedHeader:
 
     def LoadZeroMaskData(self, reader: BinaryStream, numBits: int) -> bitarray:
         if numBits <= 8:
-            bits = reader.readByte()
-            data = bitarray(bits)
+            bits = '{:08b}'.format(ord(reader.readByte()))[::-1]
+            print(bits)
+            data = bitarray(bits)            
         elif numBits <= 16:
-            bits = reader.readBytes(2)
+            bits =  '{:08b}'.format(ord(reader.readBytes(2)))[::-1]
             data = bitarray(bits)
         else:
             num = divide_round_up(numBits, 32)
-            bits = b"".join(reader.readByte() for _ in range(num))
-            data = bitarray(bits)
+            rawdata = b"".join(reader.readByte() for _ in range(num))
+            data = bitarray('{:08b}'.format(ord(rawdata))[::-1])
         trimed = data.trim(0, numBits)
         return trimed
 

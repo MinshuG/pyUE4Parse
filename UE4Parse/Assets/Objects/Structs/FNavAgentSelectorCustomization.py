@@ -7,3 +7,6 @@ class FNavAgentSelectorCustomization:
 
     def __init__(self, reader: BinaryStream):
         self.SupportedDesc = FText(reader)
+
+    def GetValue(self):
+        return self.SupportedDesc.GetValue()

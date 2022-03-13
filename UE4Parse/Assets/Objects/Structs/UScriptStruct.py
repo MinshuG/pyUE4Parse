@@ -29,11 +29,18 @@ def FallBackReader(reader: BinaryStream, structName=None):
     fallbackobj.deserialize(0)
     return fallbackobj
 
+class ZeroStruct: # TODO
+    def GetValue(self):
+        return "None"
 
 class UScriptStruct:
     Struct: object
 
-    def __init__(self, reader: BinaryStream, StructName) -> None:
+    def __init__(self, reader: BinaryStream, StructName, readType) -> None:
+        if readType.value == 3:
+            self.Struct = ZeroStruct()
+            return
+
         self.read(reader, StructName)
 
     def read(self, reader: BinaryStream, StructName):

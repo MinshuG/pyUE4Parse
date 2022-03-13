@@ -38,15 +38,6 @@ class ReadType(IntEnum):
     ARRAY = auto()
     ZERO = auto()
 
-
-class ZERORead:  # TODO
-    def __init__(self):
-        pass
-
-    def GetValue(self):
-        return None
-
-
 def switch(toCompare, CompareTo):
     return toCompare == CompareTo
 
@@ -54,40 +45,37 @@ def switch(toCompare, CompareTo):
 def ReadAsObject(reader, tag: FPropertyTag = None, type_: FName = None, readType: ReadType = None):
     type_ = type_.string if isinstance(type_, FName) else type_
 
-    if type_ != "EnumProperty" and readType == ReadType.ZERO:
-        return ZERORead()
-
     prop: object
     if switch("ByteProperty", type_):
         if enum := getattr(tag, "EnumName", None):
             if not enum.isNone:
                 prop = EnumProperty(reader, tag, readType)
             else:
-                prop = ByteProperty(reader,  readType,tag)
+                prop = ByteProperty(reader,  readType, tag)
         else:
-            prop = ByteProperty(reader,  readType,tag)
+            prop = ByteProperty(reader,  readType, tag)
     elif switch("BoolProperty", type_):
         prop = BoolProperty(reader, tag, readType)
     elif switch("IntProperty", type_):
-        prop = IntProperty(reader)
+        prop = IntProperty(reader, readType)
     elif switch("FloatProperty", type_):
-        prop = FloatProperty(reader)
+        prop = FloatProperty(reader, readType)
     elif switch("ObjectProperty", type_):
-        prop = ObjectProperty(reader)
+        prop = ObjectProperty(reader, readType)
     elif switch("NameProperty", type_):
-        prop = NameProperty(reader)
+        prop = NameProperty(reader, readType)
     elif switch("DelegateProperty", type_):
-        prop = DelegateProperty(reader)
+        prop = DelegateProperty(reader, readType)
     elif switch("DoubleProperty", type_):
-        prop = DoubleProperty(reader)
+        prop = DoubleProperty(reader, readType)
     elif switch("ArrayProperty", type_):
-        prop = ArrayProperty(reader, tag)
+        prop = ArrayProperty(reader, tag, readType)
     elif switch("StructProperty", type_):
-        prop = StructProperty(reader, tag)
+        prop = StructProperty(reader, tag, readType)
     elif switch("StrProperty", type_):
-        prop = StrProperty(reader)
+        prop = StrProperty(reader, readType)
     elif switch("TextProperty", type_):
-        prop = TextProperty(reader)
+        prop = TextProperty(reader, readType)
     # elif switch("InterfaceProperty", type_):
     #     prop = InterfaceProperty(reader)
     # # elif switch("MulticastDelegateProperty", type_):
@@ -99,25 +87,28 @@ def ReadAsObject(reader, tag: FPropertyTag = None, type_: FName = None, readType
     elif switch("AssetObjectProperty", type_):
         prop = SoftObjectProperty(reader, readType)
     elif switch("UInt64Property", type_):
-        prop = UInt64Property(reader)
+        prop = UInt64Property(reader, readType)
     elif switch("UInt32Property", type_):
-        prop = UInt32Property(reader)
+        prop = UInt32Property(reader, readType)
     elif switch("UInt16Property", type_):
-        prop = UInt16Property(reader)
+        prop = UInt16Property(reader, readType)
     elif switch("Int64Property", type_):
-        prop = Int64Property(reader)
+        prop = Int64Property(reader, readType)
     elif switch("Int16Property", type_):
-        prop = Int16Property(reader)
+        prop = Int16Property(reader, readType)
     elif switch("Int8Property", type_):
-        prop = Int8Property(reader)
+        prop = Int8Property(reader, readType)
     elif switch("MapProperty", type_):
-        prop = MapProperty(reader, tag)
+        prop = MapProperty(reader, tag, readType)
     elif switch("SetProperty", type_):
-        prop = SetProperty(reader, tag)
+        prop = SetProperty(reader, tag, readType)
     elif switch("EnumProperty", type_):
         prop = EnumProperty(reader, tag, readType)
     elif switch("Guid", type_):
-        prop = FGuid(reader)
+        if readType == ReadType.ZERO:
+            prop = FGuid(0, 0, 0, 0)
+        else:
+            prop = FGuid(reader)
     else:
         return None
 

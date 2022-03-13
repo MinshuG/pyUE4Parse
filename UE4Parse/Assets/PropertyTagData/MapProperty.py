@@ -6,9 +6,12 @@ class MapProperty:
     position: int
     Value: dict = {}
 
-    def __init__(self, reader: BinaryStream, tag):
+    def __init__(self, reader: BinaryStream, tag, readType):
         # raise NotImplementedError("Map Prop")
         self.position = reader.base_stream.tell()
+
+        if readType.value == 3: self.Value = {}
+
         NumKeysToRemove = reader.readInt32()
 
         if NumKeysToRemove != 0:

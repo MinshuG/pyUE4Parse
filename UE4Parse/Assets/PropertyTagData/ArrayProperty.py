@@ -10,9 +10,11 @@ class ArrayProperty:
     Value: list
     position: int
 
-    def __init__(self, reader: BinaryStream, tag: FPropertyTag):
+    def __init__(self, reader: BinaryStream, tag: FPropertyTag, readType):
         self.position = reader.base_stream.tell()
         self.Value = []
+        if readType.value == 3: return
+
         self.ArrayPropertyReader(reader, tag)
 
     def GetValue(self):

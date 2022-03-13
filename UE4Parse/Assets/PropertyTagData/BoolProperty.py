@@ -12,9 +12,11 @@ class BoolProperty:
     def __init__(self, reader: BinaryStream, tag: 'FPropertyTag', readType):  # for later use
         self.position = reader.base_stream.tell()
         if not reader.has_unversioned_properties and readType == 0:
-            self.Value = getattr(tag, "BoolVal", True)
+            self.Value = getattr(tag, "BoolVal", False) == True
         elif readType.value in [0, 1, 2]:  # Normal, MAP and Array
             self.Value = bool(reader.readByteToInt())
+        else: # Zero
+            self.Value = getattr(tag, "BoolVal", False) == True
 
     def GetValue(self):
         return self.Value

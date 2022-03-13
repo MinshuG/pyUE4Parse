@@ -7,10 +7,10 @@ class StructProperty:
     position: int
     Value = None
 
-    def __init__(self, reader: BinaryStream, tag) -> None:
+    def __init__(self, reader: BinaryStream, tag, readType) -> None:
         self.position = reader.base_stream.tell()
         struct_name = tag.StructName.string if isinstance(tag.StructName, FName) else tag.StructName
-        self.Value = UScriptStruct(reader, struct_name).Struct
+        self.Value = UScriptStruct(reader, struct_name, readType).Struct
 
     def GetValue(self):
         return self.Value.GetValue()

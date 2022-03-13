@@ -8,7 +8,7 @@ from UE4Parse import Logger
 from UE4Parse.Assets.Objects.FGuid import FGuid
 from UE4Parse.Assets.Objects.FPropertyTag import FPropertyTag
 from UE4Parse.Assets.PropertyTagData import BaseProperty
-from UE4Parse.Assets.PropertyTagData.BaseProperty import ReadType, ZERORead
+from UE4Parse.Assets.PropertyTagData.BaseProperty import ReadType
 from UE4Parse.Readers.FAssetReader import FAssetReader
 
 logger = Logger.get_logger(__name__)
@@ -45,7 +45,7 @@ class UObject:
                 self.ObjectGuid = FGuid(self.reader)
 
     def deserializeVersioned(self):
-        properties = {}
+        properties = {} # is this used?
         num = 1
         while True:
             Tag = FPropertyTag(self.reader)
@@ -80,11 +80,10 @@ class UObject:
 
     def deserializeUnVersioned(self, type=None):
         reader = self.reader
-        properties = {}
-        pos = reader.tell()
+        # pos = reader.tell()
         Header = FUnversionedHeader(reader)
         if not Header.hasValues():
-            return properties
+            return {}
 
         Schema = self.reader.getmappings().get_schema(type or self.type)
         if Schema is None:
@@ -94,7 +93,6 @@ class UObject:
         if Header.HasNonZeroValues:
             iterator = FIterator(Header)
             while not iterator.bDone:
-                current = iterator.Current
                 propmappings = Schema.TryGetProp(iterator._schemaIt)
                 if propmappings is None:
                     raise ParserException("Missing Mappings for index {} (type={}) cannot proceed with serilization".format(iterator._schemaIt, self.type))
@@ -106,9 +104,10 @@ class UObject:
                         pos = reader.tell()
                         obj = BaseProperty.ReadAsObject(
                         self.reader, Tag, Tag.Type, ReadType.NORMAL)
-                        logger.debug(f"{pos} -> {reader.tell()} : {Tag.Name}")
+                        # logger.debug(f"{pos} -> {reader.tell()} : {Tag.Name}")
                     except Exception as e:
-                        raise ParserException(f"Failed to read values for {Tag.Name.string}") from e
+                        logger.error(f"Failed to read values for {Tag.Name}, {e}")
+                        raise ParserException(f"Failed to read values for {Tag.Name.string}", e)
 
                     self.addProp(Tag, obj, num)
                     if obj is None:
@@ -118,7 +117,7 @@ class UObject:
                         pos = reader.tell()
                         obj = BaseProperty.ReadAsObject(
                         self.reader, Tag, Tag.Type, ReadType.ZERO)
-                        logger.debug(f"{pos} -> {reader.tell()} : {Tag.Name}")
+                        # logger.debug(f"{pos} -> {reader.tell()} : {Tag.Name}")
                     except Exception as e:
                         logger.debug(f"Failed to read values for {Tag.Name.string}, but's it's zero")
                         obj = None
