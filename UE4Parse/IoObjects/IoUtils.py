@@ -11,16 +11,24 @@ if TYPE_CHECKING:
 
 
 def resolveObjectIndex(pkg: 'IoPackageReader', globaldata: FIoGlobalData, index: FPackageObjectIndex):
-    if index.IsScriptImport:
+    if index.IsNull:
+        return None
+    elif index.IsScriptImport:
         return ResolveScriptObject(globaldata.ScriptObjectByGlobalId[index.typeAndId], pkg, globaldata)
     elif index.IsExport:
         return ResolveExportObject(pkg, pkg.ExportMap[index.AsExport], None)
     elif index.IsPackageImport:
-        for x in pkg.ImportedPackages:
-            for ImportedExport in x.ExportMap:
-                if ImportedExport.GlobalImportIndex == index:
-                    return ResolveExportObject(pkg, ImportedExport, x)
-        return None
+        if len(pkg.ImportedPublicExportHashes) != 0:
+            if index.get_imported_package_index() < len(pkg.ImportedPackages):
+                imported_pkg = pkg.ImportedPackages[index.get_imported_package_index()]
+                for export in imported_pkg.ExportMap:
+                    if export.PublicExportHash == pkg.ImportedPublicExportHashes[index.get_export_hash_index()]:
+                        return ResolveExportObject(imported_pkg, export, None)
+        else:
+            for x in pkg.ImportedPackages:
+                for ImportedExport in x.ExportMap:
+                    if ImportedExport.GlobalImportIndex == index:
+                        return ResolveExportObject(pkg, ImportedExport, x)
     else:
         return None
 

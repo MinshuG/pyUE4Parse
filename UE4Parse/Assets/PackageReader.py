@@ -250,7 +250,7 @@ class IoPackageReader(Package):
                 store_entry = container_header.StoreEntries[index]
 
             reader.seek(self.Summary.ImportedPublicExportHashesOffset, 0)
-            self.ImportedPublicExportHashes  = reader.readTArray2(reader.readInt64, int((self.Summary.ImportMapOffset - self.Summary.ImportedPublicExportHashesOffset)/8))
+            self.ImportedPublicExportHashes  = reader.readTArray2(reader.readUInt64, int((self.Summary.ImportMapOffset - self.Summary.ImportedPublicExportHashesOffset)/8))
 
             reader.seek(self.Summary.ImportMapOffset, 0)
             import_map_Count = int(

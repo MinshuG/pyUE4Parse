@@ -19,7 +19,7 @@ def do_formatting(obj, index):
         ObjectName += f":{class_.getName().string}"
 
     if len(outers) <= 0:
-        ObjectPath = obj.importedPkg.Summary.SourceName.resolve(obj.importedPkg.NameMap)  # ??
+        ObjectPath = obj.importedPkg.Name  # ??
         # ObjectPath = abs(index)
     else:
         ObjectPath = f"{outers[-1]}.{abs(index)-1}"
@@ -89,13 +89,11 @@ class FPackageIndex:
                 from UE4Parse.IoObjects.IoUtils import resolveObjectIndex
                 resolved = resolveObjectIndex(self.reader.PackageReader, self.reader.PackageReader.Provider.GlobalData,
                                             Resource)
-                if resolved is None: return None
-                # list_ = resolved.ListResolve()
+                if resolved is None: return "still this broken?"
                 return do_formatting(resolved, self.Index)
             elif isinstance(Resource, FExportMapEntry):
                 from UE4Parse.IoObjects.IoUtils import ResolveExportObject
                 resolved = ResolveExportObject(self.reader.PackageReader, Resource)
-                # list_ = resolved.ListResolve()
                 return do_formatting(resolved, self.Index)
 
             if not hasattr(Resource, "ClassIndex"):  # FObjectImport
@@ -118,3 +116,6 @@ class FPackageIndex:
             return f"Import: {self.AsImport}"
         else:
             return None
+
+    def __repr__(self) -> str:
+        return f"<{self.__str__()}>"

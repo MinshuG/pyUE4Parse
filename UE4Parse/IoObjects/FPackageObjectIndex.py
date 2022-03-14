@@ -1,5 +1,6 @@
 from enum import IntEnum, auto
 from typing import Optional
+import ctypes
 
 from UE4Parse.BinaryReader import BinaryStream
 
@@ -75,3 +76,11 @@ class FPackageObjectIndex:
             "Type": self.Type,
             "Value": self.Value
         }
+
+    def get_imported_package_index(self):
+        return ctypes.c_uint((self.typeAndId & self.IndexMask) >> 32).value
+
+    # ImportedPublicExportHashIndex
+    def get_export_hash_index(self):
+        return ctypes.c_uint(self.typeAndId).value
+    
