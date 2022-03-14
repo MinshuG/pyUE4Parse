@@ -43,15 +43,23 @@ class FPackageIndex:
     def __init__(self, reader: "FAssetReader") -> None:
         self.Index = reader.readInt32()
         self.reader = reader
-        self.IsNull = self.Index == 0
-        self.IsImport = self.Index < 0
-        self.IsExport = self.Index > 0
-        self.AsImport = -self.Index - 1
-        self.AsExport = self.Index - 1
 
     @__init__.register
     def _(self, v: int):
         self.Index = v
+        self.reader = None
+
+    @property
+    def IsNull(self): return self.Index == 0
+    @property
+    def IsImport(self): return self.Index < 0
+    @property
+    def IsExport(self): return self.Index > 0
+    @property
+    def AsImport(self): return -self.Index - 1
+    @property
+    def AsExport(self): return self.Index - 1
+    
 
     @property
     def Name(self) -> FName:  # TODO: Fix this
@@ -62,8 +70,8 @@ class FPackageIndex:
 
     @property
     def Resource(self):
-        PackageReader = self.reader.PackageReader
         if not self.IsNull:  # hmm
+            PackageReader = self.reader.PackageReader
             if self.IsImport and self.AsImport < len(PackageReader.ImportMap):
                 return PackageReader.ImportMap[self.AsImport]
 
@@ -73,23 +81,23 @@ class FPackageIndex:
 
     def GetValue(self):
         Resource = self.Resource
-        from UE4Parse.IoObjects.FPackageObjectIndex import FPackageObjectIndex
-        from UE4Parse.IoObjects.FExportMapEntry import FExportMapEntry
-
-        if isinstance(Resource, FPackageObjectIndex):
-            from UE4Parse.IoObjects.IoUtils import resolveObjectIndex
-            resolved = resolveObjectIndex(self.reader.PackageReader, self.reader.PackageReader.Provider.GlobalData,
-                                          Resource)
-            if resolved is None: return None
-            # list_ = resolved.ListResolve()
-            return do_formatting(resolved, self.Index)
-        elif isinstance(Resource, FExportMapEntry):
-            from UE4Parse.IoObjects.IoUtils import ResolveExportObject
-            resolved = ResolveExportObject(self.reader.PackageReader, Resource)
-            # list_ = resolved.ListResolve()
-            return do_formatting(resolved, self.Index)
-
         if Resource is not None:
+            from UE4Parse.IoObjects.FPackageObjectIndex import FPackageObjectIndex
+            from UE4Parse.IoObjects.FExportMapEntry import FExportMapEntry
+
+            if isinstance(Resource, FPackageObjectIndex):
+                from UE4Parse.IoObjects.IoUtils import resolveObjectIndex
+                resolved = resolveObjectIndex(self.reader.PackageReader, self.reader.PackageReader.Provider.GlobalData,
+                                            Resource)
+                if resolved is None: return None
+                # list_ = resolved.ListResolve()
+                return do_formatting(resolved, self.Index)
+            elif isinstance(Resource, FExportMapEntry):
+                from UE4Parse.IoObjects.IoUtils import ResolveExportObject
+                resolved = ResolveExportObject(self.reader.PackageReader, Resource)
+                # list_ = resolved.ListResolve()
+                return do_formatting(resolved, self.Index)
+
             if not hasattr(Resource, "ClassIndex"):  # FObjectImport
                 ObjectName = f"{Resource.ObjectName.string}"
             else:

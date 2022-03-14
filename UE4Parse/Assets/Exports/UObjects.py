@@ -88,7 +88,6 @@ class UObject:
         Schema = self.reader.getmappings().get_schema(type or self.type)
         if Schema is None:
             raise ParserException(f"Missing prop mappings for type {type or self.type}")
-        tags = []
         num = 1
         if Header.HasNonZeroValues:
             iterator = FIterator(Header)
@@ -97,8 +96,6 @@ class UObject:
                 if propmappings is None:
                     raise ParserException("Missing Mappings for index {} (type={}) cannot proceed with serilization".format(iterator._schemaIt, self.type))
                 Tag = FPropertyTag(None, propmappings)
-                tags.append(Tag)
-
                 if iterator.IsNonZero:
                     try:
                         pos = reader.tell()
@@ -133,7 +130,7 @@ class UObject:
         self.Dict[key] = value
 
     def GetValue(self) -> dict:
-        """:returns JSON Serializable dict"""
+        """:returns JSON serializable dict"""
         if len(self.Dict) == 0:
             return {}
         properties = {}

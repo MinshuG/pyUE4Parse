@@ -53,7 +53,7 @@ class FIterator:
 
     @property
     def IsNonZero(self): 
-        return invertbool(self.Current.HasAnyZeroes) or invertbool(self._zeroMask.checkifexists(self._zeroMaskIndex))
+        return invertbool(self.Current.HasAnyZeroes) or invertbool(self._zeroMask.get(self._zeroMaskIndex, False))
 
     def MoveNext(self):
         self._schemaIt += 1

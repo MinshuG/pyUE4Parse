@@ -11,7 +11,7 @@ class bitarray:
         elif isinstance(size, str):
             self.__bools = []
             for x in size:
-                self.__bools.append(bool(x))
+                self.__bools.append(bool(int(x)))
         else:
             self.__bools = [False] * size
 
@@ -52,6 +52,11 @@ class bitarray:
         except IndexError:
             return False
 
+    def get(self, index, default=None):
+        try:
+            return self.__bools[index]
+        except IndexError:
+            return default
 
 class FFragment:
     _SkipMax = 127
@@ -110,15 +115,17 @@ class FUnversionedHeader:
     def LoadZeroMaskData(self, reader: BinaryStream, numBits: int) -> bitarray:
         if numBits <= 8:
             bits = '{:08b}'.format(ord(reader.readByte()))[::-1]
-            print(bits)
             data = bitarray(bits)            
         elif numBits <= 16:
-            bits =  '{:08b}'.format(ord(reader.readBytes(2)))[::-1]
+            rawdata = reader.read(2) # *sizeof(uint16)
+            bits = "".join("{:08b}".format(x)[::-1] for x in rawdata)
             data = bitarray(bits)
         else:
             num = divide_round_up(numBits, 32)
-            rawdata = b"".join(reader.readByte() for _ in range(num))
-            data = bitarray('{:08b}'.format(ord(rawdata))[::-1])
+            rawdata = reader.read(num*4) # *sizeof(int32)
+            bits = "".join("{:08b}".format(x)[::-1] for x in rawdata)
+
+            data = bitarray(bits)
         trimed = data.trim(0, numBits)
         return trimed
 
