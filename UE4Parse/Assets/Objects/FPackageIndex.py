@@ -89,7 +89,7 @@ class FPackageIndex:
                 from UE4Parse.IoObjects.IoUtils import resolveObjectIndex
                 resolved = resolveObjectIndex(self.reader.PackageReader, self.reader.PackageReader.Provider.GlobalData,
                                             Resource)
-                if resolved is None: return "still this broken?"
+                if resolved is None: return None
                 return do_formatting(resolved, self.Index)
             elif isinstance(Resource, FExportMapEntry):
                 from UE4Parse.IoObjects.IoUtils import ResolveExportObject
