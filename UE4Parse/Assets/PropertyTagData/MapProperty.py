@@ -4,31 +4,29 @@ from UE4Parse.BinaryReader import BinaryStream
 
 class MapProperty:
     position: int
-    Value: dict = {}
+    Value: dict
 
     def __init__(self, reader: BinaryStream, tag, readType):
-        # raise NotImplementedError("Map Prop")
         self.position = reader.base_stream.tell()
-
-        if readType.value == 3: self.Value = {}
+        self.Value = {}
+        if readType.value == 3: return
 
         NumKeysToRemove = reader.readInt32()
 
-        if NumKeysToRemove != 0:
-            for _ in range(NumKeysToRemove):
-                PropertyTagData.BaseProperty.ReadAsValue(reader, tag, tag.InnerType,
+        for _ in range(NumKeysToRemove):
+            PropertyTagData.BaseProperty.ReadAsValue(reader, tag, tag.InnerType,
                                                          PropertyTagData.BaseProperty.ReadType.MAP)
 
         NumEntries = reader.readInt32()
-        data = {}
         for _ in range(NumEntries):
-            key = str(PropertyTagData.BaseProperty.ReadAsValue(reader, tag, tag.InnerType,
+            inner_data = getattr(tag, "InnerData", None)
+            value_data = getattr(tag, "ValueData", None)
+            key = str(PropertyTagData.BaseProperty.ReadAsValue(reader, inner_data or tag, tag.InnerType,
                                                                PropertyTagData.BaseProperty.ReadType.MAP))
-            value = PropertyTagData.BaseProperty.ReadAsObject(reader, tag, tag.ValueType,
+            value = PropertyTagData.BaseProperty.ReadAsObject(reader, value_data or tag, tag.ValueType,
                                                               PropertyTagData.BaseProperty.ReadType.MAP)
 
-            data[key] = value  # formatting tho
-        self.Value = data
+            self.Value[key] = value
 
     def GetValue(self) -> dict:
         Dict: dict = {}

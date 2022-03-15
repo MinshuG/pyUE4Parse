@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import IntEnum
 from functools import singledispatchmethod
+import traceback
 
 from UE4Parse.Assets.Exports.UObjects import UObject
 from UE4Parse.IO.IoObjects import FIoStoreEntry
@@ -334,7 +335,7 @@ class IoPackageReader(Package):
                     try:
                         ExportData.deserialize(currentExportDataOffset + Export.CookedSerialSize)
                     except Exception as e:
-                        error = e
+                        error = traceback.format_exc()
 
                     Export.type = export_type
                     Export.exportObject = ExportData
@@ -355,7 +356,6 @@ class IoPackageReader(Package):
                 return export.exportObject
         return None
 
-    @find_export_of_type.register
     @find_export_of_type.register
     def _(self, _cls: type) -> Optional[T]:
         for export in self.ExportMap:

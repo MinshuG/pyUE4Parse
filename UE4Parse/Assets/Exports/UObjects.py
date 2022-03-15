@@ -98,7 +98,7 @@ class UObject:
                 Tag = FPropertyTag(None, propmappings)
                 if iterator.IsNonZero:
                     try:
-                        pos = reader.tell()
+                        # pos = reader.tell()
                         obj = BaseProperty.ReadAsObject(
                         self.reader, Tag, Tag.Type, ReadType.NORMAL)
                         # logger.debug(f"{pos} -> {reader.tell()} : {Tag.Name}")

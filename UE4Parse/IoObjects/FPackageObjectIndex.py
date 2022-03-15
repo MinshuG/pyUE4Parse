@@ -83,4 +83,3 @@ class FPackageObjectIndex:
     # ImportedPublicExportHashIndex
     def get_export_hash_index(self):
         return ctypes.c_uint(self.typeAndId).value
-    
