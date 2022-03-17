@@ -39,3 +39,6 @@ class UDataTable(UObject):
         props["Rows"] = {key.GetValue(): value.GetValue() for key, value in self.RowMap.items()}
         return props
 
+@register_export
+class CompositeDataTable(UDataTable):
+    pass
