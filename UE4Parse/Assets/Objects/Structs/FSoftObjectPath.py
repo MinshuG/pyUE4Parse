@@ -1,15 +1,18 @@
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Objects.FName import FName
 
+if TYPE_CHECKING:
+    from UE4Parse.Provider.Vfs.AbstractVfsFileProvider import AbstractVfsFileProvider
+    from UE4Parse.Readers.FAssetReader import FAssetReader
+    from UE4Parse.Assets.Exports.UObjects import UObject
 
 class FSoftObjectPath:
     position: int
-    AssetPathName: FName = FName
-    SubPathString: str = None
+    AssetPathName: FName
+    SubPathString: str
 
-    def __init__(self, reader: Optional[BinaryStream] = None) -> None:
+    def __init__(self, reader: Optional['FAssetReader'] = None) -> None:
         if reader:
             self.position = reader.base_stream.tell()
             self.AssetPathName = reader.readFName()
@@ -27,3 +30,8 @@ class FSoftObjectPath:
             "AssetPathName": self.AssetPathName.string,
             "SubPathString": self.SubPathString
         }
+
+    def load(self, provider: 'AbstractVfsFileProvider') -> Optional['UObject']:
+        if self.AssetPathName.string == "None":
+            return None
+        return provider.try_load_object(self.AssetPathName.string)

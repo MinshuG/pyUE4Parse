@@ -12,3 +12,13 @@ class FWeightedRandomSampler:
         self.Prob = reader.readTArray(reader.readFloat)
         self.Alias = reader.readTArray(reader.readInt32)
         self.TotalWeight = reader.readFloat()
+
+    def GetValue(self):
+        return {
+            "Prob": self.Prob,
+            "Alias": self.Alias,
+            "TotalWeight": self.TotalWeight
+        }
+
+class FSkeletalMeshAreaWeightedTriangleSampler(FWeightedRandomSampler):
+    pass

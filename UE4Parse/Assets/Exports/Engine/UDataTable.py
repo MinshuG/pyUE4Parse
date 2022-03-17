@@ -40,5 +40,5 @@ class UDataTable(UObject):
         return props
 
 @register_export
-class CompositeDataTable(UDataTable):
+class UCompositeDataTable(UDataTable):
     pass

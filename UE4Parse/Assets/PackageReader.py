@@ -71,6 +71,11 @@ class Package(ABC):
     def _(self, arg: UObject) -> Optional[T]:
         pass
 
+    def find_export(self, export_name: str) -> Optional[UObject]:
+        for export in self.ExportMap:
+            if export_name == export.name.string:
+                return export.exportObject
+        return None
 
 class LegacyPackageReader(Package):
     NameMap: List[FNameEntrySerialized] = []
@@ -176,12 +181,6 @@ class LegacyPackageReader(Package):
 
     def get_summary(self) -> FPackageFileSummary:
         return self.PackageFileSummary
-
-    def find_export(self, export_name: str) -> Optional[UObject]:
-        for export in self.ExportMap:
-            if export_name == export.name.string:
-                return export.exportObject
-        return None
 
     @singledispatchmethod
     def find_export_of_type(self, export_type: str) -> Optional[UObject]:
@@ -362,6 +361,3 @@ class IoPackageReader(Package):
             if isinstance(export.exportObject, _cls):
                 return export.exportObject
         return None
-
-    def find_export(self, export_name: str) -> Optional[UObject]:
-        return NotImplemented

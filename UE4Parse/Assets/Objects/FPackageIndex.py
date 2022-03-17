@@ -59,7 +59,6 @@ class FPackageIndex:
     def AsImport(self): return -self.Index - 1
     @property
     def AsExport(self): return self.Index - 1
-    
 
     @property
     def Name(self) -> FName:  # TODO: Fix this

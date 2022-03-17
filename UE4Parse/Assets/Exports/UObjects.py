@@ -2,7 +2,7 @@ from UE4Parse.Assets.Objects.EObjectFlags import EObjectFlags
 from UE4Parse.Exceptions.Exceptions import ParserException
 from UE4Parse.IoObjects.FIterator import FIterator
 from UE4Parse.IoObjects.FUnversionedHeader import FUnversionedHeader
-from typing import Optional
+from typing import Optional, TypeVar
 
 from UE4Parse import Logger
 from UE4Parse.Assets.Objects.FGuid import FGuid
@@ -12,7 +12,7 @@ from UE4Parse.Assets.PropertyTagData.BaseProperty import ReadType
 from UE4Parse.Readers.FAssetReader import FAssetReader
 
 logger = Logger.get_logger(__name__)
-
+T = TypeVar('T')
 
 class UObject:
     position: int
@@ -145,7 +145,7 @@ class UObject:
             return properties
         return {"Properties": properties}
 
-    def try_get(self, key: str) -> Optional[object]:
+    def try_get(self, key: str, default: T = None) -> Optional[object]:
         if found := self.Dict.get(key, None):
             return found.Value
-        return None
+        return default

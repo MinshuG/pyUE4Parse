@@ -16,7 +16,7 @@ Pakreader_test.py
 api.py
 /testing-api
 test2.py
-oo2core_8_win64.dll
+oo2core_9_win64.dll
 /setup.build/*
 /setup.dist
 /setup.onefile

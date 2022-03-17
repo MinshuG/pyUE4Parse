@@ -72,6 +72,22 @@ class DefaultFileProvider(AbstractVfsFileProvider):
             return None
         return package.get_data()
 
+    def export_type_event(self, *args, **kwargs):
+        if len(args) > 0:
+            func = args[0]
+            if func:
+                self.Triggers[func.__name__] = func
+                return func
+        name = kwargs.get("name")
+
+        if name is None:
+            name = func.__name__
+
+        def wrapper(func):
+            self.Triggers[name] = func
+
+        return wrapper
+
     @singledispatchmethod
     def try_load_package(self, name: Union[str, FPackageId], load_mode: EPackageLoadMode = EPackageLoadMode.Full) -> Optional[Package]:
         """Load a Package"""
@@ -119,18 +135,9 @@ class DefaultFileProvider(AbstractVfsFileProvider):
                 ubulk = ubulk.get_data()
             return LegacyPackageReader(uasset, uexp, ubulk, self, load_mode)
 
-    def export_type_event(self, *args, **kwargs):
-        if len(args) > 0:
-            func = args[0]
-            if func:
-                self.Triggers[func.__name__] = func
-                return func
-        name = kwargs.get("name")
-
-        if name is None:
-            name = func.__name__
-
-        def wrapper(func):
-            self.Triggers[name] = func
-
-        return wrapper
+    def try_load_object(self, path: str):
+        path, export_name = path.split(".")
+        package = self.try_load_package(path)
+        if package is None:
+            return None
+        return package.find_export(export_name)

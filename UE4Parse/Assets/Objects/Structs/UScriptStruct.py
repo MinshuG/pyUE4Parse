@@ -14,6 +14,7 @@ from UE4Parse.Assets.Objects.Structs.FRotator import FRotator
 from UE4Parse.Assets.Objects.Structs.FSmartName import FSmartName
 from UE4Parse.Assets.Objects.Structs.FSoftObjectPath import FSoftObjectPath
 from UE4Parse.Assets.Objects.Structs.Vector import FVector2D, FVector, FVector4
+from UE4Parse.Assets.Objects.Meshes.FSkeletalMeshSamplingLODBuiltData import FSkeletalMeshSamplingLODBuiltData
 from UE4Parse.BinaryReader import BinaryStream
 
 logger = Logger.get_logger(__name__)
@@ -70,7 +71,8 @@ class UScriptStruct:
             "MovieSceneSequenceID": FFrameNumber,
             "SmartName": FSmartName,
             "PerPlatformInt": FPerPlatformInt,
-            "PerPlatformFloat": FPerPlatformFloat
+            "PerPlatformFloat": FPerPlatformFloat,
+            "SkeletalMeshSamplingLODBuiltData": FSkeletalMeshSamplingLODBuiltData
         }
 
         if StructName in Structs:

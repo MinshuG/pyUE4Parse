@@ -21,9 +21,10 @@ def resolveObjectIndex(pkg: 'IoPackageReader', globaldata: FIoGlobalData, index:
         if len(pkg.ImportedPublicExportHashes) != 0:
             if index.get_imported_package_index() < len(pkg.ImportedPackages):
                 imported_pkg = pkg.ImportedPackages[index.get_imported_package_index()]
-                for export in imported_pkg.ExportMap:
-                    if export.PublicExportHash == pkg.ImportedPublicExportHashes[index.get_export_hash_index()]:
-                        return ResolveExportObject(imported_pkg, export, None)
+                if imported_pkg is not None:
+                    for export in imported_pkg.ExportMap:
+                        if export.PublicExportHash == pkg.ImportedPublicExportHashes[index.get_export_hash_index()]:
+                            return ResolveExportObject(imported_pkg, export, None)
         else:
             for x in pkg.ImportedPackages:
                 for ImportedExport in x.ExportMap:

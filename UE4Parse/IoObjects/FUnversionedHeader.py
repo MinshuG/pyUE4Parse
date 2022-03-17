@@ -24,9 +24,6 @@ class bitarray:
             self.__bools[index] = True
 
     def trim(self, where: int, to: int):
-        if len(self.__bools) >= to + 1:
-            return bitarray(self.__bools[where:])  # ?
-            raise ValueError("trim value id more than length of object")
         return bitarray(self.__bools[where:to])
 
     def contains(self, what: bool):
@@ -131,4 +128,4 @@ class FUnversionedHeader:
 
 
 def divide_round_up(dividend, divisor):
-    return round((dividend + divisor - 1) / divisor)
+    return int((dividend + divisor - 1) / divisor)

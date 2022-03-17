@@ -1,3 +1,4 @@
+from UE4Parse.Assets.Exports.UObjects import UObject
 from UE4Parse.Assets.PackageReader import Package
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Provider.Vfs.DirectoryStorageProvider import DirectoryStorageProvider
@@ -161,4 +162,8 @@ class AbstractVfsFileProvider(ABC):
 
     @abstractmethod
     def try_load_package(self, *args, **kwargs) -> Optional[Package]:
+        pass
+
+    @abstractmethod
+    def try_load_object(self, *args, **kwargs) -> Optional[UObject]:
         pass
