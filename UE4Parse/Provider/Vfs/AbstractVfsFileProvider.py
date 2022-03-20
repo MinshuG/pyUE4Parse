@@ -5,7 +5,7 @@ from UE4Parse.Provider.Vfs.DirectoryStorageProvider import DirectoryStorageProvi
 from UE4Parse.Versions.Versions import VersionContainer
 from UE4Parse.Exceptions.Exceptions import InvalidEncryptionKey
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, Union, Dict, List
+from typing import Callable, Optional, Tuple, Union, Dict, List
 from UE4Parse.IO import FFileIoStoreReader
 
 from UE4Parse.Assets.Objects.FGuid import FGuid
@@ -24,6 +24,7 @@ class AbstractVfsFileProvider(ABC):
     LoadedContainers: List[Union[FFileIoStoreReader, PakReader]]
     _files: DirectoryStorageProvider
     GameName: str
+    _file_streams: Dict[str, BinaryStream]
 
     def __init__(self, versions: VersionContainer, isCaseInsensitive: bool = False) -> None:
         self.GlobalData = None
@@ -33,10 +34,15 @@ class AbstractVfsFileProvider(ABC):
         self.LoadedContainers = []
         self._files = DirectoryStorageProvider(self.IsCaseInsensitive)
         self.GameName = ""
+        self._file_streams = {}
 
     @property
     def files(self):
         return self._files
+
+    @abstractmethod
+    def open_stream(self, path: str) -> BinaryStream:
+        pass
 
     def close(self):
         for container in self.LoadedContainers:
@@ -53,7 +59,7 @@ class AbstractVfsFileProvider(ABC):
                     break
             self.UnloadedContainers.append(container)
 
-    def register_container(self, name, streams: Tuple[BinaryStream, BinaryStream]):
+    def register_container(self, name, streams: Tuple[BinaryStream, Callable[[str], BinaryStream]]):
         """
         Initializes container reader and adds it to `UnloadedContainers`
         """

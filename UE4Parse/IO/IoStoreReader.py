@@ -2,7 +2,7 @@ from UE4Parse.Assets.Objects.FGuid import FGuid
 import io
 import os
 import time
-from typing import Dict, Optional
+from typing import Callable, Dict, Optional
 
 from UE4Parse import Logger
 from UE4Parse.BinaryReader import BinaryStream, Align
@@ -45,31 +45,38 @@ class FFileIoStoreReader:
     caseinSensitive: bool
     _ue_version: EUEVersion
 
-    def __init__(self, dir_: str, tocStream: BinaryStream, containerStream: BinaryStream, ue_version: EUEVersion, caseinSensitive: bool = True,
+    def __init__(self, dir_: str, tocStream: BinaryStream, streamOpenFunc: Callable[[int], BinaryStream], ue_version: EUEVersion, caseinSensitive: bool = True,
                  tocReadOptions: EIoStoreTocReadOptions = EIoStoreTocReadOptions.ReadDirectoryIndex):
         """
         :param dir_:
         :param tocStream:
-        :param containerStream:
+        :param streamOpenFunc:
         :param caseinSensitive:
         :param tocReadOptions:
         """
         self.FileName = os.path.basename(dir_)
+
         self.Directory = dir_
         self.caseinSensitive = caseinSensitive
         self.ContainerFile = FFileIoStoreContainerFile()
-        self.ContainerFile.FileHandle = containerStream
+        
         self.TocResource = FIoStoreTocResource(tocStream, tocReadOptions)
         tocStream.close()
+
+        containerStreams: BinaryStream = []
+        if self.TocResource.Header.PartitionCount <= 1:
+            containerStreams.append(streamOpenFunc(dir_.replace(".utoc", ".ucas")))
+        else:
+            for i in range(self.TocResource.Header.PartitionCount):
+                name = dir_.replace(".utoc", f"_s{i}.ucas") if i > 0 else dir_.replace(".utoc", ".ucas")
+                containerStreams.append(streamOpenFunc(name))
+
+        self.ContainerFile.FileHandles = containerStreams
         self._ue_version = ue_version
-        conUncompressedSize = self.TocResource.Header.TocCompressedBlockEntryCount * self.TocResource.Header.CompressionBlockSize \
-            if self.TocResource.Header.TocCompressedBlockEntryCount > 0 else containerStream.size
 
         self.Toc = {}
         for i in range(self.TocResource.Header.TocEntryCount):
             chunkOffsetLength = self.TocResource.ChunkOffsetLengths[i]
-            if chunkOffsetLength.GetOffset + chunkOffsetLength.GetLength > conUncompressedSize:
-                raise IndexError("TocEntry out of container bounds")
             self.Toc[self.TocResource.ChunkIds[i]] = chunkOffsetLength
 
         self.ContainerFile.CompressionMethods = self.TocResource.CompressionMethods
@@ -232,7 +239,6 @@ class FFileIoStoreReader:
         offsetInBlock = int(offsetAndLength.GetOffset % compressionBlockSize)
 
         remaining_size = offsetAndLength.GetLength
-        containerStream = self.ContainerFile.FileHandle
         dst: bytes = b""
         # i = firstBlockIndex # BlockIndex
         for i in range(firstBlockIndex,
@@ -241,7 +247,11 @@ class FFileIoStoreReader:
             rawSize = Align(compressionBlock.CompressedSize, AES.block_size)
             uncompressedSize = compressionBlock.UncompressedSize
 
-            containerStream.seek(compressionBlock.Offset, 0)
+            partition_index = int(compressionBlock.Offset / self.TocResource.Header.PartitionSize)
+            partition_offset = compressionBlock.Offset % self.TocResource.Header.PartitionSize
+            containerStream = self.ContainerFile.FileHandles[partition_index]
+            containerStream.seek(partition_offset, 0)
+
             compressedBuffer: bytes = containerStream.readBytes(rawSize)
 
             if self.TocResource.Header.is_encrypted():

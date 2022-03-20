@@ -16,7 +16,7 @@ class EIoContainerFlags(Enum):
 
 
 class FFileIoStoreContainerFile:
-    FileHandle: BinaryStream
+    FileHandles: List[BinaryStream]
     CompressionBlockSize: int
     CompressionMethods: List[str]
     CompressionBlocks: List[FIoStoreTocCompressedBlockEntry]

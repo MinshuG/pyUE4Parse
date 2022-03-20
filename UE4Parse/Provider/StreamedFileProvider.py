@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Callable, Tuple
 
 from UE4Parse import DefaultFileProvider
 from UE4Parse.BinaryReader import BinaryStream
@@ -11,5 +11,5 @@ class StreamedFileProvider(DefaultFileProvider):
                  isCaseInsensitive: bool = False):
         super().__init__(".", versions, isCaseInsensitive)
 
-    def initialize(self, filename: str ,streams: Tuple[BinaryStream]):
+    def initialize(self, filename: str ,streams: Tuple[BinaryStream, Callable[[str], BinaryStream]]):
         self.register_container(filename, streams)

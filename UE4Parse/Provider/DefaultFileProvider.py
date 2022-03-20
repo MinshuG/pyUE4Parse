@@ -54,13 +54,37 @@ class DefaultFileProvider(AbstractVfsFileProvider):
                 if f.endswith(".utoc"):
                     utoc_stream = BinaryStream(f)
                     ucas_stream = BinaryStream(f.replace(".utoc", ".ucas"))
-                    self.register_container(name, (utoc_stream, ucas_stream))
+                    self._file_streams[name] = ucas_stream
+                    self.register_container(name, (utoc_stream, self.open_stream))
                 elif f.endswith(".pak"):
-                    self.register_container(name, (BinaryStream(f),))
+                    self.register_container(name, (BinaryStream(f), self.open_stream))
                 else:
                     continue
             else:
                 pass
+
+    def open_stream(self, path: str) -> BinaryStream:
+        if path in self._file_streams:
+            return self._file_streams[path]
+
+        if isinstance(self.__path, list):
+            for f in self.__path:
+                if os.path.basename(f).startswith(path.replace(".ucas", "").split("_")[0]): # _s{i}
+                    files = os.path.dirname(f)
+                    files = glob(files + "/*")
+                    break
+            else:
+                files = self.__path
+        else:
+            files = glob(self.__path + "/*")
+
+        for f in files:
+            if os.path.isfile(f):
+                name = os.path.basename(f)
+                if name == path:
+                    self._file_streams[name] = BinaryStream(f)
+                    return self._file_streams[name]
+        raise FileNotFoundError(f"File {path} not found.")
 
     def get_reader(self, path: str):  # TODO Game file overload
         name = os.path.splitext(path)[0]
