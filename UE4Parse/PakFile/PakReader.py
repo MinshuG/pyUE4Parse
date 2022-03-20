@@ -189,9 +189,9 @@ class PakReader:
         CompressionBlocksCount = (value >> 6) & 0xffff
 
         # Filter the compression block size or use the UncompressedSize if less that 64k.
-        compressionBlockSize = 0
+        CompressionBlockSize = 0
         if CompressionBlocksCount > 0:
-            compressionBlockSize = uncompressedSize if uncompressedSize < 65536 else ((value & 0x3f) << 11)
+            CompressionBlockSize = uncompressedSize if uncompressedSize < 65536 else ((value & 0x3f) << 11)
 
         # Set bDeleteRecord to false, because it obviously isn't deleted if we are here.
         Deleted = False
@@ -199,12 +199,12 @@ class PakReader:
         baseOffset = 0 if self.Info.Version.value >= EPakVersion.RELATIVE_CHUNK_OFFSETS.value else offset
 
         CompressionBlocks: list = []
-        if CompressionBlocksCount == 0 and bool(encrypted):
+        if CompressionBlocksCount == 1 and not bool(encrypted):
             # If the number of CompressionBlocks is 1, we didn't store any extra information.
             # Derive what we can from the entry's file offset and size.
             start = baseOffset + FPakEntry.GetSize(EPakVersion.LATEST, compressionMethodIndex, CompressionBlocksCount)
             CompressionBlocks.append(FPakCompressedBlock(None, start, start + size))
-        elif len(CompressionBlocks) > 0:
+        elif CompressionBlocksCount > 0:
             CompressedBlockAlignment = 16 if encrypted else 1
             CompressedBlockOffset = baseOffset + FPakEntry.GetSize(EPakVersion.LATEST, compressionMethodIndex,
                                                                    CompressionBlocksCount)
@@ -228,4 +228,5 @@ class PakReader:
         entry.CompressionMethodIndex = compressionMethodIndex
         entry.StructSize = FPakEntry.GetSize(EPakVersion.LATEST, compressionMethodIndex,
                                              len(CompressionBlocks))
+        entry.CompressionBlockSize = CompressionBlockSize
         return entry

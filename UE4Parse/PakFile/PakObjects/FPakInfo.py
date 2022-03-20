@@ -69,6 +69,7 @@ class PakInfo:
                     byteIndex = i * self.COMPRESSION_METHOD_NAME_LEN
                     byteCount = self.COMPRESSION_METHOD_NAME_LEN
                     decoded = buffer[byteIndex:byteCount].decode("utf-8").rstrip('\x00')
+                    if decoded == "": continue
                     MethodList.append(decoded)
             self.CompressionMethods = MethodList
 

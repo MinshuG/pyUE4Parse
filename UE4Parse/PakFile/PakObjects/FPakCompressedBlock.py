@@ -8,8 +8,8 @@ class FPakCompressedBlock:
         if reader is not None:
             self.CompressedStart = reader.readInt64()
             self.CompressedEnd = reader.readInt64()
-            self.Size = self.CompressedStart - self.CompressedEnd
+            self.Size = self.CompressedEnd - self.CompressedStart
         else:
             self.CompressedStart = start
             self.CompressedEnd = end
-            self.Size = self.CompressedStart - self.CompressedEnd
+            self.Size = self.CompressedEnd - self.CompressedStart
