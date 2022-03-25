@@ -76,7 +76,7 @@ class AbstractVfsFileProvider(ABC):
             try:
                 reader = FFileIoStoreReader(name, streams[0],
                                             streams[1], self.Versions.UEVersion, self.IsCaseInsensitive)
-                if name == "global.utoc":
+                if name.endswith("global.utoc"):
                     self.GlobalData = FIoGlobalData(reader, self.Versions.UEVersion)
                 self.UnloadedContainers.append(reader)
             except Exception as e:
