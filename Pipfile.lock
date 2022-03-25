@@ -186,11 +186,11 @@
         },
         "pyusmap": {
             "hashes": [
-                "sha256:4b19fda9466320fc9b2df69353757434e74af208cb5b7c5d68a2f0e077acafe5",
-                "sha256:8493211147e016ae356ee4ced75eefe23b33513ff57404d6e736b3674cb5db88"
+                "sha256:98485301742ed4d4898ef9f965df118fa80baf35a1fc29012fb6822ee1e6a513",
+                "sha256:af70d5c742f826ab63141cb6adb1119201f438ad16364f0d55f225d50da60e35"
             ],
             "index": "pypi",
-            "version": "==1.1.2"
+            "version": "==1.1.3"
         }
     },
     "develop": {}

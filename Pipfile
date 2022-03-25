@@ -6,8 +6,8 @@ name = "pypi"
 [packages]
 Cython = "~=3.0a5"
 Pillow = "*"
-pyusmap = "*"
 pycryptodome = "*"
+pyusmap = "*"
 
 [dev-packages]
 
