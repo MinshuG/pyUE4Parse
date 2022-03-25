@@ -281,7 +281,8 @@ class BinaryStream(BinaryIO):
 
     def dump_bytes(self, length):
         pos = self.tell()
-        print(self.base_stream.read(length))
+        import binascii
+        print(binascii.hexlify(self.base_stream.read(length), sep=" ").upper())
         self.seek(pos, 0)
 
 def Align(val: int, alignment: int):

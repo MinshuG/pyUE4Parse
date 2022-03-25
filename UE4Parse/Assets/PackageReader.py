@@ -246,8 +246,11 @@ class IoPackageReader(Package):
 
             store_entry = None
             if container_header is not None:
-                index = container_header.PackageIds.index(FPackageId.from_int(package.ChunkId.ChunkId))
-                store_entry = container_header.StoreEntries[index]
+                try:
+                    index = container_header.PackageIds.index(FPackageId.from_int(package.ChunkId.ChunkId))
+                    store_entry = container_header.StoreEntries[index]
+                except ValueError:
+                    pass
 
             reader.seek(self.Summary.ImportedPublicExportHashesOffset, 0)
             self.ImportedPublicExportHashes  = reader.readTArray2(reader.readUInt64, int((self.Summary.ImportMapOffset - self.Summary.ImportedPublicExportHashesOffset)/8))
@@ -266,14 +269,15 @@ class IoPackageReader(Package):
             export_bundle_entries = reader.readTArray2(lambda :FExportBundleEntry(reader), export_map_count*2)
 
             reader.seek(self.Summary.GraphDataOffset, 0)
-            export_bundle_headers = reader.readTArray2(lambda :FExportBundleHeader(reader), store_entry.ExportBundleCount)
+            export_bundle_headers = reader.readTArray2(lambda :FExportBundleHeader(reader), store_entry.ExportBundleCount if store_entry else 1)
 
             self.ExportBundle = FExportBundle.from_data(export_bundle_headers, export_bundle_entries)
 
             if load_mode == EPackageLoadMode.Info: return
 
-            self.ImportedPackages = tuple(
-                provider.try_load_package(iD, EPackageLoadMode.Info) for iD in store_entry.ImportedPackages)
+            imported = store_entry.ImportedPackages if store_entry else []
+            self.ImportedPackages = tuple(provider.try_load_package(iD, EPackageLoadMode.Info) for iD in imported)
+            del imported
 
             allExportDataOffset = self.Summary.HeaderSize
         else:
