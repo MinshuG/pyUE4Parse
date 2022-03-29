@@ -174,7 +174,7 @@ class AbstractVfsFileProvider(ABC):
                 try:
                     manifest = json.load(self.get_reader(v))
                 except Exception as _:
-                    pass
+                    continue
                 if "Contents" in manifest:
                     for content in manifest["Contents"]:
                         if "File" in content:
