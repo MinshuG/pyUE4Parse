@@ -13,7 +13,7 @@ def Decompress(buffer: bytes, method, decompressSize = 0) -> bytes:
         return result
     elif method == "Zlib":
         from zlib import decompress as zDecompress
-        result = zDecompress(buffer, bufsize=decompressSize)
+        result = zDecompress(buffer)
         assert len(result) == decompressSize
         return result
     elif method == "LZ4":

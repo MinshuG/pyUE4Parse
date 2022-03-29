@@ -4,7 +4,7 @@ import time
 from typing import Dict, Optional, Union
 
 from UE4Parse import Logger
-from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.BinaryReader import Align, BinaryStream
 from UE4Parse.Encryption.FAESKey import FAESKey
 from UE4Parse.Exceptions.Exceptions import InvalidEncryptionKey
 from UE4Parse.IO.IoObjects.FIoStoreEntry import FIoStoreEntry
@@ -209,13 +209,12 @@ class PakReader:
             CompressedBlockOffset = baseOffset + FPakEntry.GetSize(EPakVersion.LATEST, compressionMethodIndex,
                                                                    CompressionBlocksCount)
 
-            for _ in CompressionBlocks:
+            for _ in range(CompressionBlocksCount):
                 compressedStart = CompressedBlockOffset
                 compressedEnd = CompressedBlockOffset + reader.readUInt32()
                 CompressionBlocks.append(FPakCompressedBlock(None, compressedStart, compressedEnd))
 
-                align = compressedEnd - compressedStart
-                CompressedBlockOffset += align + CompressedBlockAlignment - (align % CompressedBlockAlignment)
+                CompressedBlockOffset += Align(compressedEnd-compressedStart, CompressedBlockAlignment)
 
         entry = FPakEntry(None)
         entry.Name = name

@@ -18,26 +18,6 @@ def remove_slash(string):
         return string[1:]
     return string
 
-
-def convert_path(path):
-    path = path.split("/")
-    content_index = -1
-    for i, x in enumerate(path[::-1]):
-        if x == "Content":
-            content_index = i - (len(path) - 1)
-            break
-    path = path[abs(content_index) - 1:]
-    b_rcontent = True
-    fixed_path = [""]
-    for x in path:
-        if x == "Content" and b_rcontent:
-            b_content = False
-            continue
-        fixed_path.append(x)
-
-    return "/".join(fixed_path).rstrip(".umap").rstrip(".uasset")
-
-
 class DirectoryStorage:
     IsCaseInsensitive: bool
     _files: Dict[str, 'GameFile']
@@ -59,7 +39,6 @@ class DirectoryStorage:
 
     def process_index(self, index: Dict[str, 'GameFile']):
         self._files: Dict[str, 'GameFile'] = {}
-        self._raw_names = {}
         for entry, IndexEntry in index.items():
             if entry.endswith((".uexp", ".ubulk", ".uptnl")):
                 continue
@@ -84,20 +63,10 @@ class DirectoryStorage:
             else:
                 self._files[path] = IndexEntry
 
-            if re.search(r"/Plugins/GameFeatures/.*/Content/", path):
-                path_ = convert_path(path)
-                self._raw_names[path_] = path
-
-
-    def get_full_path(self, path: str) -> Optional[str]:
-        return self._raw_names.get(path)
-
     @singledispatchmethod
     def try_get(self, path: str, default=None) -> Optional[str]:
         if out := self._files.get(path.lower() if self.IsCaseInsensitive else path, None):
             return out
-        elif out := self._raw_names.get(path):
-            return self.try_get(out, default)
         return default
 
     @try_get.register

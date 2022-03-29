@@ -35,6 +35,7 @@ class AbstractVfsFileProvider(ABC):
         self._files = DirectoryStorageProvider(self.IsCaseInsensitive)
         self.GameName = ""
         self._file_streams = {}
+        self.virtual_paths = {}
 
     @property
     def files(self):
@@ -161,6 +162,60 @@ class AbstractVfsFileProvider(ABC):
             root = k.split("/")[0]
             if root != "Engine":
                 self.GameName = root
+
+    def load_virtual_paths(self) -> int:
+        import re
+        import json
+        pattern = re.compile(f"^{self.GameName}/Plugins/.+.upluginmanifest$", re.IGNORECASE)
+
+        count = 0
+        for _, v in self.files:
+            if re.match(pattern, v.Name):
+                try:
+                    manifest = json.load(self.get_reader(v))
+                except Exception as _:
+                    pass
+                if "Contents" in manifest:
+                    for content in manifest["Contents"]:
+                        if "File" in content:
+                            s = content["File"].replace("../../../", "").split("/")
+                            virtual_path = "/".join(s[:-1])
+                            plugin_name = s[-1].split(".")[0]
+                            if content.get("Descriptor", {}).get("CanContainContent", False):
+                                if self.IsCaseInsensitive:
+                                    self.virtual_paths[plugin_name.lower()] = virtual_path.lower()
+                                else:
+                                    self.virtual_paths[plugin_name] = virtual_path
+                                count += 1
+        logger.info(f"Loaded {count} virtual paths")
+        return count
+
+    def fix_path(self, path: str) -> str:
+        path = path.lower() if self.IsCaseInsensitive else path
+        root = path[:path.index("/", path.index("/")+1)]
+
+        if root.lower() == self.GameName.lower():
+            return path
+        if root.startswith("/"): root = root[1:]
+
+        if root.lower() == "game":
+            if self.IsCaseInsensitive:
+                path = path.replace("/game", f"{self.GameName.lower()}/content", 1)
+            else:
+                path = path.replace("/Game", f"{self.GameName}/Content", 1)
+
+        if plugin_path := self.virtual_paths.get(root):
+            if self.IsCaseInsensitive:
+                path = plugin_path + "/content" + path[path.index(root)+len(root):]
+            else:
+                path = plugin_path + "/Content" + path[path.index(root)+len(root):]
+            return path
+
+        return path
+
+    @abstractmethod
+    def get_reader(self, path: str):
+        pass
 
     @abstractmethod
     def export_type_event(self, *args, **kwargs):

@@ -10,7 +10,6 @@ from .Vfs import AbstractVfsFileProvider
 import os
 from glob import glob
 
-from .utils import fixpath
 from ..Assets.PackageReader import IoPackageReader, LegacyPackageReader, Package, EPackageLoadMode
 from ..IO.IoObjects import FIoStoreEntry
 from ..IoObjects.FImportedPackage import FPackageId
@@ -86,15 +85,20 @@ class DefaultFileProvider(AbstractVfsFileProvider):
                     return self._file_streams[name]
         raise FileNotFoundError(f"File {path} not found.")
 
-    def get_reader(self, path: str):  # TODO Game file overload
+    @singledispatchmethod
+    def get_reader(self, path: str):
         name = os.path.splitext(path)[0]
-        name = fixpath(name, self.GameName)
+        name = self.fix_path(name)
         name = name.lower() if self.IsCaseInsensitive else name
         package = self.files.get(name)
         if package is None:
             logger.error(f"Requested Package \"{path}\" not found.")
             return None
         return package.get_data()
+
+    @get_reader.register
+    def get_reader(self, file: GameFile):
+        return file.get_data()
 
     def export_type_event(self, *args, **kwargs):
         if len(args) > 0:
@@ -120,7 +124,7 @@ class DefaultFileProvider(AbstractVfsFileProvider):
             package = self.files.get(name)
         else:
             name = os.path.splitext(name)[0]
-            name = fixpath(name, self.GameName)
+            name = self.fix_path(name)
             name = name.lower() if self.IsCaseInsensitive else name
             package = self.files.get(name)
 

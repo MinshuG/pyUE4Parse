@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
+    from UE4Parse.BinaryReader import BinaryStream
     from UE4Parse.PakFile.PakReader import PakReader
     from UE4Parse.IO.IoStoreReader import FFileIoStoreReader
 
@@ -20,7 +21,7 @@ class GameFile(ABC):
         pass
 
     @abstractmethod
-    def get_data(self):
+    def get_data(self) -> 'BinaryStream':
         ...
 
     def __repr__(self):
