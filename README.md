@@ -1,9 +1,15 @@
-**pak and ue4 asset parser**
+**UE4/5 Asset Parser**
 
-[![pypi](https://img.shields.io/pypi/v/ue4parse.svg)](https://pypi.python.org/pypi/ue4parse)
+<!-- ~[![pypi](https://img.shields.io/pypi/v/ue4parse.svg)](https://pypi.python.org/pypi/ue4parse) -->
 
 ## Installation
-`python -m pip install ue4parse`
+`python -m pip install git+https://github.com/MinshuG/pyUE4Parse.git`
+
+## Features
+* Parse UE4/5 asset files(.uasset, .umap, .uexp, .ubulk)
+* Convert Textures to PIL Image object
+* Convert assets to json
+* Supports reading .pak/.utoc containers
 
 
 ## Usages
@@ -35,7 +41,7 @@ provider.submit_keys(aeskeys)  # mount files
 
 gc.enable() # enable garbage collector again
 
-provider.mappings = MappingProvider()
+provider.mappings = MappingProvider("path/to/mappings.usmap")
 
 package_path = 'FortniteGame/Content/Animation/Game/MainPlayer/Skydive/ParaGlide/MechanicalEngineer/BS_MechanicalEngineer_Into_NoPack_GLIDER'
 
@@ -65,10 +71,10 @@ if texture := package.find_export_of_type("Texture2D"):
 ## Links
 
 - [Trello](https://trello.com/b/yp0hx22L/pyue4parse)
-
+- [CUE4Parse](https://github.com/FabianFG/CUE4Parse)
 ## Notes for Developers
 
-- Developers can use pyximport for development purposes 
+- Developers can use pyximport for development purposes (loading cython extensions)
 
     ```python 
     import pyximport

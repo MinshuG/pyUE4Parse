@@ -18,7 +18,7 @@ extensions = cythonize(extensions)
 
 setup(
     name="UE4Parse",
-    version="0.0.1",
+    version="0.0.2",
     description="ue4 asset parser",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -29,6 +29,6 @@ setup(
         'License :: OSI Approved :: MIT License'
     ],
     install_requires=["pycryptodome", "lz4", "pyUsmap", "pillow", "quicktex", "astc_decomp"],
-    packages=find_packages(),
+    packages=find_packages("./UE4Parse/*"),
     ext_modules=extensions,
 )

@@ -1,7 +1,6 @@
 [project]
 name = "UE4Parse"
-version = "0.0.1"
-description = "ue4 asset parser"
+description = "ue4/5 asset parser"
 authors = [
     "MinshuG"
 ]
@@ -11,7 +10,7 @@ python = "^3.8"
 homepage = "https://github.com/MinshuG/pyUE4Parse"
 repository = "https://github.com/MinshuG/pyUE4Parse"
 
-keywords = ["UE4"]
+keywords = ["UE4", "UE5", "Unreal Engine"]
 
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -19,5 +18,5 @@ classifiers = [
 ]
 
 [build-system]
-requires = ["setuptools~=56.0.0", "Cython~=3.0a5"]
+requires = ["wheel", "setuptools~=56.0.0", "Cython~=3.0a5"]
 build-backend = "setuptools.build_meta"
