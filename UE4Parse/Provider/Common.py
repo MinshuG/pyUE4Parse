@@ -21,6 +21,10 @@ class GameFile(ABC):
         pass
 
     @abstractmethod
+    def get_size(self) -> int:
+        ...
+
+    @abstractmethod
     def get_data(self) -> 'BinaryStream':
         ...
 

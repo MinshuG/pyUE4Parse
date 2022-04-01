@@ -9,18 +9,18 @@ def Decompress(buffer: bytes, method, decompressSize = 0) -> bytes:
     elif method == "Gzip":
         from gzip import decompress as gDecompress
         result = gDecompress(buffer)
-        assert len(result) == decompressSize
+        assert len(result) != 0
         return result
     elif method == "Zlib":
         from zlib import decompress as zDecompress
         result = zDecompress(buffer)
-        assert len(result) == decompressSize
+        assert len(result) != 0
         return result
     elif method == "LZ4":
         from lz4.frame import LZ4FrameDecompressor
         lz4Decompress = LZ4FrameDecompressor().decompress
         result = lz4Decompress(buffer, max_length=decompressSize)
-        assert len(result) == decompressSize
+        assert len(result) != 0
         return result
     else:
         raise NotImplementedError("Unknown Compression Method " + str(method))

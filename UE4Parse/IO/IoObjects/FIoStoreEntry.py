@@ -63,5 +63,8 @@ class FIoStoreEntry(GameFile):
         #     if ioStore.TocResource.Header.is_encrypted():
         #         self.Encrypted = True
 
+    def get_size(self) -> int:
+        return self.Length
+
     def get_data(self) -> BinaryStream:
         return self.Container.Read(self.ChunkId)

@@ -81,6 +81,9 @@ class FPakEntry(GameFile):
 
         self.StructSize = reader.base_stream.tell() - StartOffset
 
+    def get_size(self) -> int:
+        return self.Size
+
     def get_data(self) -> BinaryStream:
         stream: BinaryStream = self.Container.reader
         key: FAESKey = self.Container.AesKey

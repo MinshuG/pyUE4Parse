@@ -1,4 +1,3 @@
-from UE4Parse.Assets.Objects.EPackageFlags import EPackageFlags
 import os
 from io import BufferedReader, BytesIO
 from struct import *
@@ -146,8 +145,24 @@ class BinaryStream(BinaryIO):
     def readDouble(self) -> float:
         return self.unpack('d', 8)
 
+    def read7BitEncodedInt(self) -> int:
+        count = 0
+        shift = 0
+        while True:
+            # if shift == 5 * 7:  # 5 bytes max per Int32, shift += 7
+            #     raise Exception("Archive is corrupted.")
+            b = self.readUInt8()
+            count |= (b & 0x7F) << shift
+            shift += 7
+            if (b & 0x80) == 0:
+                break
+        return count
+
     def readString(self) -> str:
         length = self.readByteToInt()
+        return self.unpack(str(length) + 's', length).decode("utf-8")
+
+    def readBytesAsString(self, length: int) -> str:
         return self.unpack(str(length) + 's', length).decode("utf-8")
 
     def readFString(self) -> str:
