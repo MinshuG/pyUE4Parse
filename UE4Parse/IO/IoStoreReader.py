@@ -2,7 +2,7 @@ from UE4Parse.Assets.Objects.FGuid import FGuid
 import io
 import os
 import time
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, List, Optional
 
 from UE4Parse import Logger
 from UE4Parse.BinaryReader import BinaryStream, Align
@@ -63,7 +63,7 @@ class FFileIoStoreReader:
         self.TocResource = FIoStoreTocResource(tocStream, tocReadOptions)
         tocStream.close()
 
-        containerStreams: BinaryStream = []
+        containerStreams: List[BinaryStream] = []
         if self.TocResource.Header.PartitionCount <= 1:
             containerStreams.append(streamOpenFunc(dir_.replace(".utoc", ".ucas")))
         else:
@@ -223,7 +223,7 @@ class FFileIoStoreReader:
                 outfile[path] = entry
                 file = self.GetNextFile(file)
 
-            childoutfile, childoutchunk = self.ReadIndex(sub_dir_name, self.GetChildDirectory(dir), )
+            childoutfile, childoutchunk = self.ReadIndex(sub_dir_name, self.GetChildDirectory(dir))
             outfile.update(childoutfile)
             outchunk.update(childoutchunk)
             dir = self.GetNextDirectory(dir)

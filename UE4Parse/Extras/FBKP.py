@@ -1,12 +1,11 @@
-import sys
-from typing import NamedTuple
+from typing import Dict, NamedTuple
 from UE4Parse.Assets.Objects.Decompress import Decompress
 from UE4Parse.BinaryReader import BinaryStream
 
 Entry = NamedTuple('Entry', Size=int, IsEncrypted=bool, Path=str)
 
 class FModelBackupReader:
-    entries: list
+    entries: Dict[str, Entry]
 
     def __init__(self, fp: BinaryStream) -> None:
         if not isinstance(fp, BinaryStream):
@@ -14,7 +13,7 @@ class FModelBackupReader:
             assert stream.size != -1
         else:
             stream = fp
-        self.entries = []
+        self.entries = {}
 
         if stream.readUInt32() == 0x184D2204:
             stream.seek(0, 0)
@@ -31,19 +30,18 @@ class FModelBackupReader:
             path = stream.readBytesAsString(_size)
             # path = stream.readBytesAsString(stream.read7BitEncodedInt())
             stream.seek(4)
-            self.entries.append(Entry(size, isEncrypted, path))
+            self.entries[path] = Entry(size, isEncrypted, path)
 
-    def __getitem__(self, index):
-        return self.entries[index]
+    def __getitem__(self, key):
+        return self.entries[key]
     
     def get(self, path: str) -> Entry:
-        for entry in self.entries:
-            if entry.Path == path:
-                return entry
+        if path in self.entries:
+            return self.entries[path]
         return None
 
     def contains(self, path: str) -> bool:
-        return self.get(path) is not None
+        return path in self.entries
 
     def __len__(self):
         return len(self.entries)
