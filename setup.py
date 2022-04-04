@@ -29,6 +29,6 @@ setup(
         'License :: OSI Approved :: MIT License'
     ],
     install_requires=["pycryptodome", "lz4", "pyUsmap", "pillow", "quicktex", "astc_decomp"],
-    packages=find_packages("./UE4Parse/*"),
+    packages=find_packages(),
     ext_modules=extensions,
 )

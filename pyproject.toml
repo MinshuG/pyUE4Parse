@@ -18,5 +18,5 @@ classifiers = [
 ]
 
 [build-system]
-requires = ["wheel", "setuptools~=56.0.0", "Cython~=3.0a5"]
+requires = ["setuptools~=56.0.0", "Cython~=3.0a5"]
 build-backend = "setuptools.build_meta"
