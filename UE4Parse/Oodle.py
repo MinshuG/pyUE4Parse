@@ -6,9 +6,10 @@ import lzma
 import os
 import urllib.request
 
+lib = None
+OODLE_DLL_NAME = "oo2core_9_win64.dll"
 
-def load_lib() -> bool:
-    OODLE_DLL_NAME = "oo2core_9_win64.dll"
+def load_lib() -> bool:    
     libname = os.path.abspath(
         os.path.join(os.getcwd(), OODLE_DLL_NAME)
     )
@@ -41,7 +42,10 @@ def load_lib() -> bool:
 
     try:
         global lib
-        lib = ctypes.windll.LoadLibrary(libname)
+        if os.name == "nt":
+            lib = ctypes.windll.LoadLibrary(libname)
+        else:
+            lib = ctypes.CDLL(libname)
         return True
     except Exception as e:
         print("Failed to load library", e)
@@ -71,23 +75,25 @@ def OodleLZ_Decompress(
         i: int = 0,
         ThreadModule: int = 3,
 ):
-    if load_lib():
-        data = lib.OodleLZ_Decompress(
-            buffer,
-            bufferSize,
-            result,
-            outputBufferSize,
-            a,
-            b,
-            c,
-            d,
-            e,
-            f,
-            g,
-            h,
-            i,
-            ThreadModule,
-        )
-        return data
-    else:
-        raise Exception("Oodle dll is not loaded")
+    if lib is None:
+        if not load_lib():
+            raise Exception("Oodle dll is not loaded")
+
+    data = lib.OodleLZ_Decompress(
+        buffer,
+        bufferSize,
+        result,
+        outputBufferSize,
+        a,
+        b,
+        c,
+        d,
+        e,
+        f,
+        g,
+        h,
+        i,
+        ThreadModule,
+    )
+    return data
+    
