@@ -14,12 +14,12 @@ if TYPE_CHECKING:
 
 
 class FPakEntry(GameFile):
-    Flags: int = 0
     Flag_Encrypted = 0x01
     # above 5 lines are useless ?
 
     __slots__ = ("Offset", "Size", "UncompressedSize", "CompressionBlocks",
-                 "CompressionBlockSize", "CompressionMethodIndex", "StructSize", "_Encrypted")
+                 "CompressionBlockSize", "CompressionMethodIndex", "StructSize", "_Encrypted", "Flags")
+    Flags: int
     _Encrypted: bool
     Offset: int
     Size: int
