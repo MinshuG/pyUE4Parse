@@ -25,7 +25,6 @@ class FPackageFileSummary:
     CustomVersionContainer: FCustomVersionContainer
 
     def __init__(self, reader: BinaryStream) -> None:
-        self.IsUE3Package = False
         Tag = reader.readUInt32()
         if Tag != PACKAGE_FILE_TAG and Tag != PACKAGE_FILE_TAG_SWAPPED:
             raise InvalidMagic("Not a UE package")
@@ -50,12 +49,10 @@ class FPackageFileSummary:
             if self.FileVersionUE4.value != 0 and self.FileVersionLicenseeUE4.value != 0:
                 self.bUnversioned = True
         else:
-            self.IsUE3Package = True
-             #raise ParserException("Can not load UE3 packages.")
+            raise ParserException("Can not load UE3 packages.")
 
         self.TotalHeaderSize = reader.readInt32()
-        reader.dump_bytes(20)
-        self.FolderName = reader.readFString() # ue3 if (Ar.ArVer >= 269)
+        self.FolderName = reader.readFString()
 
         self.PackageFlags = reader.readUInt32()
         with suppress(ValueError):
@@ -64,7 +61,7 @@ class FPackageFileSummary:
         self.NameCount = reader.readInt32()
         self.NameOffset = reader.readInt32()
 
-        if self.Isself.FileVersionUE4.value >= EUnrealEngineObjectUE4Version.VER_UE4_ADDED_PACKAGE_SUMMARY_LOCALIZATION_ID.value:
+        if self.FileVersionUE4.value >= EUnrealEngineObjectUE4Version.VER_UE4_ADDED_PACKAGE_SUMMARY_LOCALIZATION_ID.value:
             self.LocalizationId = reader.readFString()
 
         if self.FileVersionUE4.value >= EUnrealEngineObjectUE4Version.VER_UE4_SERIALIZE_TEXT_IN_PACKAGES.value or self.FileVersionUE4.value == 0:
@@ -75,20 +72,7 @@ class FPackageFileSummary:
         self.ExportOffset = reader.readInt32()
         self.ImportCount = reader.readInt32()
         self.ImportOffset = reader.readInt32()
-        self.DependsOffset = reader.readInt32() # ue (Ar.ArVer >= 415)
-
-        # if (Ar.ArVer >= 623)
-        #	Ar << f38 << f3C << f40;
-
-        """
-        if (Ar.ArVer >= 584)
-        {
-        read_unk38:
-            int32 unk38;
-            Ar << unk38;
-        }
-        """
-
+        self.DependsOffset = reader.readInt32()
         if self.FileVersionUE4.value >= EUnrealEngineObjectUE4Version.VER_UE4_ADD_STRING_ASSET_REFERENCES_MAP.value or self.FileVersionUE4.value == 0:
             self.SoftPackageReferencesCount = reader.readInt32()
             self.SoftPackageReferencesOffset = reader.readInt32()
@@ -96,8 +80,7 @@ class FPackageFileSummary:
         if self.FileVersionUE4.value >= EUnrealEngineObjectUE4Version.VER_UE4_ADDED_SEARCHABLE_NAMES.value or self.FileVersionUE4.value == 0:
             self.SearchableNamesOffset = reader.readInt32()
 
-        if not self.IsUE3Package:
-            self.ThumbnailTableOffset = reader.readInt32()
+        self.ThumbnailTableOffset = reader.readInt32()
         self.Guid = FGuid(reader)
 
         if reader.game == EUEVersion.GAME_VALORANT:

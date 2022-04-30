@@ -17,7 +17,7 @@ class FAssetReader(BinaryStream):
     PackageReader: 'Package'
     absolute_offset: int
 
-    def __init__(self, fp: Union[BinaryIO, str, bytes], owner: 'Package', size: int = -1, absolute_offset: int = 0, ):
+    def __init__(self, fp: Union[BinaryIO, str, bytes], owner: 'Package', size: int = -1, absolute_offset: int = 0):
         super().__init__(fp, size)
         self.PackageReader = owner
         self.absolute_offset = absolute_offset

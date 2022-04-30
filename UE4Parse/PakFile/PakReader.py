@@ -145,9 +145,15 @@ class PakReader:
         tempentries = {}
         for directoryEntry in PathHashIndex:
             for hasIndexEntry in directoryEntry.Entries:
-                path = directoryEntry.Directory + hasIndexEntry.FileName
-                if Case_insensitive:
-                    path = path.lower()
+                if self.MountPoint.endswith("/") and directoryEntry.Directory.startswith("/"):
+                    if len(directoryEntry.Directory) == 1:
+                        path = self.MountPoint + hasIndexEntry.FileName
+                    else:
+                        path = self.MountPoint + directoryEntry.Directory[1:] + hasIndexEntry.FileName
+                else:
+                    path = self.MountPoint + directoryEntry.Directory + hasIndexEntry.FileName
+
+                if Case_insensitive: path = path.lower()
 
                 encodedEntryReader.seek(hasIndexEntry.Location, 0)
                 entry = self.BitEntry(path, encodedEntryReader)
