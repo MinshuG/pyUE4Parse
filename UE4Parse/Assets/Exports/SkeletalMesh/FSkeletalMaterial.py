@@ -19,3 +19,12 @@ class FSkeletalMaterial:
 
         if FRenderingObjectVersion().get(reader) >= FRenderingObjectVersion.TextureStreamingMeshUVChannelData:
             self.UVChannelData = FMeshUVChannelInfo(reader)
+        else:
+            self.UVChannelData = None
+
+    def GetValue(self):
+        return {
+            'Material': self.Material.GetValue(),
+            'MaterialSlotName': self.MaterialSlotName.GetValue(),
+            'UVChannelData': self.UVChannelData.GetValue() if self.UVChannelData else None
+        }

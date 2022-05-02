@@ -14,3 +14,10 @@ class FMeshUVChannelInfo:
         self.bInitialized = reader.readBool()
         self.bOverrideDensities = reader.readBool()
         self.LocalUVDensities = [reader.readFloat() for _ in range(TEXSTREAM_MAX_NUM_UVCHANNELS)]
+    
+    def GetValue(self):
+        return {
+            'bInitialized': self.bInitialized,
+            'bOverrideDensities': self.bOverrideDensities,
+            'LocalUVDensities': self.LocalUVDensities
+        }

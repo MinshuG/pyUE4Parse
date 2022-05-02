@@ -19,3 +19,12 @@ class FStaticMaterial:
 
         if FRenderingObjectVersion().get(reader) >= FRenderingObjectVersion.TextureStreamingMeshUVChannelData:
             self.UVChannelData = FMeshUVChannelInfo(reader)
+        else:
+            self.UVChannelData = None
+
+    def GetValue(self):
+        return {
+            'MaterialInterface': self.MaterialInterface,
+            'MaterialSlotName': self.MaterialSlotName,
+            'UVChannelData': self.UVChannelData.GetValue() if self.UVChannelData else None
+        }

@@ -16,3 +16,9 @@ class USkeletalMesh(UObject):
         strip_data = FStripDataFlags(self.reader)
         self.ImportedBounds = FBoxSphereBounds(self.reader)
         self.Materials  = self.reader.readTArray(lambda:FSkeletalMaterial(self.reader))
+
+    def GetValue(self):
+        props = super().GetValue()
+        props["ImportedBounds"] = self.ImportedBounds.GetValue()
+        props["Materials"] = [m.GetValue() for m in self.Materials]
+        return props
