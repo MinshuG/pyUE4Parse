@@ -9,8 +9,8 @@ if TYPE_CHECKING:
 
 class EUeBase(ABC):
     class Type(IntEnum): pass
-    GUID: FGuid
+    GUID: 'FGuid'
 
     @abstractmethod
-    def get(self, reader: FAssetReader):
+    def get(self, reader: 'FAssetReader'):
         pass
