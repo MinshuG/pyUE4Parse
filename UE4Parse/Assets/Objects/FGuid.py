@@ -46,5 +46,8 @@ class FGuid:
     def __str__(self):
         return self.GetValue()
 
+    def __repr__(self):
+        return f"FGuid({self.A}, {self.B}, {self.C}, {self.D})"
+
     def __hash__(self) -> int:
         return hash(self.GetValue())

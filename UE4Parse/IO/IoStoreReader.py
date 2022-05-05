@@ -59,7 +59,7 @@ class FFileIoStoreReader:
         self.Directory = dir_
         self.caseinSensitive = caseinSensitive
         self.ContainerFile = FFileIoStoreContainerFile()
-        
+
         self.TocResource = FIoStoreTocResource(tocStream, tocReadOptions)
         tocStream.close()
 
@@ -89,10 +89,7 @@ class FFileIoStoreReader:
 
         self._directoryIndexBuffer = self.TocResource.DirectoryIndexBuffer  # TODO no
         # del self.TocResource.ChunkIds
-        if self.HasDirectoryIndex:
-            self.ContainerHeader = self.ReadContainerHeader()
-        else:
-            self.ContainerHeader = None
+        self.ContainerHeader = None
 
     def get_encryption_key_guid(self) -> FGuid:
         return self.TocResource.Header.EncryptionKeyGuid
@@ -126,6 +123,9 @@ class FFileIoStoreReader:
         self.aeskey = key
         starttime = time.time()
         if self.HasDirectoryIndex:
+            if self.HasDirectoryIndex:
+                self.ContainerHeader = self.ReadContainerHeader()
+
             if not self.IsEncrypted:
                 IndexReader = BinaryStream(io.BytesIO(self._directoryIndexBuffer), len(self._directoryIndexBuffer))
             else:
