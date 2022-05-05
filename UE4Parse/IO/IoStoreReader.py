@@ -209,6 +209,13 @@ class FFileIoStoreReader:
         return self._directory_index.FileEntries[file.ToIndex()]
 
     def ReadIndex(self, directoryName: str, dir: FIoDirectoryIndexHandle):
+        class State:
+            def __init__(self, dir: FIoDirectoryIndexHandle, path: str, directory_name: str):
+                self.dir = dir
+                self.path = path
+                self.directory_name = directory_name
+
+        states = []
         outfile = {}
         outchunk = {}
         while dir.isValid():
@@ -216,17 +223,34 @@ class FFileIoStoreReader:
             file = self.GetFile(dir)
             while file.isValid():
                 name = self.GetFileName(file)
-                path = sub_dir_name + name  # self._directory_index.MountPoint +
+                path = sub_dir_name + name
                 data = self.GetFileData(file)  # UserData
                 entry = FIoStoreEntry(self, data, path)
                 outchunk[entry.ChunkId] = path
                 outfile[path] = entry
                 file = self.GetNextFile(file)
 
-            childoutfile, childoutchunk = self.ReadIndex(sub_dir_name, self.GetChildDirectory(dir))
-            outfile.update(childoutfile)
-            outchunk.update(childoutchunk)
-            dir = self.GetNextDirectory(dir)
+            # if True: # flattened
+            next_dir = self.GetNextDirectory(dir)
+            if next_dir.isValid(): states.append(State(self.GetNextDirectory(dir), sub_dir_name, directoryName))
+
+            child_dir = self.GetChildDirectory(dir)
+            if child_dir.isValid():
+                dir = child_dir
+                directoryName = sub_dir_name
+            else:
+                if len(states) > 0:
+                    state = states.pop()
+                    dir = state.dir
+                    sub_dir_name = state.path
+                    directoryName = state.directory_name
+                else:
+                    dir = self.GetNextDirectory(dir)
+            # else:
+            #     childoutfile, childoutchunk = self.ReadIndex(sub_dir_name, self.GetChildDirectory(dir))
+            #     outfile.update(childoutfile)
+            #     outchunk.update(childoutchunk)
+            #     dir = self.GetNextDirectory(dir)
 
         return outfile, outchunk
 

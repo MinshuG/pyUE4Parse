@@ -234,4 +234,5 @@ class PakReader:
         entry.StructSize = FPakEntry.GetSize(EPakVersion.LATEST, compressionMethodIndex,
                                              len(CompressionBlocks))
         entry.CompressionBlockSize = CompressionBlockSize
+        entry.Flags = 1 if encrypted else 0
         return entry

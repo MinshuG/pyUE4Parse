@@ -166,7 +166,7 @@ class AbstractVfsFileProvider(ABC):
     def load_virtual_paths(self) -> int:
         import re
         import json
-        pattern = re.compile(f"^{self.GameName}/Plugins/.+.upluginmanifest$", re.IGNORECASE)
+        pattern = re.compile(f"^/{self.GameName}/Plugins/.+.upluginmanifest$", re.IGNORECASE)
 
         count = 0
         for _, v in self.files:
