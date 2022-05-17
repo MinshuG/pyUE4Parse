@@ -77,7 +77,7 @@ class BinaryStream(BinaryIO):
         raise NotImplementedError()
 
     def read(self, length=-1) -> bytes:
-        if length > 0:
+        if length >= 0:
             return self.readBytes(length)
         return self.base_stream.read()
 
