@@ -1,7 +1,7 @@
 import os
 from io import BufferedReader, BytesIO
 from struct import *
-from typing import BinaryIO, Tuple, TypeVar, Union, TYPE_CHECKING, AnyStr, Optional, Iterable, Type
+from typing import Any, BinaryIO, Callable, Tuple, TypeVar, Union, TYPE_CHECKING, AnyStr, Optional, Iterable, Type
 
 from UE4Parse import Logger
 from UE4Parse.Exceptions.Exceptions import ParserException
@@ -191,14 +191,14 @@ class BinaryStream(BinaryIO):
             byte = self.base_stream.read(length)[:-1]
             return byte.decode("utf-8")
 
-    def readTArray(self, func: T, *args) -> Tuple[Type[T]]:
+    def readTArray(self, func: Union[Callable[[Any], T], Callable[[], T]], *args) -> Tuple[T]:
         SerializeNum = self.readInt32()
         return tuple(func(*args) for _ in range(SerializeNum))
 
-    def readTArray2(self, func: T, size: int, *args) -> Tuple[Type[T]]:
+    def readTArray2(self, func: Union[Callable[[Any], T], Callable[[], T]], size: int, *args) -> Tuple[T]:
         return tuple(func(*args) for _ in range(size))
 
-    def readTArray_W_Arg(self, func: T, *args) -> Tuple[Type[T]]:  # argument
+    def readTArray_W_Arg(self, func: Union[Callable[[Any], T], Callable[[], T]], *args) -> Tuple[T]:  # argument
         """use readTArray"""
         return self.readTArray(func, *args)
 

@@ -335,7 +335,9 @@ class IoPackageReader(Package):
 
                     self.reader.seek(currentExportDataOffset, 0)
 
-                    export_type = resolveObjectIndex(self, provider.GlobalData, index=Export.ClassIndex).getName()
+                    export_resolved = resolveObjectIndex(self, provider.GlobalData, index=Export.ClassIndex)
+                    if export_resolved is None: continue
+                    export_type = export_resolved.getName()
                     ExportData = Registry().get_export_reader(export_type.string, Export, self.reader)
                     error = None
                     try:

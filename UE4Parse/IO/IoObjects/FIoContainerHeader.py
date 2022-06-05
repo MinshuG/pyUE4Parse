@@ -14,6 +14,7 @@ class EIoContainerHeaderVersion(IntEnum):
         BeforeVersionWasAdded = -1  # Custom constant to indicate pre-UE5 data
         Initial = 0
         LocalizedPackages = 1
+        OptionalSegmentPackages = 2
         LatestPlusOne = auto()
         Latest = LatestPlusOne - 1
 
@@ -21,7 +22,7 @@ class FIoContainerHeader:
     Signature = 0x496f436e
 
     ContainerId: int  # FIoContainerId ulong
-    PackageCount: int
+    # PackageCount: int
     ContainerNameMap: List['FNameEntrySerialized']
     PackageIds: List['FPackageId']
     StoreEntries: List[FFilePackageStoreEntry]
@@ -40,7 +41,8 @@ class FIoContainerHeader:
             version = EIoContainerHeaderVersion(reader.readInt32())
 
         self.ContainerId = reader.readUInt64()
-        self.PackageCount = reader.readUInt32()
+        if version < EIoContainerHeaderVersion.OptionalSegmentPackages:
+            PackageCount = reader.readUInt32()
 
         if version == EIoContainerHeaderVersion.BeforeVersionWasAdded:
             raise NotImplementedError()
@@ -49,7 +51,7 @@ class FIoContainerHeader:
 
         size = reader.readInt32()
         end = size + reader.tell()
-        self.StoreEntries = list(reader.readTArray2(lambda: FFilePackageStoreEntry(reader, ueversion), self.PackageCount))
+        self.StoreEntries = list(reader.readTArray2(lambda: FFilePackageStoreEntry(reader, ueversion), len(self.PackageIds)))
         reader.seek(end, 0)
 
         if version >= EIoContainerHeaderVersion.Initial:

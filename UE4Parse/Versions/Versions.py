@@ -1,5 +1,3 @@
-from typing import Optional
-
 from UE4Parse.Versions.EUEVersion import EUEVersion
 
 

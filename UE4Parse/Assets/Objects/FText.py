@@ -35,7 +35,7 @@ class FText:
 
     @classmethod
     def default(cls):
-        cls = cls.__new__()
+        cls = cls.__new__(cls)
         cls.HistoryType = ETextHistoryBase._None
         cls.Text = _None()
         return cls

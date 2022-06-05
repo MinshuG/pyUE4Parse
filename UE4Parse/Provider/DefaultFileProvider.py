@@ -97,7 +97,7 @@ class DefaultFileProvider(AbstractVfsFileProvider):
         return package.get_data()
 
     @get_reader.register
-    def get_reader(self, file: GameFile):
+    def get_reader2(self, file: GameFile):
         return file.get_data()
 
     def export_type_event(self, *args, **kwargs):

@@ -45,7 +45,7 @@ class FFileIoStoreReader:
     caseinSensitive: bool
     _ue_version: EUEVersion
 
-    def __init__(self, dir_: str, tocStream: BinaryStream, streamOpenFunc: Callable[[int], BinaryStream], ue_version: EUEVersion, caseinSensitive: bool = True,
+    def __init__(self, dir_: str, tocStream: BinaryStream, streamOpenFunc: Callable[[str], BinaryStream], ue_version: EUEVersion, caseinSensitive: bool = True,
                  tocReadOptions: EIoStoreTocReadOptions = EIoStoreTocReadOptions.ReadDirectoryIndex):
         """
         :param dir_:
