@@ -1,5 +1,5 @@
 from enum import IntEnum, auto
-from typing import List, Tuple, TYPE_CHECKING
+from typing import List, TYPE_CHECKING
 
 from UE4Parse.IO.IoObjects.FFilePackageStoreEntry import FFilePackageStoreEntry
 from UE4Parse.Assets.Objects.FNameEntrySerialized import FNameEntrySerialized
