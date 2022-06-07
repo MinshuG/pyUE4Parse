@@ -46,13 +46,13 @@ class EPackageLoadMode(IntEnum):
 
 
 class Package(ABC):
-    NameMap: List[FNameEntrySerialized] = []
-    ImportMap: Tuple[Union[FObjectImport, FPackageObjectIndex]] = []
-    ExportMap: Tuple[FObjectExport, FExportMapEntry] = []
+    NameMap: List[FNameEntrySerialized]
+    ImportMap: Tuple[Union[FObjectImport, FPackageObjectIndex]]
+    ExportMap: Tuple[Union[FObjectExport, FExportMapEntry]]
     Summary: Union[FPackageFileSummary, FPackageSummary]
     Provider: 'DefaultFileProvider'
 
-    def get_summary(self) -> FPackageFileSummary:
+    def get_summary(self):
         return self.Summary
 
     def get_dict(self):

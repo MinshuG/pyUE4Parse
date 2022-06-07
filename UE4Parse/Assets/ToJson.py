@@ -1,5 +1,5 @@
 from UE4Parse.IoObjects.FExportMapEntry import FExportMapEntry
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple, Union
 
 from UE4Parse.Assets.Objects.FNameEntrySerialized import FNameEntrySerialized
 from UE4Parse.Assets.Objects.FObjectExport import FObjectExport
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 def ToJson(PackageReader: 'Package'):
     # NameMap: List[FNameEntrySerialized] = PackageReader.NameMap
     # ImportMap: List[FObjectImport] = PackageReader.ImportMap
-    ExportMap: List[FObjectExport, FExportMapEntry] = PackageReader.ExportMap
+    ExportMap: Tuple[Union[FObjectExport, FExportMapEntry]] = PackageReader.ExportMap
     # Dict = {"Exports": []}
     Exports = []
     # "ImportMap": [], "ExportMap": []

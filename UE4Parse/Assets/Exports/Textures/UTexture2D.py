@@ -58,6 +58,13 @@ class UTexture2D(UTexture):
             return  # no data
 
         PlatformData = self.data[0]
+        
+        if mip_index == -1:
+            for i, mip in enumerate(PlatformData.Mips):
+                if mip.BulkData.Data != None:
+                    mip_index = i
+                    break
+        
         mip_index = PlatformData.FirstMipToSerialize if mip_index == -1 else mip_index
 
         Mip = PlatformData.Mips[mip_index]
