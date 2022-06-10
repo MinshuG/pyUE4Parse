@@ -41,11 +41,6 @@ class UScriptStruct:
     Struct: StructInterface
 
     def __init__(self, reader: BinaryStream, StructName: str, readType: IntEnum) -> None:
-        if readType.value == 3:
-            # self.Struct = ZeroStruct()
-            print("zero read!!!")
-            # return
-
         self.read(reader, StructName, readType)
 
     def read(self, reader: BinaryStream, StructName: str, readType):
