@@ -1,7 +1,15 @@
 from typing import Union
 from functools import cached_property
-from Crypto.Cipher import AES
 
+from UE4Parse.Logger import get_logger
+logger = get_logger(__name__)
+
+try:
+    CryptoAval = True
+    from Crypto.Cipher import AES
+except ImportError:
+    CryptoAval = False
+    logger.warn("AES decryption unavailable(pycryptodome is not installed)")
 
 class FAESKey:
     __key: bytearray
@@ -27,6 +35,8 @@ class FAESKey:
 
     @cached_property
     def decryptor(self) -> AES.new:
+        if not CryptoAval:
+            raise ImportError("AES decryption unavailable pycryptodome is not installed")
         return AES.new(self.__key, AES.MODE_ECB)
 
     def decrypt(self, data: Union[bytearray, bytes]) -> bytes:

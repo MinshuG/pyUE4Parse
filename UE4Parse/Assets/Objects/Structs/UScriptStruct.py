@@ -1,6 +1,9 @@
+from enum import IntEnum
+from typing import Dict, Type
 from UE4Parse import Logger
 from UE4Parse.Assets.Exports import UObjects
 from UE4Parse.Assets.Objects.FGuid import FGuid
+from UE4Parse.Assets.Objects.Common import StructInterface
 from UE4Parse.Assets.Objects.Structs.Box import FBox, FBox2D
 from UE4Parse.Assets.Objects.Structs.Colors import FColor, FLinearColor
 from UE4Parse.Assets.Objects.Structs.CurveKey import FSimpleCurveKey, FRichCurveKey
@@ -35,17 +38,18 @@ class ZeroStruct: # TODO
         return "None"
 
 class UScriptStruct:
-    Struct: object
+    Struct: StructInterface
 
-    def __init__(self, reader: BinaryStream, StructName, readType) -> None:
+    def __init__(self, reader: BinaryStream, StructName: str, readType: IntEnum) -> None:
         if readType.value == 3:
-            self.Struct = ZeroStruct()
-            return
+            # self.Struct = ZeroStruct()
+            print("zero read!!!")
+            # return
 
-        self.read(reader, StructName)
+        self.read(reader, StructName, readType)
 
-    def read(self, reader: BinaryStream, StructName):
-        Structs = {
+    def read(self, reader: BinaryStream, StructName: str, readType):
+        Structs: Dict[str, Type[StructInterface]] = {
             "NavAgentSelector": FNavAgentSelectorCustomization,
             "GameplayTagContainer": FGameplayTagContainer,
             "Vector2D": FVector2D,
@@ -73,10 +77,13 @@ class UScriptStruct:
             "PerPlatformInt": FPerPlatformInt,
             "PerPlatformFloat": FPerPlatformFloat,
             "SkeletalMeshSamplingLODBuiltData": FSkeletalMeshSamplingLODBuiltData
-        }
+        }  # type: ignore
 
         if StructName in Structs:
-            self.Struct = Structs.get(StructName)(reader)
+            if readType.value == 3: # zero
+                self.Struct = Structs[StructName].default()
+            else:
+                self.Struct = Structs[StructName](reader)
         else:
             # logger.debug(f"Unsupported Struct {StructName}, using Fallback reader.")
             self.Struct = FallBackReader(reader, StructName)

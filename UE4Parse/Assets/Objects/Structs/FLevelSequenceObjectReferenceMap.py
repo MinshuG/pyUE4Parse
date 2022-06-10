@@ -1,11 +1,10 @@
+from UE4Parse.Assets.Objects.Common import StructInterface
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Objects.FGuid import FGuid
-from UE4Parse.Assets.Objects.FLevelSequenceLegacyObjectReference import (
-    FLevelSequenceLegacyObjectReference,
-)
+from UE4Parse.Assets.Objects.FLevelSequenceLegacyObjectReference import FLevelSequenceLegacyObjectReference
 
 
-class FLevelSequenceObjectReferenceMap:
+class FLevelSequenceObjectReferenceMap(StructInterface):
     position: int
     Map: dict
 
@@ -15,3 +14,12 @@ class FLevelSequenceObjectReferenceMap:
 
         for _ in range(length):
             self.Map[FGuid(reader)] = FLevelSequenceLegacyObjectReference(reader)
+
+    @classmethod
+    def default(cls):
+        inst = cls.__new__(cls)
+        inst.Map = {}
+        return inst
+
+    def GetValue(self):
+        return {x.GetValue() : y.GetValue() for x, y in self.Map.items()}

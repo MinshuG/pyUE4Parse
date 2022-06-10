@@ -1,11 +1,12 @@
 from functools import singledispatchmethod
 from typing import Union
+from UE4Parse.Assets.Objects.Common import StructInterface
 
 from UE4Parse.BinaryReader import BinaryStream
 
 
 # TODO Implement EGuidFormats
-class FGuid:
+class FGuid(StructInterface):
     position: int
     A: int
     B: int
@@ -37,6 +38,10 @@ class FGuid:
         if isinstance(o, str):
             return str(self).lower() == o.lower()
         return ((self.A ^ o.A) | (self.B ^ o.B) | (self.C ^ o.C) | (self.D ^ o.D)) == 0
+    
+    @classmethod
+    def default(cls):
+        return cls(0, 0, 0, 0)
 
     def GetValue(self):
         def formatter(a):
