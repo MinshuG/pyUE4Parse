@@ -1,7 +1,8 @@
+from UE4Parse.Assets.Objects.Common import StructInterface
 from UE4Parse.BinaryReader import BinaryStream
 
 
-class FPerPlatform:
+class FPerPlatform(StructInterface):
     def __init__(self):
         pass
 
@@ -20,6 +21,13 @@ class FPerPlatformInt(FPerPlatform):
         super().__init__()
         self.Cooked = reader.readBool()
         self.Value = reader.readInt32()
+    
+    @classmethod
+    def default(cls):
+        inst = cls.__new__(cls)
+        inst.Cooked = False
+        inst.Value = 0
+        return inst
 
 
 class FPerPlatformFloat(FPerPlatform):
@@ -30,3 +38,10 @@ class FPerPlatformFloat(FPerPlatform):
         super().__init__()
         self.Cooked = reader.readBool()
         self.Value = reader.readFloat()
+
+    @classmethod
+    def default(cls):
+        inst = cls.__new__(cls)
+        inst.Cooked = False
+        inst.Value = 0.0
+        return inst

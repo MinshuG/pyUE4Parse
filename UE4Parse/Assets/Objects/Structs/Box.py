@@ -1,8 +1,9 @@
+from UE4Parse.Assets.Objects.Common import StructInterface
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Objects.Structs import Vector
 
 
-class FBox:
+class FBox(StructInterface):
     position: int
     Min: Vector.FVector
     Max: Vector.FVector
@@ -14,6 +15,13 @@ class FBox:
         self.Max = Vector.FVector(reader)
         self.bIsValid = reader.readByte() != 0
 
+    @classmethod
+    def default(cls):
+        inst = cls.__new__(cls)
+        inst.position = -1
+        inst.Min, inst.Max, inst.bIsValid = (Vector.FVector.default(), Vector.FVector.default(), False)
+        return inst
+
     def GetValue(self):
         return {
             "Min": self.Min.GetValue(),
@@ -22,7 +30,7 @@ class FBox:
         }
 
 
-class FBox2D:
+class FBox2D(StructInterface):
     position: int
     Min: Vector.FVector2D
     Max: Vector.FVector2D
@@ -33,6 +41,13 @@ class FBox2D:
         self.Min = Vector.FVector2D(reader)
         self.Max = Vector.FVector2D(reader)
         self.bIsValid = reader.readByte() != 0
+
+    @classmethod
+    def default(cls):
+        inst = cls.__new__(cls)
+        inst.position = -1
+        inst.Min, inst.Max, inst.bIsValid = (Vector.FVector2D.default(), Vector.FVector2D.default(), False)
+        return inst
 
     def GetValue(self):
         return {

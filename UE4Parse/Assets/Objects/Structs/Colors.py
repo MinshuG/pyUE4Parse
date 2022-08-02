@@ -1,7 +1,8 @@
+from UE4Parse.Assets.Objects.Common import StructInterface
 from UE4Parse.BinaryReader import BinaryStream
 
 
-class FColor:
+class FColor(StructInterface):
     position: int
     R: int
     G: int
@@ -15,6 +16,13 @@ class FColor:
         self.B = reader.readByteToInt()
         self.A = reader.readByteToInt()
 
+    @classmethod
+    def default(cls):
+        cls = cls.__new__(cls)
+        cls.position = -1
+        cls.R, cls.G, cls.B, cls.A = (0,0,0,0,)
+        return cls
+
     def GetValue(self):
         return {
             "R": self.R,
@@ -24,7 +32,7 @@ class FColor:
         }
 
 
-class FLinearColor:
+class FLinearColor(StructInterface):
     position: int
     R: float
     G: float
@@ -37,6 +45,13 @@ class FLinearColor:
         self.G = reader.readFloat()
         self.B = reader.readFloat()
         self.A = reader.readFloat()
+
+    @classmethod
+    def default(cls):
+        cls = cls.__new__(cls)
+        cls.position = -1
+        cls.R, cls.G, cls.B, cls.A = (0.0,0.0,0.0,0.0,)
+        return cls
 
     def GetValue(self):
         return {

@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from UE4Parse.Assets.Objects.Common import StructInterface
 
 from UE4Parse.BinaryReader import BinaryStream
 
@@ -24,7 +25,7 @@ class ERichCurveTangentWeightMode(Enum):
     Both = auto()
 
 
-class FSimpleCurveKey:
+class FSimpleCurveKey(StructInterface):
     position: int
     KeyTime: float
     KeyValue: float
@@ -34,6 +35,12 @@ class FSimpleCurveKey:
         self.KeyTime = reader.readFloat()
         self.KeyValue = reader.readFloat()
 
+    @classmethod
+    def default(cls):
+        inst = cls.__new__(cls)
+        inst.position = 0
+        inst.KeyTime, inst.KeyValue = (0.0, 0.0,)
+
     def GetValue(self):
         return {
             "KeyTime": self.KeyTime,
@@ -41,7 +48,7 @@ class FSimpleCurveKey:
         }
 
 
-class FRichCurveKey:
+class FRichCurveKey(StructInterface):
     position: int
     InterpMode: ERichCurveInterpMode
     TangentMode: ERichCurveTangentMode
@@ -64,6 +71,16 @@ class FRichCurveKey:
         self.ArriveTangentWeight = reader.readFloat()
         self.LeaveTangent = reader.readFloat()
         self.LeaveTangentWeight = reader.readFloat()
+
+    @classmethod
+    def default(cls):
+        inst = cls.__new__(cls)
+        inst.position = -1
+        inst.InterpMode, inst.TangentMode, inst.TangentWeightMode = (ERichCurveInterpMode.Linear, ERichCurveTangentMode.Auto, ERichCurveTangentWeightMode.none,)
+        inst.KeyTime, inst.KeyValue = (0.0, 0.0,)
+        inst.ArriveTangent, inst.ArriveTangentWeight = (0.0, 0.0,)
+        inst.LeaveTangent, inst.LeaveTangentWeight = (0.0, 0.0,)
+        return inst
 
     def GetValue(self):
         return {
