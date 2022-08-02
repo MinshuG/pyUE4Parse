@@ -65,6 +65,9 @@ class FByteBulkData:
                 reader.seek(pos + self.Header.ElementCount, 0)
         elif (bulkDataFlags & EBulkDataFlags.BULKDATA_PayloadInSeperateFile) != 0:  # ubulk
             self.Header.BulkDataFlags = EBulkDataFlags.BULKDATA_PayloadInSeperateFile
+            if ubulk is None:
+                self.Data = None
+                logger.warn("BulkDataFlags.BULKDATA_PayloadInSeperateFile but no ubulk")
             ubulk.seek(self.Header.OffsetInFile, 0)
             self.Data = ubulk.readBytes(self.Header.ElementCount)
         elif (bulkDataFlags & EBulkDataFlags.BULKDATA_PayloadAtEndOfFile) != 0:
