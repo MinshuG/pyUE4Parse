@@ -9,7 +9,10 @@ class StructProperty:
 
     def __init__(self, reader: BinaryStream, tag, readType) -> None:
         self.position = reader.base_stream.tell()
-        struct_name = tag.StructName.string if isinstance(tag.StructName, FName) else tag.StructName
+        if readType.value == 1: # Map
+            struct_name = "WeDon'tCare?"
+        else:
+            struct_name = tag.StructName.string if isinstance(tag.StructName, FName) else tag.StructName
         self.Value = UScriptStruct(reader, struct_name, readType).Struct
 
     def GetValue(self):

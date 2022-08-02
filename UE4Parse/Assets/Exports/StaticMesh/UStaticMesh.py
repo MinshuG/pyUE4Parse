@@ -37,7 +37,7 @@ class UStaticMesh(UObject):
 
     def __init__(self, reader: BinaryStream):
         super().__init__(reader)
-    
+
     def deserialize(self, validpos) -> None:
         super().deserialize(validpos)
         reader = self.reader

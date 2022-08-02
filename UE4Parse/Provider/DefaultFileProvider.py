@@ -139,9 +139,7 @@ class DefaultFileProvider(AbstractVfsFileProvider):
         if not package.Name.endswith((".umap", ".uasset")):
             return None
 
-        real_path = package.Container.get_mount_point() + package.Name
-
-        logger.info(f"Loading {real_path}")
+        logger.info(f"Loading {package.Name}")
 
         uexp = getattr(package, "uexp", None)
         ubulk = getattr(package, "ubulk", None)

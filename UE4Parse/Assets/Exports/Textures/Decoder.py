@@ -5,7 +5,43 @@ from PIL import Image
 
 from UE4Parse.Exceptions import UnknownPixelFormatException
 from UE4Parse.Assets.Objects.EPixelFormat import EPixelFormat
-from .utils import build_blue_channel, swap_b_and_r
+from UE4Parse.Logger import get_logger
+
+
+logger = get_logger(__name__)
+
+try:
+    from .utils import build_blue_channel
+    from .utils import swap_b_and_r
+except ImportError:
+    logger.warning("Cython based texture decoder is not available. Slower Python implementation will be used.")
+    from math import floor
+    def build_blue_channel(data: bytearray, size_x: int, size_y: int):
+        offset = 0
+        i = 0
+        # float uf, vf, t
+        while i < size_x*size_y:
+            i += 1
+            u = data[offset]
+            v = data[offset + 1]
+            uf = u / 255.0 * 2 - 1
+            vf = v / 255.0 * 2 - 1
+            t = t  = 1.0 - uf * uf - vf * vf
+            if t >= 0:
+                data[offset+2] = floor((t + 1.0) * 127.5)
+            else:
+                data[offset+2] = 255
+            offset += 4
+
+    def swap_b_and_r(data: bytearray, size_x: int, size_y: int):
+        offset = 0
+        i = 0
+        while i < size_x * size_y:
+            i += 1
+            b_ = data[offset]
+            data[offset] = data[offset+2]  # replace b with r
+            data[offset+2] = b_
+            offset += 4
 
 
 class TextureDecoder:

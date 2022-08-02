@@ -16,9 +16,9 @@ class SetProperty:
                                                       PropertyTagData.BaseProperty.ReadType.ARRAY)
         Entries = reader.readInt32()
         for _ in range(Entries):
-            value = PropertyTagData.BaseProperty.ReadAsObject(reader, Tag, Tag.Type,
+            value = PropertyTagData.BaseProperty.ReadAsObject(reader, Tag, Tag.InnerType,
                                                               PropertyTagData.BaseProperty.ReadType.ARRAY)
             self.Value.append(value)
 
     def GetValue(self):
-        return self.Value.GetValue()
+        return [v.GetValue() for v in self.Value]
