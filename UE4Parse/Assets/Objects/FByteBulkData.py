@@ -29,7 +29,10 @@ class FByteBulkDataHeader:
                                                else reader.readInt32()
 
         if not (self.BulkDataFlags & EBulkDataFlags.BULKDATA_NoOffsetFixUp):  # UE4.26 flag
-            self.OffsetInFile += bulkOffset
+            try:
+                self.OffsetInFile += reader.PackageReader.get_summary().BulkDataStartOffset
+            except AttributeError: # IoPackageReader
+                pass
 
         if (self.BulkDataFlags & EBulkDataFlags.BULKDATA_BadDataVersion) != 0:
             reader.seek(2)

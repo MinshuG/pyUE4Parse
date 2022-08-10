@@ -7,3 +7,4 @@ from .UStringTable import *
 from UE4Parse.Assets.Exports.Textures import *
 from .World import *
 from .SkeletalMesh import *
+from .Sound import *

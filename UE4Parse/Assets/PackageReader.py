@@ -107,13 +107,13 @@ class LegacyPackageReader(Package):
         if filever > 0:
             self.reader.version = filever
 
-        self.reader.ubulk_stream = ubulk
-
         if uexp is not None:
             self.reader = FAssetReader(uexp, self, uexp.size, uasset.size)
             self.reader.mappings = uasset.mappings
             self.reader.set_ar_version(provider.Versions.UEVersion)
             self.reader.provider = provider
+
+        self.reader.ubulk_stream = ubulk
 
         # what was this for?
         # elif self.PackageFileSummary.FileVersionUE4.value == 0:  # Cooked
