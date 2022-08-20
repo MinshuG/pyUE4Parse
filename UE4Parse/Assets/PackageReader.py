@@ -145,15 +145,16 @@ class LegacyPackageReader(Package):
                 logger.error(f"Could not read {ExportType.string} correctly, {e}")
             Export.exportObject = ExportData
 
+            position = self.reader.base_stream.tell()
+            if position != pos + Export.SerialSize:
+                logger.debug(
+                    f"Didn't read ExportType {ExportType.string} properly, at {position}, should be: {pos + Export.SerialSize} behind: {pos + Export.SerialSize - position}")
+
             # export event
             trigger = provider.Triggers.get(ExportType.string, False)
             if trigger:
                 trigger(ExportData)
 
-            position = self.reader.base_stream.tell()
-            if position != pos + Export.SerialSize:
-                logger.debug(
-                    f"Didn't read ExportType {ExportType.string} properly, at {position}, should be: {pos + Export.SerialSize} behind: {pos + Export.SerialSize - position}")
 
     def SerializeNameMap(self):
         if self.PackageFileSummary.NameCount > 0:
@@ -327,6 +328,8 @@ class IoPackageReader(Package):
             allExportDataOffset = self.Summary.GraphDataOffset + self.Summary.GraphDataSize
         currentExportDataOffset = allExportDataOffset
 
+        assert provider.GlobalData != None, "can't serialize without global data"
+
         for header in self.ExportBundle.Headers:
             for i in range(header.EntryCount):
                 export_entry = self.ExportBundle.Entries[header.FirstEntryIndex + i]
@@ -354,6 +357,11 @@ class IoPackageReader(Package):
                         if error is not None:
                             msg += f"\nError: {error}"
                         logger.debug(msg)
+
+                    # export event
+                    trigger = provider.Triggers.get(ExportData.type, False)
+                    if trigger:
+                        trigger(ExportData)
 
                     currentExportDataOffset += Export.CookedSerialSize
 
