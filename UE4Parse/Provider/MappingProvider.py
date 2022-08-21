@@ -74,7 +74,7 @@ class MappingProvider:
         return os.path.exists(mappings_path)
 
     def _dl_mappings(self, path):
-        ENDPOINT = "https://benbot.app/api/v1/mappings"
+        ENDPOINT = "https://fortnitecentral.gmatrixgames.ga/api/v1/mappings"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
             "accept": "application/json"
