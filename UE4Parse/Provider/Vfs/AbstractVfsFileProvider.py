@@ -1,6 +1,7 @@
 from UE4Parse.Assets.Exports.UObjects import UObject
 from UE4Parse.Assets.PackageReader import Package
 from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.Localization.FTextLocalizationResource import FTextLocalizationResource
 from UE4Parse.Provider.Vfs.DirectoryStorageProvider import DirectoryStorageProvider
 from UE4Parse.Versions.Versions import VersionContainer
 from UE4Parse.Exceptions.Exceptions import InvalidEncryptionKey
@@ -22,6 +23,7 @@ class AbstractVfsFileProvider(ABC):
     GlobalData: Optional[FIoGlobalData]
     UnloadedContainers: List[Union[FFileIoStoreReader, PakReader]]
     LoadedContainers: List[Union[FFileIoStoreReader, PakReader]]
+    LocalizedResources: Dict[str, Dict[str, str]]
     _files: DirectoryStorageProvider
     GameName: str
     _file_streams: Dict[str, BinaryStream]
@@ -32,6 +34,7 @@ class AbstractVfsFileProvider(ABC):
         self.IsCaseInsensitive = isCaseInsensitive
         self.UnloadedContainers = []
         self.LoadedContainers = []
+        self.LocalizedResources = {}
         self._files = DirectoryStorageProvider(self.IsCaseInsensitive)
         self.GameName = ""
         self._file_streams = {}
@@ -189,6 +192,28 @@ class AbstractVfsFileProvider(ABC):
                                 count += 1
         logger.info(f"Loaded {count} virtual paths")
         return count
+
+    def load_localization(self, language_code = "en") -> int:
+        #  https://github.com/FabianFG/CUE4Parse/blob/22ad6c42a27071cd91fdad71f2a02e8597031de9/CUE4Parse/FileProvider/AbstractFileProvider.cs#L63
+        import re
+        pattern = re.compile( f"^/{self.GameName}/.+/{language_code}/.+.locres$", re.IGNORECASE)
+        self.LocalizedResources = {}
+        count = 0
+        for _, v in self.files:
+            if re.match(pattern, v.Name):
+                logger.debug(f"Loading {v.Name}")
+                res = FTextLocalizationResource(self.get_reader(v))
+                for key, value in res.Entries.items():
+                    if key not in self.LocalizedResources:
+                        self.LocalizedResources[key] = {}
+                    self.LocalizedResources[key].update(value)
+                    count += len(value)
+        logger.info(f"Loaded {count} localized resources for {language_code}.")
+
+        return count
+
+    def get_localized_string(self, namespace, key, default=""):
+        return self.LocalizedResources.get(namespace, {}).get(key, default)
 
     def fix_path(self, path: str) -> str:
         path = path.lower() if self.IsCaseInsensitive else path

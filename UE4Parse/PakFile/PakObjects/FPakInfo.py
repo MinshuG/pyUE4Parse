@@ -65,12 +65,11 @@ class PakInfo:
             buffer: bytes = reader.readBytes(BufferSize)
             MethodList = []
             for i in range(4):
-                if int(buffer[i * self.COMPRESSION_METHOD_NAME_LEN]) != 0:
-                    byteIndex = i * self.COMPRESSION_METHOD_NAME_LEN
-                    byteCount = self.COMPRESSION_METHOD_NAME_LEN
-                    decoded = buffer[byteIndex:byteCount].decode("utf-8").rstrip('\x00')
-                    if decoded == "": continue
-                    MethodList.append(decoded)
+                byteIndex = i * self.COMPRESSION_METHOD_NAME_LEN
+                byteCount = self.COMPRESSION_METHOD_NAME_LEN + byteIndex
+                decoded = buffer[byteIndex:byteCount].decode("utf-8").rstrip('\x00')
+                if decoded == "": continue
+                MethodList.append(decoded)
             self.CompressionMethods = MethodList
 
         if self.Version.value < EPakVersion.INDEX_ENCRYPTION.value:

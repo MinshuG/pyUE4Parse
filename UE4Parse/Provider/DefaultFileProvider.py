@@ -162,7 +162,10 @@ class DefaultFileProvider(AbstractVfsFileProvider):
             return LegacyPackageReader(uasset, uexp, ubulk, self, load_mode)
 
     def try_load_object(self, path: str):
-        path, export_name = path.split(".")
+        try:
+            path, export_name = path.split(".")
+        except ValueError:
+            path, export_name = path, path.split("/")[-1]
         package = self.try_load_package(path)
         if package is None:
             return None

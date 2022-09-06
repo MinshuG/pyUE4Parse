@@ -30,6 +30,10 @@ class FAssetReader(BinaryStream):
     def NameMap(self):
         return self.PackageReader.NameMap
 
+    @property
+    def provider(self):
+        return self.PackageReader.Provider
+
     def get_name_map(self):
         return self.NameMap
 

@@ -39,6 +39,8 @@ provider = DefaultFileProvider(path, VersionContainer(EUEVersion.LATEST))
 provider.initialize()
 provider.submit_keys(aeskeys)  # mount files
 
+provider.load_localization("fr")
+
 gc.enable() # enable garbage collector again
 
 provider.mappings = MappingProvider("path/to/mappings.usmap")
@@ -76,7 +78,7 @@ if texture := package.find_export_of_type("Texture2D"):
 
 - Developers can use pyximport for development purposes (loading cython extensions)
 
-    ```python 
+    ```python
     import pyximport
     pyximport.install()
     ```
