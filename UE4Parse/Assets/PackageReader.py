@@ -89,7 +89,6 @@ class LegacyPackageReader(Package):
         self.reader = FAssetReader(uasset.base_stream, self, size=uasset.size)
         self.reader.mappings = uasset.mappings
         self.reader.set_ar_version(provider.Versions.UEVersion)
-        self.reader.provider = provider
         self.reader.PackageReader = self
 
         self.PackageFileSummary = FPackageFileSummary(self.reader)
@@ -111,7 +110,7 @@ class LegacyPackageReader(Package):
             self.reader = FAssetReader(uexp, self, uexp.size, uasset.size)
             self.reader.mappings = uasset.mappings
             self.reader.set_ar_version(provider.Versions.UEVersion)
-            self.reader.provider = provider
+            self.reader.PackageReader = self
 
         self.reader.ubulk_stream = ubulk
 
