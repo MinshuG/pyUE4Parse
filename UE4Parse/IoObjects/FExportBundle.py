@@ -18,7 +18,7 @@ class FExportBundleHeader:
     EntryCount: int
 
     def __init__(self, reader: FAssetReader):
-        self.SerialOffset = reader.readUInt64() if reader.version <= EUEVersion.GAME_UE5_0 else -1
+        self.SerialOffset = reader.readUInt64() if reader.game >= EUEVersion.GAME_UE5_0 else -1
         self.FirstEntryIndex = reader.readUInt32()
         self.EntryCount = reader.readUInt32()
 
@@ -36,9 +36,30 @@ class FExportBundle:
     Headers: List[FExportBundleHeader]
     Entries: Tuple[FExportBundleEntry]
 
-    def __init__(self, reader: BinaryStream):
-        self.Headers = list((FExportBundleHeader(reader),))
-        self.Entries = tuple(FExportBundleEntry(reader) for _ in range(self.Headers[0].EntryCount))
+    def __init__(self, reader: BinaryStream, graphdatasize: int):
+        remainingBundleEntryCount = graphdatasize // (4+4)
+        """
+        var foundBundlesCount = 0;
+        var foundBundleHeaders = new List<FExportBundleHeader>();
+        while (foundBundlesCount < remainingBundleEntryCount)
+        {
+            // This location is occupied by header, so it is not a bundle entry
+            remainingBundleEntryCount--;
+            var bundleHeader = new FExportBundleHeader(Ar);
+            foundBundlesCount += (int) bundleHeader.EntryCount;
+            foundBundleHeaders.Add(bundleHeader);
+        }
+        """
+        foundBundlesCount = 0
+        foundBundleHeaders = []
+        while foundBundlesCount < remainingBundleEntryCount:
+            remainingBundleEntryCount -= 1
+            bundleHeader = FExportBundleHeader(reader)
+            foundBundlesCount += bundleHeader.EntryCount
+            foundBundleHeaders.append(bundleHeader)
+
+        self.Headers = foundBundleHeaders
+        self.Entries = reader.readTArray2(FExportBundleEntry, foundBundlesCount, reader)
 
     @classmethod
     def from_data(cls, headers, entries):

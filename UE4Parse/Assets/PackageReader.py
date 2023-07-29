@@ -285,7 +285,7 @@ class IoPackageReader(Package):
             allExportDataOffset = self.Summary.HeaderSize
         else:
             self.Summary = FPackageSummary(reader=reader)
-
+            
             if self.Summary.NameMapNamesSize > 0:
                 reader.seek(self.Summary.NameMapNamesOffset, 0)
                 nameMapReader = BinaryStream(reader.readBytes(self.Summary.NameMapNamesSize))
@@ -297,6 +297,7 @@ class IoPackageReader(Package):
                 name_map = []
                 FNameEntrySerialized.LoadNameBatch(name_map, nameMapReader, hashCount)
                 self.NameMap = tuple(name_map)
+                self.Name = self.Summary.Name.resolve(self.NameMap)
                 del nameHashReader
                 del nameMapReader
             if load_mode == EPackageLoadMode.NameMap: return
@@ -311,7 +312,7 @@ class IoPackageReader(Package):
             self.ExportMap = tuple(FExportMapEntry(reader) for _ in range(exportMapCount))
 
             reader.seek(self.Summary.ExportBundlesOffset, 0)
-            self.ExportBundle = FExportBundle(reader)
+            self.ExportBundle = FExportBundle(reader, self.Summary.GraphDataOffset - self.Summary.ExportBundlesOffset)
 
             if load_mode == EPackageLoadMode.Info: return
 
