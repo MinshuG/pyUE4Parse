@@ -13,7 +13,7 @@ class FStaticMeshUVItem:
         self.Normal = self.serialize_tangents(reader, useHighPrecisionTangents)
         self.UV = self.serialize_texcoords(reader, numStaticUVSets, useStaticFloatUVs)
 
-    def construct(self, normal, uv):
+    def construct(self, normal, uv) -> 'FStaticMeshUVItem':
         self.Normal = normal
         self.UV = uv
         return self

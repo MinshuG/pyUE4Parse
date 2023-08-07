@@ -22,7 +22,6 @@ def swap_b_and_r(bytearray data, int size_x, int size_y):
     """BGRA -> RGBA"""
     cdef int offset = 0
     cdef int i = 0
-    cdef int r, b,
     while i < size_x * size_y:
         i += 1
         b_ = data[offset]

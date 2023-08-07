@@ -1,8 +1,45 @@
+from typing import Optional, Mapping
+
 from UE4Parse.Assets.Objects.FName import FName
 from UE4Parse.Assets.Objects.FPackageIndex import FPackageIndex
 from UE4Parse.Assets.UObject.CoreNetTypes import ELifetimeCondition
-from UE4Parse.Assets.UObject.FField import FField
+from UE4Parse.Exceptions import ParserException
 from UE4Parse.Readers.FAssetReader import FAssetReader
+
+
+class FField(object):
+    Name: 'FName'
+    Flags: int
+    _types_map: Mapping[str, 'FProperty']
+
+    def __init__(self):
+        self.Name = FName("None", 0)
+        self.Flags = 0
+
+    def deserialize(self, reader: 'FAssetReader'):
+        self.Name = reader.readFName()
+        self.Flags = reader.readUInt32()
+
+    def serialize_single_field(self, reader: 'FAssetReader') -> Optional['FField']:
+        property_field_name = reader.readFName()
+        if not property_field_name.isNone:
+            field = self.construct(property_field_name)
+            field.deserialize(reader)
+            return field
+        return None
+
+    @staticmethod
+    def construct(field_type: 'FName') -> 'FField':
+        if field_type.string in FField._types_map:
+            return FField._types_map[field_type.string]()
+        else:
+            raise ParserException("Unsupported FieldType")
+
+    def GetValue(self):
+        return {
+            "Name": self.Name.GetValue(),
+            "Flags": self.Flags
+        }
 
 
 class FProperty(FField):
@@ -23,6 +60,7 @@ class FProperty(FField):
         super().__init__()
 
     def deserialize(self, reader: FAssetReader):
+        super().deserialize(reader)
         self.ArrayDim = reader.readInt32()
         self.ElementSize = reader.readInt32()
         self.PropertyFlags = reader.readUInt64()
@@ -37,7 +75,7 @@ class FProperty(FField):
             "ElementSize": self.ElementSize,
             "PropertyFlags": self.PropertyFlags,
             "RepIndex": self.RepIndex,
-            "RepNotifyFunc": self.RepNotifyFunc,
+            "RepNotifyFunc": self.RepNotifyFunc.GetValue(),
             "BlueprintReplicationCondition": self.BlueprintReplicationCondition.value
         })
         return props
@@ -48,7 +86,7 @@ class FObjectProperty(FProperty):
 
     def deserialize(self, reader: FAssetReader):
         super().deserialize(reader)
-        self.PropertyClass = FPackageIndex(self.reader)
+        self.PropertyClass = FPackageIndex(reader)
 
     def GetValue(self):
         props = super().GetValue()
@@ -61,9 +99,9 @@ class FObjectProperty(FProperty):
 class FArrayProperty(FProperty):
     Inner: FProperty
 
-    def deserialize(self):
-        super().deserialize()
-        self.Inner = self.serialize_single_field(self.reader)
+    def deserialize(self, reader):
+        super().deserialize(reader)
+        self.Inner = self.serialize_single_field(reader)
 
     def GetValue(self):
         props = super().GetValue()
@@ -71,6 +109,7 @@ class FArrayProperty(FProperty):
             "Inner": self.Inner.GetValue()
         })
         return props
+
 
 class FBoolProperty(FProperty):
     FieldSize: int
@@ -80,14 +119,14 @@ class FBoolProperty(FProperty):
     BoolSize: int
     bIsNativeBool: bool
 
-    def deserialize(self):
-        super().deserialize()
-        self.FieldSize = self.reader.readInt8()
-        self.ByteOffset = self.reader.readInt8()
-        self.ByteMask = self.reader.readInt8()
-        self.FieldMask = self.reader.readInt8()
-        self.BoolSize = self.reader.readInt8()
-        self.bIsNativeBool = self.reader.readFlag()
+    def deserialize(self, reader: 'FAssetReader'):
+        super().deserialize(reader)
+        self.FieldSize = reader.readInt8()
+        self.ByteOffset = reader.readInt8()
+        self.ByteMask = reader.readInt8()
+        self.FieldMask = reader.readInt8()
+        self.BoolSize = reader.readInt8()
+        self.bIsNativeBool = reader.readFlag()
 
     def GetValue(self):
         props = super().GetValue()
@@ -101,14 +140,16 @@ class FBoolProperty(FProperty):
         })
         return props
 
+
 class FNumericProperty(FProperty): pass
+
 
 class FByteProperty(FNumericProperty):
     Enum: FPackageIndex
 
-    def deserialize(self):
-        super().deserialize()
-        self.Enum = FPackageIndex(self.reader)
+    def deserialize(self, reader: 'FAssetReader'):
+        super().deserialize(reader)
+        self.Enum = FPackageIndex(reader)
 
     def GetValue(self):
         props = super().GetValue()
@@ -117,12 +158,13 @@ class FByteProperty(FNumericProperty):
         })
         return props
 
+
 class FClassProperty(FObjectProperty):
     MetaClass: FPackageIndex
 
-    def deserialize(self):
-        super().deserialize()
-        self.MetaClass = FPackageIndex(self.reader)
+    def deserialize(self, reader: 'FAssetReader'):
+        super().deserialize(reader)
+        self.MetaClass = FPackageIndex(reader)
 
     def GetValue(self):
         props = super().GetValue()
@@ -131,12 +173,13 @@ class FClassProperty(FObjectProperty):
         })
         return props
 
+
 class FDelegateProperty(FProperty):
     SignatureFunction: FPackageIndex
 
-    def deserialize(self):
-        super().deserialize()
-        self.SignatureFunction = FPackageIndex(self.reader)
+    def deserialize(self, reader: 'FAssetReader'):
+        super().deserialize(reader)
+        self.SignatureFunction = FPackageIndex(reader)
 
     def GetValue(self):
         props = super().GetValue()
@@ -145,14 +188,15 @@ class FDelegateProperty(FProperty):
         })
         return props
 
+
 class FEnumProperty(FProperty):
     UnderlyingProp: FNumericProperty
     Enum: FPackageIndex
 
-    def deserialize(self):
-        super().deserialize()
-        self.Enum = FPackageIndex(self.reader)
-        self.UnderlyingProp = self.serialize_single_field(self.reader)
+    def deserialize(self, reader: FAssetReader):
+        super().deserialize(reader)
+        self.Enum = FPackageIndex(reader)
+        self.UnderlyingProp = self.serialize_single_field(reader)
 
     def GetValue(self):
         props = super().GetValue()
@@ -162,12 +206,13 @@ class FEnumProperty(FProperty):
         })
         return props
 
+
 class FFieldPathProperty(FProperty):
     PropertyClass: FName
 
-    def deserialize(self):
-        super().deserialize()
-        self.PropertyClass = self.reader.readFName()
+    def deserialize(self, reader: FAssetReader):
+        super().deserialize(reader)
+        self.PropertyClass = reader.readFName()
 
     def GetValue(self):
         props = super().GetValue()
@@ -176,18 +221,28 @@ class FFieldPathProperty(FProperty):
         })
         return props
 
+
 class FFloatProperty(FNumericProperty): pass
+
+
 class FInt16Property(FNumericProperty): pass
+
+
 class FInt64Property(FNumericProperty): pass
+
+
 class FInt8Property(FNumericProperty): pass
+
+
 class FIntProperty(FNumericProperty): pass
+
 
 class FInterfaceProperty(FProperty):
     InterfaceClass: FPackageIndex
 
-    def deserialize(self):
-        super().deserialize()
-        self.InterfaceClass = FPackageIndex(self.reader)
+    def deserialize(self, reader: FAssetReader):
+        super().deserialize(reader)
+        self.InterfaceClass = FPackageIndex(reader)
 
     def GetValue(self):
         props = super().GetValue()
@@ -196,14 +251,15 @@ class FInterfaceProperty(FProperty):
         })
         return props
 
+
 class FMapProperty(FProperty):
     KeyProp: FProperty
     ValueProp: FProperty
 
-    def deserialize(self):
-        super().deserialize()
-        self.KeyProp = self.serialize_single_field(self.reader)
-        self.ValueProp = self.serialize_single_field(self.reader)
+    def deserialize(self, reader: FAssetReader):
+        super().deserialize(reader)
+        self.KeyProp = self.serialize_single_field(reader)
+        self.ValueProp = self.serialize_single_field(reader)
 
     def GetValue(self):
         props = super().GetValue()
@@ -213,12 +269,13 @@ class FMapProperty(FProperty):
         })
         return props
 
+
 class FMulticastDelegateProperty(FProperty):
     SignatureFunction: FPackageIndex
 
-    def deserialize(self):
-        super().deserialize()
-        self.SignatureFunction = FPackageIndex(self.reader)
+    def deserialize(self, reader: FAssetReader):
+        super().deserialize(reader)
+        self.SignatureFunction = FPackageIndex(reader)
 
     def GetValue(self):
         props = super().GetValue()
@@ -226,13 +283,14 @@ class FMulticastDelegateProperty(FProperty):
             "SignatureFunction": self.SignatureFunction.GetValue()
         })
         return props
+
 
 class FMulticastInlineDelegateProperty(FProperty):
     SignatureFunction: FPackageIndex
 
-    def deserialize(self):
-        super().deserialize()
-        self.SignatureFunction = FPackageIndex(self.reader)
+    def deserialize(self, reader):
+        super().deserialize(reader)
+        self.SignatureFunction = FPackageIndex(reader)
 
     def GetValue(self):
         props = super().GetValue()
@@ -241,14 +299,16 @@ class FMulticastInlineDelegateProperty(FProperty):
         })
         return props
 
+
 class FNameProperty(FProperty): pass
+
 
 class FSoftClassProperty(FObjectProperty):
     MetaClass: FPackageIndex
 
-    def deserialize(self):
-        super().deserialize()
-        self.MetaClass = FPackageIndex(self.reader)
+    def deserialize(self, reader: FAssetReader):
+        super().deserialize(reader)
+        self.MetaClass = FPackageIndex(reader)
 
     def GetValue(self):
         props = super().GetValue()
@@ -257,14 +317,16 @@ class FSoftClassProperty(FObjectProperty):
         })
         return props
 
+
 class FSoftObjectProperty(FObjectProperty): pass
+
 
 class FSetProperty(FProperty):
     ElementProp: FProperty
 
-    def deserialize(self):
-        super().deserialize()
-        self.ElementProp = self.serialize_single_field(self.reader)
+    def deserialize(self, reader: FAssetReader):
+        super().deserialize(reader)
+        self.ElementProp = self.serialize_single_field(reader)
 
     def GetValue(self):
         props = super().GetValue()
@@ -276,12 +338,13 @@ class FSetProperty(FProperty):
 
 class FStrProperty(FProperty): pass
 
+
 class FStructProperty(FProperty):
     Struct: FPackageIndex
 
-    def deserialize(self):
-        super().deserialize()
-        self.Struct = FPackageIndex(self.reader)
+    def deserialize(self, reader: FAssetReader):
+        super().deserialize(reader)
+        self.Struct = FPackageIndex(reader)
 
     def GetValue(self):
         props = super().GetValue()
@@ -290,8 +353,22 @@ class FStructProperty(FProperty):
         })
         return props
 
+
 class FTextProperty(FProperty): pass
+
+
 class FUInt16Property(FNumericProperty): pass
+
+
 class FUInt32Property(FNumericProperty): pass
+
+
 class FUInt64Property(FNumericProperty): pass
 
+
+def all_subclasses(cls):
+    return set(cls.__subclasses__()).union(
+        [s for c in cls.__subclasses__() for s in all_subclasses(c)])
+
+
+FField._types_map = {cls.__name__[1:]: cls for cls in all_subclasses(FProperty)}

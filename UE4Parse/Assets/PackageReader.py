@@ -31,9 +31,7 @@ if TYPE_CHECKING:
     from UE4Parse.Provider import DefaultFileProvider
     from UE4Parse.IO.IoObjects.FIoContainerHeader import FIoContainerHeader
 
-
 logger = Logger.get_logger(__name__)
-
 
 T = TypeVar('T')
 
@@ -77,6 +75,7 @@ class Package(ABC):
                 return export.exportObject
         return None
 
+
 class LegacyPackageReader(Package):
     NameMap: List[FNameEntrySerialized] = []
     ImportMap: List[FObjectImport] = []
@@ -118,8 +117,8 @@ class LegacyPackageReader(Package):
         # elif self.PackageFileSummary.FileVersionUE4.value == 0:  # Cooked
         #     return
         # else:  # not cooked
-            # self.reader.seek(pos, 0)
-            # self.reader.change_stream(self.reader.read())
+        # self.reader.seek(pos, 0)
+        # self.reader.change_stream(self.reader.read())
 
         for Export in self.ExportMap:
             if Export.ClassIndex.IsNull:
@@ -153,7 +152,6 @@ class LegacyPackageReader(Package):
             trigger = provider.Triggers.get(ExportType.string, False)
             if trigger:
                 trigger(ExportData)
-
 
     def SerializeNameMap(self):
         if self.PackageFileSummary.NameCount > 0:
@@ -223,7 +221,7 @@ class IoPackageReader(Package):
 
     # noinspection PyTypeChecker
     def __init__(self, uasset: BinaryStream, ubulk: BinaryStream, uptnl: BinaryStream, provider: "DefaultFileProvider",
-                load_mode: EPackageLoadMode = EPackageLoadMode.Full, container_header: 'FIoContainerHeader' = None, package: 'FIoStoreEntry' = None):
+                 load_mode: EPackageLoadMode = EPackageLoadMode.Full, container_header: 'FIoContainerHeader' = None, package: 'FIoStoreEntry' = None):
         reader = FAssetReader(uasset.base_stream, self, size=uasset.size)
         reader.mappings = uasset.mappings
         reader.ubulk_stream = ubulk or uptnl
@@ -243,7 +241,8 @@ class IoPackageReader(Package):
             assert not self.Summary.bHasVersioningInfo
             temp_names = []
             self.NameMap = FNameEntrySerialized.LoadNameBatch2(temp_names, reader)
-            self.NameMap = tuple(temp_names); del temp_names
+            self.NameMap = tuple(temp_names);
+            del temp_names
             self.Name = self.Summary.Name.resolve(self.NameMap)
             if load_mode == EPackageLoadMode.NameMap: return
 
@@ -256,7 +255,7 @@ class IoPackageReader(Package):
                     pass
 
             reader.seek(self.Summary.ImportedPublicExportHashesOffset, 0)
-            self.ImportedPublicExportHashes  = reader.readTArray2(reader.readUInt64, int((self.Summary.ImportMapOffset - self.Summary.ImportedPublicExportHashesOffset)/8))
+            self.ImportedPublicExportHashes = reader.readTArray2(reader.readUInt64, int((self.Summary.ImportMapOffset - self.Summary.ImportedPublicExportHashesOffset) / 8))
 
             reader.seek(self.Summary.ImportMapOffset, 0)
             import_map_Count = int(
@@ -269,10 +268,10 @@ class IoPackageReader(Package):
             self.ExportMap = tuple(FExportMapEntry(reader) for _ in range(export_map_count))
 
             reader.seek(self.Summary.ExportBundleEntriesOffset, 0)
-            export_bundle_entries = reader.readTArray2(lambda :FExportBundleEntry(reader), export_map_count*2)
+            export_bundle_entries = reader.readTArray2(lambda: FExportBundleEntry(reader), export_map_count * 2)
 
             reader.seek(self.Summary.GraphDataOffset, 0)
-            export_bundle_headers = reader.readTArray2(lambda :FExportBundleHeader(reader), store_entry.ExportBundleCount if store_entry else 1)
+            export_bundle_headers = reader.readTArray2(lambda: FExportBundleHeader(reader), store_entry.ExportBundleCount if store_entry else 1)
 
             self.ExportBundle = FExportBundle.from_data(export_bundle_headers, export_bundle_entries)
 
@@ -285,7 +284,7 @@ class IoPackageReader(Package):
             allExportDataOffset = self.Summary.HeaderSize
         else:
             self.Summary = FPackageSummary(reader=reader)
-            
+
             if self.Summary.NameMapNamesSize > 0:
                 reader.seek(self.Summary.NameMapNamesOffset, 0)
                 nameMapReader = BinaryStream(reader.readBytes(self.Summary.NameMapNamesSize))

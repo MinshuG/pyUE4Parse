@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Exceptions.Exceptions import ParserException
@@ -13,7 +13,7 @@ class FStaticMeshVertexBuffer:
     NumVertices: int
     UseFullPrecisionUVs: bool
     UseHighPrecisionTangentBasis: bool
-    UV: List[FStaticMeshUVItem]
+    UV: Tuple[FStaticMeshUVItem]
 
     def __init__(self, reader: BinaryStream):
         StripFlags = FStripDataFlags(reader, Versions.VER_UE4_STATIC_SKELETAL_MESH_SERIALIZATION_FIX)
@@ -26,7 +26,7 @@ class FStaticMeshVertexBuffer:
 
         if not StripFlags.isDataStrippedForServer():
             if reader.game < GAME_UE4(19):
-                self.UV = reader.readTArray_W_Arg(FStaticMeshUVItem().read, reader, self.UseHighPrecisionTangentBasis,
+                self.UV = reader.readTArray(FStaticMeshUVItem().read, reader, self.UseHighPrecisionTangentBasis,
                                                   self.NumTexCoords, self.UseFullPrecisionUVs)
             else:
                 # reader.readBulkTArray()
@@ -37,8 +37,8 @@ class FStaticMeshVertexBuffer:
                     raise ParserException(f"{itemCount=} != {self.NumVertices=}")
 
                 pos = reader.tell()
-                self.UV = [FStaticMeshUVItem().construct(
-                    FStaticMeshUVItem().serialize_tangents(reader, self.UseHighPrecisionTangentBasis), []) for _ in range(self.NumVertices)]
+                self.UV = tuple(FStaticMeshUVItem().construct(
+                    FStaticMeshUVItem().serialize_tangents(reader, self.UseHighPrecisionTangentBasis), []) for _ in range(self.NumVertices))
 
                 if reader.tell() - pos != itemSize * itemCount:
                     raise ParserException(

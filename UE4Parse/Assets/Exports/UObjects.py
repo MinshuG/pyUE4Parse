@@ -14,6 +14,7 @@ from UE4Parse.Readers.FAssetReader import FAssetReader
 logger = Logger.get_logger(__name__)
 T = TypeVar('T')
 
+
 class UObject:
     position: int
     Dict: dict
@@ -45,7 +46,7 @@ class UObject:
                 self.ObjectGuid = FGuid(self.reader)
 
     def deserializeVersioned(self):
-        properties = {} # is this used?
+        properties = {}  # is this used?
         num = 1
         while True:
             Tag = FPropertyTag(self.reader)
@@ -100,7 +101,7 @@ class UObject:
                     try:
                         # pos = reader.tell()
                         obj = BaseProperty.ReadAsObject(
-                        self.reader, Tag, Tag.Type, ReadType.NORMAL)
+                            self.reader, Tag, Tag.Type, ReadType.NORMAL)
                         # logger.debug(f"{pos} -> {reader.tell()} : {Tag.Name}")
                     except Exception as e:
                         logger.error(f"Failed to read values for {Tag.Name}, {e}")
@@ -113,7 +114,7 @@ class UObject:
                     try:
                         pos = reader.tell()
                         obj = BaseProperty.ReadAsObject(
-                        self.reader, Tag, Tag.Type, ReadType.ZERO)
+                            self.reader, Tag, Tag.Type, ReadType.ZERO)
                         # logger.debug(f"{pos} -> {reader.tell()} : {Tag.Name}")
                     except Exception as e:
                         logger.debug(f"Failed to read values for {Tag.Name.string}, but's it's zero")

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 from functools import singledispatchmethod
 from UE4Parse.Assets.Objects.FName import FName
 
@@ -39,8 +39,16 @@ class FPackageIndex:
     AsImport: int
     AsExport: int
 
+    @overload
+    def __init__(self, reader: 'FAssetReader'):
+        ...
+
+    @overload
+    def __init__(self, v: int):
+        ...
+
     @singledispatchmethod
-    def __init__(self, reader: "FAssetReader") -> None:
+    def __init__(self, reader: 'FAssetReader') -> None:
         self.Index = reader.readInt32()
         self.reader = reader
 
@@ -95,12 +103,10 @@ class FPackageIndex:
                 resolved = ResolveExportObject(self.reader.PackageReader, Resource)
                 return do_formatting(resolved, self.Index)
 
-            if not hasattr(Resource, "ClassIndex"):  # FObjectImport
-                ObjectName = f"{Resource.ObjectName.string}"
-            else:
-                ObjectName = f"{Resource.ObjectName.string}:{Resource.ClassIndex.Name.string}"
+            ObjectName = f"{Resource.ObjectName.string}"
             return {
                 "ObjectName": ObjectName,
+                "Outer": Resource.OuterIndex.Name.GetValue(),
                 "OuterIndex": Resource.OuterIndex.GetValue()
             }
         return self.Index

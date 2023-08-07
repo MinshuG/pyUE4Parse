@@ -191,7 +191,7 @@ class BinaryStream(BinaryIO):
             byte = self.base_stream.read(length)[:-1]
             return byte.decode("utf-8")
 
-    def readTArray(self, func: Union[Callable[[Any], T], Callable[[], T]], *args) -> Tuple[T]:
+    def readTArray(self, func: Union[Callable[[Any], T], Callable[[], T]], *args: object) -> Tuple[T]:
         SerializeNum = self.readInt32()
         return tuple(func(*args) for _ in range(SerializeNum))
 
@@ -211,7 +211,7 @@ class BinaryStream(BinaryIO):
                 f"RawArray item size mismatch: expected {element_size}, serialized {(self.tell() - save_pos) / len(array)}")
         return array
 
-    def readFName(self) -> FName:
+    def readFName(self) -> FName:  # should be in FAssetReader
         NameMap = self.get_name_map()
         NameIndex = self.readInt32()
         Number = self.readInt32()
@@ -299,6 +299,7 @@ class BinaryStream(BinaryIO):
         import binascii
         print(binascii.hexlify(self.base_stream.read(length), sep=" ").upper())
         self.seek(pos, 0)
+
 
 def Align(val: int, alignment: int):
     return val + alignment - 1 & ~(alignment - 1)

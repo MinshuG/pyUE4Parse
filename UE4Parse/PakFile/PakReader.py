@@ -138,7 +138,7 @@ class PakReader:
         else:
             PathHash_Reader = BinaryStream(io.BytesIO(PathHashIndexData))
 
-        PathHashIndex = PathHash_Reader.readTArray_W_Arg(FPakDirectoryEntry, PathHash_Reader)
+        PathHashIndex = PathHash_Reader.readTArray(FPakDirectoryEntry, PathHash_Reader)
         PathHash_Reader.base_stream.close()
 
         encodedEntryReader = BinaryStream(EncodedPakEntries)

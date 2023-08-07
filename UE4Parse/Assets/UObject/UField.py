@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING
 
-from UE4Parse.Assets.Exports import UObject
+
 from UE4Parse.Assets.Exports.ExportRegistry import register_export
 from UE4Parse.Assets.Objects.FPackageIndex import FPackageIndex
 from UE4Parse.Versions.FFrameworkObjectVersion import FFrameworkObjectVersion
+from UE4Parse.Assets.Exports.UObjects import UObject
 
 if TYPE_CHECKING:
     from UE4Parse.Readers.FAssetReader import FAssetReader
