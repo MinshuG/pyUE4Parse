@@ -96,7 +96,7 @@ class AbstractVfsFileProvider(ABC):
                 files.append(x)
         return files
 
-    def submit_key(self, guid: Union[str, FGuid], key: Optional[FAESKey]) -> int:
+    def submit_key(self, guid: Union[str, FGuid]=FGuid(0,0,0,0), key: Optional[FAESKey]=None) -> int:
         """
         Tries to mount a file with the given guid
         returns: `int` the number of files successfully mounted
@@ -169,7 +169,7 @@ class AbstractVfsFileProvider(ABC):
     def load_virtual_paths(self) -> int:
         import re
         import json
-        pattern = re.compile(f"^/{self.GameName}/Plugins/.+.upluginmanifest$", re.IGNORECASE)
+        pattern = re.compile(f"^{self.GameName}/Plugins/.+.upluginmanifest$", re.IGNORECASE)
 
         count = 0
         for _, v in self.files:
@@ -196,7 +196,7 @@ class AbstractVfsFileProvider(ABC):
     def load_localization(self, language_code = "en") -> int:
         #  https://github.com/FabianFG/CUE4Parse/blob/22ad6c42a27071cd91fdad71f2a02e8597031de9/CUE4Parse/FileProvider/AbstractFileProvider.cs#L63
         import re
-        pattern = re.compile( f"^/{self.GameName}/.+/{language_code}/.+.locres$", re.IGNORECASE)
+        pattern = re.compile( f"^{self.GameName}/.+/{language_code}/.+.locres$", re.IGNORECASE)
         self.LocalizedResources = {}
         count = 0
         for _, v in self.files:
