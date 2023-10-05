@@ -1,4 +1,4 @@
-from typing import Tuple, Union, TYPE_CHECKING, Callable, Any
+from typing import Tuple, Union, Dict, TYPE_CHECKING, Callable, Any
 
 from UE4Parse.Assets.Objects.FPackageIndex import FPackageIndex
 from UE4Parse.Assets.UObject.UField import UField
@@ -51,7 +51,7 @@ class UStruct(UField):
 
         self.ChildProperties = tuple(children)
 
-    def GetValue(self) -> dict[str, Any]:
+    def GetValue(self) -> Dict[str, Any]:
         props = super().GetValue()
         props["SuperStruct"] = self.SuperStruct.GetValue()
         props["Children"] = [child.GetValue() for child in self.Children]

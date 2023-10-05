@@ -85,6 +85,7 @@ class LegacyPackageReader(Package):
     # @profile
     def __init__(self, uasset: BinaryStream, uexp: BinaryStream = None, ubulk: BinaryStream = None,
                  provider: "DefaultFileProvider" = None, load_mode: EPackageLoadMode = EPackageLoadMode.Full) -> None:
+        FAssetReader.provider = provider
         self.reader = FAssetReader(uasset.base_stream, self, size=uasset.size)
         self.reader.mappings = uasset.mappings
         self.reader.set_ar_version(provider.Versions.UEVersion)
