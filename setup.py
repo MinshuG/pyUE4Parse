@@ -1,7 +1,15 @@
 from Cython.Build import cythonize
 from setuptools import find_packages
-from distutils.core import setup
-from distutils.extension import Extension
+
+import sys
+
+if sys.version_info >= (3, 12):
+    from setuptools import setup, Extension
+else:
+    from distutils.core import setup
+    from distutils.extension import Extension
+
+
 import pathlib
 
 HERE = pathlib.Path(__file__).parent
@@ -11,7 +19,9 @@ README = (HERE / "README.md").read_text()
 extensions = [
     Extension(
         name="UE4Parse.Assets.Exports.Textures.utils",
-        sources=["UE4Parse/Assets/Exports/Textures/utils.pyx"])
+        sources=["UE4Parse/Assets/Exports/Textures/utils.pyx"],
+        cython_directives={'language_level': "3"}
+        )
 ]
 
 extensions = cythonize(extensions)

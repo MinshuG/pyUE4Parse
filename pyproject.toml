@@ -1,22 +1,23 @@
 [project]
 name = "UE4Parse"
 description = "ue4/5 asset parser"
-authors = [
-    "MinshuG"
-]
-license = "MIT"
+authors = [{ name = "Minshu Gurjar" }]
+license = { text = "MIT License" }
 readme = "README.md"
-python = "^3.8"
+requires-python = ">=3.8"
+dynamic = ["version"]
+keywords = ["UE4", "UE5", "Unreal Engine"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Developers",
+    'License :: OSI Approved :: MIT License',
+]
+
+[project.urls]
 homepage = "https://github.com/MinshuG/pyUE4Parse"
 repository = "https://github.com/MinshuG/pyUE4Parse"
 
-keywords = ["UE4", "UE5", "Unreal Engine"]
-
-classifiers = [
-    "Programming Language :: Python :: 3",
-    'License :: OSI Approved :: MIT License'
-]
 
 [build-system]
-requires = ["setuptools~=56.0.0", "Cython~=3.0a5"]
+requires = ["setuptools~=69.5.1", "Cython~=3.0a5"]
 build-backend = "setuptools.build_meta"
