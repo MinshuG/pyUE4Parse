@@ -12,11 +12,14 @@ classifiers = [
     "Intended Audience :: Developers",
     'License :: OSI Approved :: MIT License',
 ]
+dependencies = ["pycryptodome", "lz4", "pyUsmap", "pillow"]
+
+[project.optional-dependencies]
+tex = ["quicktex", "astc_decomp_faster"]
 
 [project.urls]
 homepage = "https://github.com/MinshuG/pyUE4Parse"
 repository = "https://github.com/MinshuG/pyUE4Parse"
-
 
 [build-system]
 requires = ["setuptools~=69.5.1", "Cython~=3.0.10"]

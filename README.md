@@ -3,7 +3,9 @@
 <!-- ~[![pypi](https://img.shields.io/pypi/v/ue4parse.svg)](https://pypi.python.org/pypi/ue4parse) -->
 
 ## Installation
-`python -m pip install git+https://github.com/MinshuG/pyUE4Parse.git`
+    python -m pip install git+https://github.com/MinshuG/pyUE4Parse.git  // minimal installation
+
+    python -m pip install git+https://github.com/MinshuG/pyUE4Parse.git[tex]  // with texture decoders
 
 ## Features
 * Parse UE4/5 asset files(.uasset, .umap, .uexp, .ubulk)
