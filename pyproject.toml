@@ -19,5 +19,5 @@ repository = "https://github.com/MinshuG/pyUE4Parse"
 
 
 [build-system]
-requires = ["setuptools~=69.5.1", "Cython~=3.0a5"]
+requires = ["setuptools~=69.5.1", "Cython~=3.0.10"]
 build-backend = "setuptools.build_meta"

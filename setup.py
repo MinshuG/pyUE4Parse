@@ -1,16 +1,7 @@
 from Cython.Build import cythonize
-from setuptools import find_packages
-
-import sys
-
-if sys.version_info >= (3, 12):
-    from setuptools import setup, Extension
-else:
-    from distutils.core import setup
-    from distutils.extension import Extension
-
-
+from setuptools import find_packages, setup, Extension
 import pathlib
+
 
 HERE = pathlib.Path(__file__).parent
 
@@ -38,7 +29,7 @@ setup(
         "Programming Language :: Python :: 3",
         'License :: OSI Approved :: MIT License'
     ],
-    install_requires=["pycryptodome", "lz4", "pyUsmap", "pillow", "quicktex", "astc_decomp"],
+    install_requires=["pycryptodome", "lz4", "pyUsmap", "pillow", "quicktex", "astc_decomp_faster"],
     packages=find_packages(),
     ext_modules=extensions,
 )

@@ -8,6 +8,8 @@ Cython = "~=3.0a5"
 Pillow = "*"
 pycryptodome = "*"
 pyusmap = "*"
+quicktex = "*"
+astc-decomp-faster = "*"
 
 [dev-packages]
 
