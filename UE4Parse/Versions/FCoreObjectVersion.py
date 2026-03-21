@@ -10,7 +10,7 @@ class FCoreObjectVersion(EUeBase):
     """Custom serialization version for changes made in Dev-Core stream"""
     class Type(IntEnum):
         # Before any version changes were made
-        BeforeCustomVersionWasAdded = 0,
+        BeforeCustomVersionWasAdded = 0
         MaterialInputNativeSerialize = 1
         EnumProperties = 2
         SkeletalMaterialEditorDataStripping = 3

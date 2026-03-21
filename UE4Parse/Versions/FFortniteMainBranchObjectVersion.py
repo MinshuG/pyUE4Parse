@@ -9,7 +9,7 @@ class FFortniteMainBranchObjectVersion:
 
     class Type(IntEnum):
         # Before any version changes were made
-        BeforeCustomVersionWasAdded = 0,
+        BeforeCustomVersionWasAdded = 0
 
         # World composition tile offset changed from 2d to 3d
         WorldCompositionTile3DOffset = auto()

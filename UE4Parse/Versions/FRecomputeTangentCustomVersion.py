@@ -8,13 +8,13 @@ from UE4Parse.Versions.EUeBase import EUeBase
 class FRecomputeTangentCustomVersion(EUeBase):
     class Type(EUeBase.Type):
         # Before any version changes were made in the plugin
-        BeforeCustomVersionWasAdded = 0,
+        BeforeCustomVersionWasAdded = 0
         # UE4.12
         # We serialize the RecomputeTangent Option
-        RuntimeRecomputeTangent = 1,
+        RuntimeRecomputeTangent = 1
         # UE4.26
         # Choose which Vertex Color channel to use as mask to blend tangents
-        RecomputeTangentVertexColorMask = 2,
+        RecomputeTangentVertexColorMask = 2
         # -----<new versions can be added above this line>-------------------------------------------------
         VersionPlusOne = auto()
         LatestVersion = VersionPlusOne - 1

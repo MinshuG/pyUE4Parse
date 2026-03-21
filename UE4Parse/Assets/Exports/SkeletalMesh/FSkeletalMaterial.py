@@ -34,7 +34,6 @@ class FSkeletalMaterial:
 
             if FRecomputeTangentCustomVersion().get(reader) >= FRecomputeTangentCustomVersion.Type.RuntimeRecomputeTangent:
                     reader.seek(4, 1) # bRecomputeTangent
-        
 
         if FRenderingObjectVersion().get(reader) >= FRenderingObjectVersion.TextureStreamingMeshUVChannelData:
             self.UVChannelData = FMeshUVChannelInfo(reader)
@@ -43,7 +42,7 @@ class FSkeletalMaterial:
 
     def GetValue(self):
         return {
-            'Material': self.Material.GetValue(),
+            'Material': self.Material.GetValue() if self.Material is not None else None,
             'MaterialSlotName': self.MaterialSlotName.GetValue(),
             'ImportedMaterialSlotName': self.ImportedMaterialSlotName.GetValue(),
             'UVChannelData': self.UVChannelData.GetValue() if self.UVChannelData else None
