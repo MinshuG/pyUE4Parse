@@ -21,6 +21,7 @@ PACKAGE_FILE_TAG_SWAPPED = 0xC1832A9E
 class FPackageFileSummary:
     FileVersionUE4: EUnrealEngineObjectUE4Version
     FileVersionLicenseeUE4: EUnrealEngineObjectLicenseeUE4Version
+    FileVersionUE5: int = 0
     bUnversioned: bool = False
     CustomVersionContainer: FCustomVersionContainer
 
@@ -34,13 +35,18 @@ class FPackageFileSummary:
 
         LegacyFileVersion = reader.readInt32()
         if LegacyFileVersion < 0:
-            if LegacyFileVersion < -7:
+            # UE5 packages use LegacyFileVersion == -8 (the legacy UE3 cutoff is -7).
+            if LegacyFileVersion < -8:
                 raise ParserException("Can not load UE3 packages.")
             if LegacyFileVersion != -4:
                 reader.readInt32()  # VersionUE3
 
             version = reader.readInt32()
             self.FileVersionUE4 = EUnrealEngineObjectUE4Version(version)  # version
+
+            # UE5 inserts a separate object-version int after FileVersionUE4.
+            if LegacyFileVersion <= -8:
+                self.FileVersionUE5 = reader.readInt32()
 
             self.FileVersionLicenseeUE4 = EUnrealEngineObjectLicenseeUE4Version(reader.readInt32())  # Licensee Version
             if LegacyFileVersion <= -2:
@@ -61,7 +67,17 @@ class FPackageFileSummary:
         self.NameCount = reader.readInt32()
         self.NameOffset = reader.readInt32()
 
-        if self.FileVersionUE4.value >= EUnrealEngineObjectUE4Version.VER_UE4_ADDED_PACKAGE_SUMMARY_LOCALIZATION_ID.value:
+        # UE5 inserts a SoftObjectPaths list right after NameOffset.
+        if LegacyFileVersion <= -8:
+            self.SoftObjectPathsCount = reader.readInt32()
+            self.SoftObjectPathsOffset = reader.readInt32()
+
+        # LocalizationId is editor-only metadata and is stripped from cooked
+        # packages (PKG_FilterEditorOnly, 0x80000000). All shipped game assets
+        # are cooked, so reading it there would desync the stream.
+        flags = self.PackageFlags.value if hasattr(self.PackageFlags, "value") else self.PackageFlags
+        is_cooked = bool(flags & 0x80000000)
+        if not is_cooked and self.FileVersionUE4.value >= EUnrealEngineObjectUE4Version.VER_UE4_ADDED_PACKAGE_SUMMARY_LOCALIZATION_ID.value:
             self.LocalizationId = reader.readFString()
 
         if self.FileVersionUE4.value >= EUnrealEngineObjectUE4Version.VER_UE4_SERIALIZE_TEXT_IN_PACKAGES.value or self.FileVersionUE4.value == 0:
