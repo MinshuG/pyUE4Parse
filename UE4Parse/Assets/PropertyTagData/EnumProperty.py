@@ -18,7 +18,10 @@ class EnumProperty:
             innerType = getattr(tag, "InnerType", None)
             if innerType is not None:
                 from .BaseProperty import ReadAsValue
-                byteValue = ReadAsValue(reader, tag.InnerData, innerType, 0)
+                # Must pass a ReadType, not the literal 0: the numeric inner
+                # property readers (e.g. UInt16Property/UInt32Property for enums
+                # with >256 members) do `readType.value`, which raises on an int.
+                byteValue = ReadAsValue(reader, tag.InnerData, innerType, ReadType.NORMAL)
             else:
                 byteValue = reader.readByteToInt()
 
@@ -40,5 +43,17 @@ class EnumProperty:
             return str(name) + "::" + name_entry
 
         if reader.has_unversioned_properties:
+            # The mappings (.usmap) can be older than the game build, so an enum
+            # may have gained members and `index` can be past the known list.
+            # Fall back to "EnumName::<index>" instead of crashing the whole asset.
+            # The enum width is unaffected, so this never desyncs the stream.
             enumVals = reader.getmappings().get_enum(name.string)
-            return tag.EnumName.string + "::" + enumVals[index]
+            label = None
+            if enumVals is not None:
+                try:
+                    label = enumVals[index]
+                except (IndexError, KeyError, TypeError):
+                    label = None
+            if label is None:
+                label = str(index)
+            return name.string + "::" + label

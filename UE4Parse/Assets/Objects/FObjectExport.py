@@ -2,6 +2,7 @@ from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Exports.UObjects import UObject
 from UE4Parse.Assets.Objects.EObjectFlags import EObjectFlags
 from UE4Parse.Versions.EUnrealEngineObjectUE4Version import EUnrealEngineObjectUE4Version
+from UE4Parse.Versions.EUEVersion import EUEVersion
 from UE4Parse.Assets.Objects.FGuid import FGuid
 from UE4Parse.Assets.Objects.FName import FName
 from UE4Parse.Assets.Objects.FPackageIndex import FPackageIndex
@@ -32,6 +33,7 @@ class FObjectExport:
         return self.ObjectName
 
     def __init__(self, reader: BinaryStream) -> None:
+        is_ue5 = reader.game >= EUEVersion.GAME_UE5_0
         self.ClassIndex = FPackageIndex(reader)
         self.SuperIndex = FPackageIndex(reader)
 
@@ -60,7 +62,9 @@ class FObjectExport:
         self.bNotForClient = reader.readInt32() != 0
         self.bNotForServer = reader.readInt32() != 0
 
-        self.PackageGuid = FGuid(reader)
+        # UE5 (REMOVE_OBJECT_EXPORT_PACKAGE_GUID) drops the per-export PackageGuid.
+        if not is_ue5:
+            self.PackageGuid = FGuid(reader)
         self.PackageFlags = reader.readUInt32()
 
         # only serialize when file version is past VER_UE4_LOAD_FOR_EDITOR_GAME
@@ -70,6 +74,10 @@ class FObjectExport:
         # only serialize when file version is past VER_UE4_COOKED_ASSETS_IN_EDITOR_SUPPORT
         if reader.version >= EUnrealEngineObjectUE4Version.VER_UE4_COOKED_ASSETS_IN_EDITOR_SUPPORT:
             self.bIsAsset = reader.readBool()
+
+        # UE5 (OPTIONAL_RESOURCES) adds bGeneratePublicHash.
+        if is_ue5:
+            self.bGeneratePublicHash = reader.readBool()
 
         # only serialize when file version is past VER_UE4_PRELOAD_DEPENDENCIES_IN_COOKED_EXPORTS
         if reader.version >= EUnrealEngineObjectUE4Version.VER_UE4_PRELOAD_DEPENDENCIES_IN_COOKED_EXPORTS:

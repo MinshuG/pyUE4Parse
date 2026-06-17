@@ -1,6 +1,7 @@
 from UE4Parse.BinaryReader import BinaryStream
 from UE4Parse.Assets.Objects.FName import FName
 from UE4Parse.Assets.Objects.FPackageIndex import FPackageIndex
+from UE4Parse.Versions.EUEVersion import EUEVersion
 
 
 class FObjectImport:
@@ -14,6 +15,10 @@ class FObjectImport:
         self.ClassName = reader.readFName()
         self.OuterIndex = FPackageIndex(reader)
         self.ObjectName = reader.readFName()
+
+        # UE5 (OPTIONAL_RESOURCES) adds a per-import bImportOptional int32.
+        if reader.game >= EUEVersion.GAME_UE5_0:
+            self.bImportOptional = reader.readInt32()
 
     def __str__(self):
         return self.ObjectName.GetValue()

@@ -3,6 +3,12 @@ from typing import Optional, Dict
 from UE4Parse.Assets.Objects.Common import StructInterface
 
 from UE4Parse.BinaryReader import BinaryStream
+from UE4Parse.Versions.EUEVersion import EUEVersion
+
+
+def _read_float(reader: BinaryStream):
+    """UE5 Large World Coordinates store vector/rotator components as doubles."""
+    return reader.readDouble() if reader.game >= EUEVersion.GAME_UE5_0 else reader.readFloat()
 
 
 class FVector2D(StructInterface):
@@ -17,8 +23,8 @@ class FVector2D(StructInterface):
             self.Y = 0.0
             return
         self.position = reader.base_stream.tell()
-        self.X = reader.readFloat()
-        self.Y = reader.readFloat()
+        self.X = _read_float(reader)
+        self.Y = _read_float(reader)
 
     def construct(self, X: float, Y: float):
         self.X = X
@@ -50,9 +56,9 @@ class FVector(StructInterface):
             self.Z = 0.0
             return
         self.position = reader.base_stream.tell()
-        self.X = reader.readFloat()
-        self.Y = reader.readFloat()
-        self.Z = reader.readFloat()
+        self.X = _read_float(reader)
+        self.Y = _read_float(reader)
+        self.Z = _read_float(reader)
 
     @classmethod
     def default(cls):
@@ -75,10 +81,10 @@ class FVector4(StructInterface):
 
     def __init__(self, reader: BinaryStream):
         self.position = reader.base_stream.tell()
-        self.X = reader.readFloat()
-        self.Y = reader.readFloat()
-        self.Z = reader.readFloat()
-        self.W = reader.readFloat()
+        self.X = _read_float(reader)
+        self.Y = _read_float(reader)
+        self.Z = _read_float(reader)
+        self.W = _read_float(reader)
 
     @classmethod
     def default(cls):
